@@ -1,0 +1,29 @@
+{
+  // Cloudflare Workers Static Assets — the professional site.
+  //
+  // This is a purely static deploy: no "main" field, because there is no
+  // Worker script. Cloudflare serves the built files directly.
+  //
+  // The build runs at the REPO ROOT (npm workspaces need the install there),
+  // so the deploy command has to point at this file explicitly:
+  //
+  //     npx wrangler deploy -c sites/work/wrangler.jsonc
+  //
+  // Set that as the "Deploy command" in the Cloudflare project settings.
+  // Plain `npx wrangler deploy` fails at the root of a workspace, because
+  // wrangler cannot guess which of the two sites you meant.
+  //
+  // "name" MUST match the Worker that already exists in the dashboard.
+  // If it doesn't, wrangler creates a second one instead of updating yours.
+  "name": "interactive-resume",
+
+  "compatibility_date": "2026-08-31",
+
+  "assets": {
+    // Relative to this file, not to where the command runs.
+    "directory": "./dist",
+
+    // /notes/some-post -> /notes/some-post/index.html
+    "html_handling": "auto-trailing-slash"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  // Cloudflare Workers Static Assets — Milkshake O'neil.
+  // Not deployed yet. A second Cloudflare project points at this file:
+  //
+  //     npx wrangler deploy -c sites/music/wrangler.jsonc
+  //
+  // Rename "name" to whatever that project ends up being called.
+  "name": "milkshake-oneil",
+  "compatibility_date": "2026-08-31",
+  "assets": {
+    "directory": "./dist",
+    "html_handling": "auto-trailing-slash"
+  }
+}
