@@ -1,0 +1,51 @@
+/**
+ * Roles are static; bullets come from the active lens (see lenses.ts).
+ * `lensKey` names which lens field supplies this role's bullets.
+ */
+export interface Role {
+  years: string;
+  title: string;
+  org?: string;
+  lensKey?: "studio" | "crew";
+  /** Static prose used instead of lens bullets. */
+  note?: string;
+  current?: boolean;
+}
+
+export const roles: Role[] = [
+  {
+    years: "May 2024 — 2026",
+    title: "Career sabbatical",
+    current: true,
+    note: "Planned roughly a decade in advance and taken on schedule. Freelance production work, music, and time. It is finished, and I am looking forward.",
+  },
+  {
+    years: "2022 — 2024",
+    title: "Event Studio Manager, Americas & LatAm",
+    org: "Google",
+    lensKey: "studio",
+  },
+  {
+    years: "2013 — 2022",
+    title: "Event Technician → Crew Lead, Executive & Event Production",
+    org: "Google",
+    lensKey: "crew",
+  },
+  {
+    years: "2012 — 2013",
+    title: "Freelance Audio Engineer",
+    org: "Astreya Partners",
+  },
+  {
+    years: "2005 — 2012",
+    title: "Operations & Quality Control",
+    org: "Video Equipment Rentals",
+    note: "Seven years on the equipment side, before ever standing in the room it shipped to.",
+  },
+];
+
+export const education = {
+  degree: "B.A.S., Sound Arts",
+  school: "Ex'pression College for Digital Arts",
+  note: "Graduated valedictorian. Elected chair of the campus Audio Engineering Society chapter.",
+};

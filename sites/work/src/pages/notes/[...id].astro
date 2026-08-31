@@ -1,0 +1,46 @@
+---
+import { getCollection, render } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import Masthead from "../../components/Masthead.astro";
+import Footer from "../../components/Footer.astro";
+import { site } from "../../data/site";
+
+export async function getStaticPaths() {
+  // Drafts are excluded from the build entirely, not merely unlinked.
+  const notes = (await getCollection("notes")).filter((n) => !n.data.draft);
+  return notes.map((note) => ({ params: { id: note.id }, props: { note } }));
+}
+
+const { note } = Astro.props;
+const { Content } = await render(note);
+---
+<Base title={`${note.data.title} — ${site.name}`} description={note.data.summary}>
+  <Masthead />
+  <main>
+    <article class="section" style="border-top: 0;">
+      <div class="wrap section-grid">
+        <div class="label">
+          {note.data.date.toLocaleDateString("en-US", { year: "numeric", month: "short" })}
+        </div>
+        <div class="section-body">
+          <h1>{note.data.title}</h1>
+          <div class="prose"><Content /></div>
+          <p><a class="label" href="/">← Back</a></p>
+        </div>
+      </div>
+    </article>
+    <Footer />
+  </main>
+</Base>
+
+<style>
+  h1 { font-size: clamp(1.85rem, 4.5vw, 2.6rem); line-height: 1.08; letter-spacing: -0.03em; }
+  .prose { display: flex; flex-direction: column; gap: 1.15rem; max-width: 63ch; }
+  .prose :global(p) { max-width: 63ch; }
+  .prose :global(h2) { font-size: 1.375rem; margin-top: 1.1rem; }
+  .prose :global(blockquote) {
+    margin: 0; padding-left: 1.15rem; border-left: 2px solid var(--tally); color: var(--ink-mid);
+  }
+  .prose :global(code) { font-family: var(--f-mono); font-size: 0.875em; }
+  .prose :global(pre) { overflow-x: auto; padding: 1rem; background: var(--sunk); border-radius: 3px; }
+</style>

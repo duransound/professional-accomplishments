@@ -1,0 +1,83 @@
+/* ==========================================================================
+   Base element styles and shared type roles. Depends on tokens.css.
+   ========================================================================== */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: 1.0313rem;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: var(--tally); color: #FBFAF8; }
+
+a {
+  color: inherit;
+  text-decoration-color: var(--tally);
+  text-underline-offset: 0.22em;
+}
+a:hover { color: var(--tally); }
+
+:focus-visible { outline: 2px solid var(--tally); outline-offset: 3px; border-radius: 2px; }
+
+img { max-width: 100%; height: auto; }
+
+h1, h2, h3, h4 {
+  font-family: var(--f-display);
+  font-weight: 600;
+  text-wrap: balance;
+  margin: 0;
+  letter-spacing: -0.018em;
+}
+h3 { font-size: 1.0625rem; line-height: 1.3; }
+h4 { font-size: 0.9375rem; }
+p { margin: 0; }
+
+.wrap { max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter); }
+
+.label {
+  font-family: var(--f-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+/* Section scaffold: mono label in a left rail, content beside it. */
+.section {
+  border-top: 1px solid var(--rule);
+  padding-block: clamp(2.25rem, 5vw, 3.5rem);
+}
+.section-grid {
+  display: grid;
+  grid-template-columns: var(--rail) minmax(0, 1fr);
+  gap: 0 3rem;
+  align-items: start;
+}
+.section-grid > .label { padding-top: 0.35rem; }
+.section-body { display: flex; flex-direction: column; gap: 1.5rem; min-width: 0; }
+
+@media (max-width: 48rem) {
+  .section-grid { grid-template-columns: 1fr; gap: 1rem; }
+  .section-grid > .label { padding-top: 0; }
+}
+
+/* The tally light. One animated element on the page; that is the budget. */
+.tally-dot {
+  width: 0.5rem; height: 0.5rem; border-radius: 50%;
+  background: var(--tally); flex: none;
+  animation: tally-pulse 3.4s ease-out infinite;
+}
+@keyframes tally-pulse {
+  0%, 72%, 100% { box-shadow: 0 0 0 0 var(--tally-wash); }
+  36%           { box-shadow: 0 0 0 0.3rem var(--tally-wash); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tally-dot { animation: none; }
+}

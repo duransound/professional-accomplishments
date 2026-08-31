@@ -1,0 +1,134 @@
+---
+/**
+ * Summary + experience under the lens switcher.
+ *
+ * Every lens variant is rendered server-side and hidden with [hidden]; the
+ * script only flips which one is visible. That keeps the default lens fully
+ * readable without JavaScript, and means no data is duplicated into a script
+ * tag just to be re-rendered on the client.
+ */
+import { lenses, defaultLens } from "../data/lenses";
+import { roles } from "../data/experience";
+---
+<div class="lens">
+  <div class="wrap lens-inner">
+    <span class="label" id="lens-label">Read this as a candidate for</span>
+    <div class="lens-row" role="group" aria-labelledby="lens-label">
+      {lenses.map((l) => (
+        <button
+          class="lens-btn"
+          type="button"
+          data-lens={l.id}
+          aria-pressed={l.id === defaultLens ? "true" : "false"}
+        >{l.label}</button>
+      ))}
+    </div>
+  </div>
+</div>
+
+<section class="section" style="border-top: 0;">
+  <div class="wrap section-grid">
+    <div class="label">Summary</div>
+    <div class="section-body">
+      {lenses.map((l) => (
+        <p class="summary" data-lens-panel={l.id} hidden={l.id !== defaultLens} set:html={l.summary} />
+      ))}
+    </div>
+  </div>
+</section>
+
+<section class="section" id="experience">
+  <div class="wrap section-grid">
+    <div class="label">Experience</div>
+    <div class="section-body">
+      <ul class="jobs">
+        {roles.map((role) => (
+          <li data-current={role.current ? "" : null}>
+            <span class="years">{role.years}</span>
+            <h3>{role.title}</h3>
+            {role.org && <span class="org">{role.org}</span>}
+            {role.note && <p class="note-line">{role.note}</p>}
+            {role.lensKey && lenses.map((l) => (
+              <ul class="bullets" data-lens-panel={l.id} hidden={l.id !== defaultLens}>
+                {l[role.lensKey!].map((b) => <li>{b}</li>)}
+              </ul>
+            ))}
+          </li>
+        ))}
+      </ul>
+    </div>
+  </div>
+</section>
+
+<script>
+  const buttons = document.querySelectorAll<HTMLButtonElement>(".lens-btn");
+  const panels = document.querySelectorAll<HTMLElement>("[data-lens-panel]");
+
+  function setLens(id: string) {
+    panels.forEach((p) => { p.hidden = p.dataset.lensPanel !== id; });
+    buttons.forEach((b) => {
+      b.setAttribute("aria-pressed", b.dataset.lens === id ? "true" : "false");
+    });
+  }
+
+  buttons.forEach((b) => {
+    b.addEventListener("click", () => setLens(b.dataset.lens!));
+  });
+</script>
+
+<style>
+  .lens { border-bottom: 1px solid var(--rule); background: var(--sunk); }
+  .lens-inner { padding-block: 1.15rem 1.25rem; display: flex; flex-direction: column; gap: 0.7rem; }
+  .lens-row { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+
+  .lens-btn {
+    font-family: var(--f-mono); font-size: 0.75rem; letter-spacing: 0.04em;
+    color: var(--ink-mid); background: transparent;
+    border: 1px solid var(--rule); border-radius: 2px;
+    padding: 0.42rem 0.7rem; cursor: pointer;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+  }
+  .lens-btn:hover { color: var(--ink); border-color: var(--ink-soft); }
+  .lens-btn[aria-pressed="true"] {
+    color: var(--tally); border-color: var(--tally); background: var(--tally-wash);
+  }
+
+  .summary { font-size: 1.1875rem; line-height: 1.5; font-weight: 300; max-width: 56ch; }
+  .summary :global(em) { font-style: normal; box-shadow: inset 0 -0.4em 0 var(--tally-wash); }
+
+  .jobs {
+    list-style: none; margin: 0; padding: 0 0 0 1.6rem;
+    border-left: 1px solid var(--rule);
+    display: flex; flex-direction: column; gap: 2rem;
+  }
+  .jobs li { position: relative; }
+  .jobs li::before {
+    content: ""; position: absolute; left: calc(-1.6rem - 3.5px); top: 0.6rem;
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--rule); outline: 3px solid var(--paper);
+  }
+  .jobs li[data-current]::before { background: var(--tally); }
+
+  .years {
+    font-family: var(--f-mono); font-size: 0.75rem; color: var(--ink-soft);
+    font-variant-numeric: tabular-nums; display: block; margin-bottom: 0.2rem;
+  }
+  .org {
+    font-family: var(--f-mono); font-size: 0.75rem; color: var(--tally);
+    letter-spacing: 0.06em; text-transform: uppercase; display: block; margin-top: 0.28rem;
+  }
+
+  .bullets {
+    margin: 0.75rem 0 0; padding: 0; list-style: none;
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+  .bullets li { position: relative; padding-left: 1rem; color: var(--ink-mid);
+                font-size: 0.9688rem; line-height: 1.55; max-width: 62ch; }
+  .bullets li::before {
+    content: ""; position: absolute; left: 0; top: 0.68em;
+    width: 5px; height: 1px; background: var(--tally);
+  }
+  .bullets li::marker { content: none; }
+
+  .note-line { margin-top: 0.65rem; color: var(--ink-mid); font-size: 0.9688rem; max-width: 62ch; }
+</style>

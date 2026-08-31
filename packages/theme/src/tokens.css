@@ -1,0 +1,62 @@
+/* ==========================================================================
+   Shared design tokens — both sites read from this file.
+   Light palette lives on bare :root. Dark redefines TOKENS ONLY, never
+   component rules, so the un-stamped "system" state resolves correctly.
+   ========================================================================== */
+
+:root {
+  /* Warm grey paper against blue-biased ink. Accent is tally red — the
+     light that tells you which camera is live. Used once, sparingly. */
+  --paper:      #F2F1ED;
+  --surface:    #FBFAF8;
+  --sunk:       #EAE8E2;
+  --ink:        #15181E;
+  --ink-mid:    #454B55;
+  --ink-soft:   #6E747E;
+  --rule:       #DAD8D1;
+  --rule-soft:  #E6E4DE;
+  --tally:      #C0342A;
+  --tally-wash: rgba(192, 52, 42, 0.10);
+  --held:       #1F6F5C;
+  --held-wash:  rgba(31, 111, 92, 0.12);
+
+  --f-display: "Familjen Grotesk", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --f-body:    "Newsreader", Georgia, "Times New Roman", serif;
+  --f-mono:    "DM Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
+  --gutter: clamp(1.25rem, 4.5vw, 3.25rem);
+  --rail: 8.5rem;
+  --max: 64rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper:      #14161B;
+    --surface:    #1A1D23;
+    --sunk:       #1F232A;
+    --ink:        #E9E7E2;
+    --ink-mid:    #AEB4BE;
+    --ink-soft:   #868D98;
+    --rule:       #2B2F37;
+    --rule-soft:  #23272E;
+    --tally:      #E4594C;
+    --tally-wash: rgba(228, 89, 76, 0.14);
+    --held:       #5FBFA4;
+    --held-wash:  rgba(95, 191, 164, 0.14);
+  }
+}
+
+:root[data-theme="dark"] {
+  --paper:      #14161B;
+  --surface:    #1A1D23;
+  --sunk:       #1F232A;
+  --ink:        #E9E7E2;
+  --ink-mid:    #AEB4BE;
+  --ink-soft:   #868D98;
+  --rule:       #2B2F37;
+  --rule-soft:  #23272E;
+  --tally:      #E4594C;
+  --tally-wash: rgba(228, 89, 76, 0.14);
+  --held:       #5FBFA4;
+  --held-wash:  rgba(95, 191, 164, 0.14);
+}

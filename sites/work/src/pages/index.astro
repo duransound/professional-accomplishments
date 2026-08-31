@@ -1,0 +1,35 @@
+---
+import Base from "../layouts/Base.astro";
+import Masthead from "../components/Masthead.astro";
+import Resume from "../components/Resume.astro";
+import CrewMap from "../components/CrewMap.astro";
+import Kit from "../components/Kit.astro";
+import Notes from "../components/Notes.astro";
+import Education from "../components/Education.astro";
+import Footer from "../components/Footer.astro";
+import { site } from "../data/site";
+
+// Real name in the title and in schema.org Person data. This does far more for
+// "recruiter googles Ian Duran" than the domain string ever will.
+const person = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name: site.name,
+  email: site.email,
+  jobTitle: "Event Studio Manager",
+  address: { "@type": "PostalAddress", addressLocality: "San Francisco", addressRegion: "CA" },
+  sameAs: [site.linkedin],
+};
+---
+<Base title={site.name} description={site.tagline}>
+  <script slot="head" type="application/ld+json" set:html={JSON.stringify(person)} is:inline />
+  <Masthead />
+  <main>
+    <Resume />
+    <CrewMap />
+    <Kit />
+    <Notes />
+    <Education />
+    <Footer />
+  </main>
+</Base>

@@ -1,0 +1,82 @@
+/**
+ * The lens: four framings of the same eleven years, one per target track.
+ * Every variant renders server-side; the switcher only toggles visibility,
+ * so the default lens is readable with JavaScript disabled.
+ */
+export type LensId = "workplace" | "tpm" | "vendor" | "solutions";
+
+export interface Lens {
+  id: LensId;
+  label: string;
+  /** <em> marks the phrase that carries the claim. */
+  summary: string;
+  studio: string[];
+  crew: string[];
+}
+
+export const lenses: Lens[] = [
+  {
+    id: "workplace",
+    label: "Workplace & AV technology",
+    summary:
+      "Eleven years at Google, ending as Event Studio Manager for the Americas and Latin America — <em>operating budget and readiness standard for more than ten studios</em> across two regions. Looking for workplace technology leadership where a room portfolio is the unit of work.",
+    studio: [
+      "Managed the operating budget for 10+ event studios across the Americas and Latin America",
+      "Set and enforced room readiness and preventative maintenance standards across a distributed portfolio",
+      "Held technical capability consistent across venues, so a traveling executive program performed identically in every space",
+      "Owned vendor partner performance for regional AV operations",
+    ],
+    crew: [
+      "Technical point of contact for executive-level productions across the studio footprint",
+      "Rebuilt production delivery for hybrid operation in 2020, against a deadline nobody could move",
+      "Hands-on ownership of studio systems: video switching, audio consoles, multi-camera, streaming encoders",
+    ],
+  },
+  {
+    id: "tpm",
+    label: "Technical program management",
+    summary:
+      "Eleven years owning technical execution for executive programs at Google, including <em>budget and vendor accountability for 10+ studios across two regions</em>. Now focused on program management roles where that scope carries directly.",
+    studio: [
+      "Owned intake through delivery for recurring high-visibility programs, defining scoping criteria, lead times, and staffing requirements with partner teams",
+      "Built repeatable operating frameworks for flagship events, replacing ad-hoc coordination with documented process",
+      "Aligned Event Production, Communications, and Workplace organizations on shared readiness standards across a distributed operation",
+    ],
+    crew: [
+      "Drove a production model change — hybrid delivery — across a multi-region team under a hard external deadline",
+      "Served as escalation point during live execution, communicating status and risk to non-technical executive stakeholders in real time",
+    ],
+  },
+  {
+    id: "vendor",
+    label: "Vendor & operations",
+    summary:
+      "Vendor manager for distributed partner teams across two regions, with <em>budget accountability across a 10+ facility footprint</em> and delivery quality on me. Eleven years at Google, operator through regional manager.",
+    studio: [
+      "Vendor manager for distributed partner teams across two regions, accountable for delivery quality",
+      "Budget ownership across a 10+ facility footprint",
+      "Negotiated and aligned staffing and lead-time expectations between internal programs and vendor crews",
+    ],
+    crew: [
+      "Directed contractor crews through rehearsal and live execution",
+      "Set the technical standard those crews were held to, having done every seat myself",
+    ],
+  },
+  {
+    id: "solutions",
+    label: "Solutions & implementation",
+    summary:
+      "Eleven years translating what executives described into <em>technical plans a crew could actually execute</em> — then standing in the room while it ran. Google, operator through regional manager.",
+    studio: [
+      "Translated executive and non-technical stakeholder vision into executable technical plans",
+      "Defined what was and wasn't achievable within a given budget and lead time, and said so early",
+    ],
+    crew: [
+      "Front-line diagnosis and escalation of complex live AV failures, with clear stakeholder communication while the event continued",
+      "Deep hands-on fluency: video switchers, audio consoles, multi-camera workflows, streaming encoders, Google Meet at enterprise scale",
+      "Trained and supported others through tutoring and crew leadership — the direct analogue to customer enablement",
+    ],
+  },
+];
+
+export const defaultLens: LensId = "workplace";

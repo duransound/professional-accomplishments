@@ -1,0 +1,37 @@
+---
+import { site } from "../data/site";
+---
+<section class="section" id="contact">
+  <div class="wrap section-grid">
+    <div class="label">Contact</div>
+    <div class="section-body">
+      <p class="pitch">
+        If you're building something where rooms, vendors, and executive programs all have to
+        work at once — I'd like to hear about it.
+      </p>
+      <div class="links">
+        <a href={`mailto:${site.email}`}>{site.email}</a>
+        <a href={site.linkedin}>{site.linkedinLabel}</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap footer-inner">
+    <span class="label">{site.name} — {site.location}</span>
+    <span class="label">{new Date().getFullYear()}</span>
+  </div>
+</footer>
+
+<style>
+  .pitch { font-size: 1.125rem; max-width: 56ch; }
+  .links {
+    display: flex; flex-wrap: wrap; gap: 0.7rem 2rem;
+    font-family: var(--f-mono); font-size: 0.875rem;
+  }
+  .links a { text-decoration: none; border-bottom: 1px solid var(--tally); padding-bottom: 1px; }
+
+  footer { border-top: 1px solid var(--rule); padding-block: 1.6rem 2.5rem; color: var(--ink-soft); }
+  .footer-inner { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; justify-content: space-between; }
+</style>

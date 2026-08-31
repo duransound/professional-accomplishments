@@ -1,0 +1,153 @@
+---
+/**
+ * All seat panels render server-side and hide with [hidden]; the script only
+ * toggles which is visible. Without JS the default seat still reads.
+ */
+import { depts, allSeats, statusLabel, defaultSeat, seatCount } from "../data/crew";
+
+const words = ["zero","one","two","three","four","five","six","seven","eight","nine","ten",
+  "eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen","twenty"];
+const spell = (n: number) => words[n] ?? String(n);
+const swatch = (s: string) => (s === "led" ? "s-led" : s === "held" ? "s-held" : "s-adj");
+---
+<section class="section" id="crew">
+  <div class="wrap section-grid">
+    <div class="label">Crew map</div>
+    <div class="section-body">
+      <p class="intro">
+        Production job titles don't travel. Outside this industry almost nobody knows what an A1
+        does, which makes eleven years of experience hard to read. So here is the room, seat by
+        seat — what each one actually owns, and the closest thing to it in a technology
+        organization. Pick a seat.
+      </p>
+
+      <p class="tallyline">
+        Of the {spell(seatCount.total)} seats below, I have personally worked
+        <strong>{spell(seatCount.worked)}</strong>. The remaining {spell(seatCount.adjacent)} I have
+        scoped, budgeted, and staffed without ever sitting in the chair.
+      </p>
+
+      <div class="legend">
+        <span><span class="swatch s-led" aria-hidden="true"></span><span class="label">Led or owned</span></span>
+        <span><span class="swatch s-held" aria-hidden="true"></span><span class="label">Held personally</span></span>
+        <span><span class="swatch s-adj" aria-hidden="true"></span><span class="label">Worked alongside</span></span>
+      </div>
+
+      <div class="depts">
+        {depts.map((d) => (
+          <div class="dept">
+            <div class="label">{d.name}</div>
+            {d.seats.map((s) => (
+              <button
+                class="seat" type="button" data-seat={s.id}
+                aria-pressed={s.id === defaultSeat ? "true" : "false"}
+              >
+                <span class={`swatch ${swatch(s.status)}`} aria-hidden="true"></span>
+                <span class="seat-name">{s.title}</span>
+              </button>
+            ))}
+          </div>
+        ))}
+      </div>
+
+      <div class="detail" aria-live="polite">
+        {allSeats.map((s) => (
+          <div data-seat-panel={s.id} hidden={s.id !== defaultSeat} class="panel">
+            <div class="detail-head">
+              <h3>{s.title}</h3>
+              <span class="status" data-s={s.status}>{statusLabel[s.status]}</span>
+            </div>
+            <p class="detail-what">{s.what}</p>
+            <dl class="xlate">
+              <dt>In the room</dt><dd>{s.room}</dd>
+              <dt>Reads as</dt><dd set:html={s.reads} />
+            </dl>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const seats = document.querySelectorAll<HTMLButtonElement>(".seat");
+  const panels = document.querySelectorAll<HTMLElement>("[data-seat-panel]");
+
+  seats.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.seat!;
+      panels.forEach((p) => { p.hidden = p.dataset.seatPanel !== id; });
+      seats.forEach((b) => {
+        b.setAttribute("aria-pressed", b.dataset.seat === id ? "true" : "false");
+      });
+    });
+  });
+</script>
+
+<style>
+  .intro { color: var(--ink-mid); max-width: 62ch; }
+
+  .tallyline {
+    font-size: 1.1875rem; line-height: 1.5; font-weight: 300;
+    max-width: 54ch; color: var(--ink);
+    padding-left: 1.15rem; border-left: 2px solid var(--tally);
+  }
+  .tallyline strong { font-weight: 500; box-shadow: inset 0 -0.4em 0 var(--tally-wash); }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 0.4rem 1.35rem; }
+  .legend > span { display: flex; align-items: center; gap: 0.4rem; }
+  .swatch { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+  .s-held { background: var(--held); }
+  .s-led  { background: var(--tally); }
+  .s-adj  { background: var(--rule); border: 1px solid var(--ink-soft); }
+
+  .depts { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 1.5rem; }
+  .dept { display: flex; flex-direction: column; gap: 0.45rem; min-width: 0; }
+  .dept > .label { padding-bottom: 0.35rem; border-bottom: 1px solid var(--rule); }
+
+  .seat {
+    display: flex; align-items: center; gap: 0.55rem; width: 100%;
+    text-align: left; background: transparent; border: 0;
+    border-bottom: 1px solid var(--rule-soft);
+    padding: 0.5rem 0.2rem 0.5rem 0; cursor: pointer;
+    font-family: var(--f-body); font-size: 0.9375rem; color: var(--ink-mid);
+    transition: color 0.14s, background 0.14s;
+  }
+  .seat:hover { color: var(--ink); background: var(--tally-wash); }
+  .seat[aria-pressed="true"] { color: var(--ink); font-weight: 500; }
+  .seat[aria-pressed="true"] .seat-name { box-shadow: inset 0 -0.4em 0 var(--tally-wash); }
+  .seat-name { min-width: 0; }
+
+  .detail {
+    background: var(--surface); border: 1px solid var(--rule);
+    border-radius: 3px; padding: 1.35rem 1.5rem 1.5rem;
+  }
+  .panel { display: flex; flex-direction: column; gap: 0.9rem; }
+  .panel[hidden] { display: none; }
+
+  .detail-head { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: baseline; }
+  .detail-head h3 { font-size: 1.25rem; margin-right: auto; }
+
+  .status {
+    font-family: var(--f-mono); font-size: 0.625rem; letter-spacing: 0.13em;
+    text-transform: uppercase; padding: 0.22rem 0.5rem; border-radius: 2px; white-space: nowrap;
+  }
+  .status[data-s="led"]      { color: var(--tally); background: var(--tally-wash); }
+  .status[data-s="held"]     { color: var(--held);  background: var(--held-wash); }
+  .status[data-s="adjacent"] { color: var(--ink-soft); border: 1px solid var(--rule); }
+
+  .detail-what { font-size: 1.0625rem; line-height: 1.5; max-width: 60ch; }
+
+  .xlate { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); gap: 0.55rem 1.25rem; margin: 0; }
+  .xlate dt {
+    font-family: var(--f-mono); font-size: 0.6875rem; letter-spacing: 0.11em;
+    text-transform: uppercase; color: var(--ink-soft); padding-top: 0.18rem;
+  }
+  .xlate dd { margin: 0; color: var(--ink-mid); font-size: 0.9375rem; line-height: 1.55; max-width: 58ch; }
+  .xlate dd :global(strong) { color: var(--ink); font-weight: 500; }
+
+  @media (max-width: 34rem) {
+    .xlate { grid-template-columns: 1fr; gap: 0.15rem; }
+    .xlate dd { margin-bottom: 0.7rem; }
+  }
+</style>

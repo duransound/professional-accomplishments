@@ -1,0 +1,31 @@
+---
+import { site } from "../data/site";
+---
+<header class="masthead">
+  <div class="wrap masthead-inner">
+    <a class="wordmark" href="/">
+      <span class="tally-dot" aria-hidden="true"></span>{site.name}
+    </a>
+    <div class="masthead-meta">
+      <span class="label">{site.location}</span>
+      <a class="label" href={`mailto:${site.email}`}>{site.email}</a>
+      <a class="label" href={site.linkedin}>{site.linkedinLabel}</a>
+    </div>
+  </div>
+</header>
+
+<style>
+  .masthead { border-bottom: 1px solid var(--rule); background: var(--surface); }
+  .masthead-inner {
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.6rem 1.5rem;
+    padding-block: 1.5rem 1.35rem;
+  }
+  .wordmark {
+    font-family: var(--f-display); font-weight: 700; font-size: 1.75rem;
+    letter-spacing: -0.03em; margin-right: auto; text-decoration: none;
+    display: flex; align-items: center; gap: 0.7rem;
+  }
+  .wordmark:hover { color: inherit; }
+  .masthead-meta { display: flex; flex-wrap: wrap; gap: 0.4rem 1.25rem; align-items: center; }
+  .masthead-meta a { text-decoration: none; border-bottom: 1px solid var(--tally); }
+</style>

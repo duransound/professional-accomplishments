@@ -1,0 +1,41 @@
+---
+import { kit } from "../data/kit";
+---
+<section class="section" id="kit">
+  <div class="wrap section-grid">
+    <div class="label">Hands on</div>
+    <div class="section-body">
+      <div class="kit">
+        {kit.map((row) => (
+          <div class="kit-row">
+            <div class="label">{row.label}</div>
+            <div class="chips">{row.items.map((i) => <span>{i}</span>)}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .kit { display: flex; flex-direction: column; gap: 1.1rem; }
+  .kit-row {
+    display: grid; grid-template-columns: 7rem minmax(0, 1fr);
+    gap: 0.5rem 1.5rem; align-items: start;
+    padding-bottom: 1.1rem; border-bottom: 1px solid var(--rule-soft);
+  }
+  .kit-row:last-child { border-bottom: 0; padding-bottom: 0; }
+  .kit-row > .label { padding-top: 0.3rem; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .chips span {
+    font-family: var(--f-mono); font-size: 0.75rem;
+    color: var(--ink-mid); border: 1px solid var(--rule);
+    border-radius: 2px; padding: 0.26rem 0.52rem; white-space: nowrap;
+  }
+
+  @media (max-width: 34rem) {
+    .kit-row { grid-template-columns: 1fr; }
+    .kit-row > .label { padding-top: 0; }
+  }
+</style>

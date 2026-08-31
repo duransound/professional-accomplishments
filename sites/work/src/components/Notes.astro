@@ -1,0 +1,51 @@
+---
+/**
+ * Deliberately not a reverse-chron feed. At a few posts a year a dated stream
+ * reads as abandoned, so notes are listed plainly and dates stay quiet.
+ */
+import { getCollection } from "astro:content";
+
+const notes = (await getCollection("notes"))
+  .filter((n) => !n.data.draft)
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+---
+{notes.length > 0 && (
+  <section class="section" id="notes">
+    <div class="wrap section-grid">
+      <div class="label">Notes</div>
+      <div class="section-body">
+        <div class="list">
+          {notes.map((n) => (
+            <a class="note" href={`/notes/${n.id}/`}>
+              <h3>{n.data.title}</h3>
+              <span class="date">
+                {n.data.date.toLocaleDateString("en-US", { year: "numeric", month: "short" })}
+              </span>
+              <p>{n.data.summary}</p>
+            </a>
+          ))}
+        </div>
+      </div>
+    </div>
+  </section>
+)}
+
+<style>
+  .list { display: flex; flex-direction: column; }
+  .note {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.35rem 1.5rem; align-items: baseline;
+    padding: 1.05rem 0; border-bottom: 1px solid var(--rule-soft);
+    text-decoration: none;
+  }
+  .note:first-child { border-top: 1px solid var(--rule-soft); }
+  .note:hover h3 { color: var(--tally); }
+  .note p {
+    grid-column: 1 / -1; color: var(--ink-soft);
+    font-size: 0.9375rem; max-width: 58ch;
+  }
+  .date {
+    font-family: var(--f-mono); font-size: 0.6875rem; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--ink-soft); white-space: nowrap;
+  }
+</style>

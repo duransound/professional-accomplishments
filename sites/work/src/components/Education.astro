@@ -1,0 +1,23 @@
+---
+import { education } from "../data/experience";
+---
+<section class="section" id="education">
+  <div class="wrap section-grid">
+    <div class="label">Education</div>
+    <div class="section-body">
+      <div>
+        <h3>{education.degree}</h3>
+        <span class="org">{education.school}</span>
+        <p class="note-line">{education.note}</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .org {
+    font-family: var(--f-mono); font-size: 0.75rem; color: var(--tally);
+    letter-spacing: 0.06em; text-transform: uppercase; display: block; margin-top: 0.28rem;
+  }
+  .note-line { margin-top: 0.65rem; color: var(--ink-mid); font-size: 0.9688rem; max-width: 62ch; }
+</style>
