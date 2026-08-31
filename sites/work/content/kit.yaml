@@ -1,8 +1,3 @@
-# ============================================================================
-# The "Hands on" section. Names only, no explanation — the crew map already
-# does the explaining. Add or remove items freely.
-# ============================================================================
-
 groups:
   - label: Audio
     items:
@@ -13,23 +8,21 @@ groups:
       - RF coordination
       - Broadcast mix
       - Room mix
-
   - label: Video
     items:
       - Multi-camera switching
-      - Camera shading
+      - Large Format Displays
       - Source matching
       - Routing
       - Format conversion
       - Graphics playout
-
+      - Video Servers
   - label: Delivery
     items:
       - Streaming encoders
       - Platform endpoints
       - Google Meet at scale
       - Hybrid production
-
   - label: Operations
     items:
       - Readiness standards
@@ -37,3 +30,4 @@ groups:
       - Spares strategy
       - Vendor performance
       - Budget ownership
+      - Technical Program Management
