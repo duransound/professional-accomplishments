@@ -1,7 +1,8 @@
 import { defineConfig } from "astro/config";
 
 export default defineConfig({
-  // Set this once the domain is chosen — it drives canonical URLs and RSS.
-  site: "https://example.com",
+  // Drives canonical URLs, Open Graph URLs and schema.org data.
+  // Must match the custom domain attached to the Worker in Cloudflare.
+  site: "https://duran.show",
   build: { inlineStylesheets: "auto" },
 });
