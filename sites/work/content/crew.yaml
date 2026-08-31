@@ -1,241 +1,136 @@
-# ============================================================================
-# THE CREW MAP — the most important file here.
-#
-# Each department becomes a coloured line on the diagram. Each seat becomes a
-# station on that line. Everything feeds the ON AIR terminus.
-#
-# status must be exactly one of:
-#   led       red station    - you owned it
-#   held      solid station  - you personally worked it
-#   adjacent  dashed station - you worked alongside it but never sat in it
-#
-# The "worked N of M seats" sentence above the diagram counts itself from this
-# file. Never type that number anywhere.
-#
-# Per seat:
-#   title  full name, shown in the detail panel
-#   short  abbreviated name for the diagram — keep under about 20 characters
-#          or labels collide with their neighbours
-#   what   one sentence: what this seat owns
-#   room   what the work actually looks like during a show
-#   reads-title
-#          the closest job title in a technology company. Just the title —
-#          no sentence. It is what the vocabulary switch shows in place of
-#          `short` on the diagram, so it lives under the same length limit.
-#
-# NOTE: colours start with # so they MUST stay in quotes. Everything else can
-# be written plainly.
-#
-# Order matters. Seats appear left to right in the order listed.
-# ============================================================================
-
 departments:
   - name: Program & content
     short: Program
-    color: "#C2372A"
+    color: '#C2372A'
     seats:
       - id: resm
         title: Regional Event Studio Manager
         short: Regional Studio Mgr
-        reads-title: Workplace tech manager
         status: led
-        what: >
-          Owns a portfolio of rooms across a region — the budget, the standard,
-          and the partners who keep them working.
-        room: >
-          Decides what every studio in the region must be capable of, funds it,
-          and holds vendor teams to it. Answerable for a room in São Paulo
-          behaving exactly like a room in the Bay Area, so a traveling
-          executive program never has to care which one it landed in.
-
+        what: Owns a portfolio of rooms across a region — the budget, the standard, and the partners who keep them working.
+        room: Decides what every studio in the region must be capable of, funds it, and holds vendor teams to it. Answerable for a room in São Paulo behaving exactly like a room in the Bay Area, so a traveling executive program never has to care which one it landed in.
+        reads-title: Workplace tech manager
       - id: pm
         title: Program Management
         short: Program Mgmt
-        reads-title: Program manager
         status: led
-        what: >
-          Owns the portfolio of programs rather than any single show.
-        room: >
-          Intake criteria, scheduling across venues, staffing models, vendor
-          contracts, and a budget that spans a year of events instead of one
-          night.
-
+        what: Owns the portfolio of programs rather than any single show.
+        room: Intake criteria, scheduling across venues, staffing models, vendor contracts, and a budget that spans a year of events instead of one night.
+        reads-title: Program manager
       - id: tp
         title: Technical Producer
         short: Technical Producer
-        reads-title: Technical PM
         status: held
-        what: >
-          Owns the technical plan for a show, its budget, and the people who
-          execute it.
-        room: >
-          Turns what the producer wants into gear, crew, lead times, and a
-          number. Present through rehearsal to catch what the plan missed while
-          there is still time to fix it.
-
+        what: Owns the technical plan for a show, its budget, and the people who execute it.
+        room: Turns what the producer wants into gear, crew, lead times, and a number. Present through rehearsal to catch what the plan missed while there is still time to fix it.
+        reads-title: Technical PM
       - id: prod
         title: Producer
         short: Producer
-        reads-title: Product owner
         status: adjacent
-        what: >
-          Owns the outcome. Decides what the show is and whether it worked.
-        room: >
-          Sets content and rehearsal priorities, and makes the calls that trade
-          scope against time. Talks to the client, not to the rack.
-
+        what: Owns the outcome. Decides what the show is and whether it worked.
+        room: Sets content and rehearsal priorities, and makes the calls that trade scope against time. Talks to the client, not to the rack.
+        reads-title: Product owner
       - id: sm
         title: Stage Manager / Show Caller
         short: Show Caller
-        reads-title: Incident commander
         status: held
-        what: >
-          Owns time and sequence once the show is running.
-        room: >
-          Calls every cue — standby camera two, take two. Holds the entire
-          sequence in their head and communicates continuously without
-          editorializing.
-
+        what: Owns time and sequence once the show is running.
+        room: Calls every cue — standby camera two, take two. Holds the entire sequence in their head and communicates continuously without editorializing.
+        reads-title: Incident commander
   - name: Audio
     short: Audio
-    color: "#2E7A6B"
+    color: '#2E7A6B'
     seats:
       - id: a1
         title: A1 — Audio Lead
         short: A1 Audio Lead
-        reads-title: Principal engineer
         status: held
-        what: >
-          Owns everything anyone hears.
-        room: >
-          Designs the audio system, sets gain structure, and mixes the show
-          live. One person, one mix, and no second take.
-
+        what: Owns everything anyone hears.
+        room: Designs the audio system, sets gain structure, and mixes the show live. One person, one mix, and no second take.
+        reads-title: Principal engineer
       - id: a2
         title: A2 — Audio Assistant
         short: A2 Audio Asst
-        reads-title: Site reliability eng
         status: held
-        what: >
-          The A1's hands in the room.
-        room: >
-          Mics talent, coordinates wireless frequencies, runs cable, and fixes
-          the problem while the show keeps going around them.
-
+        what: The A1's hands in the room.
+        room: Mics talent, coordinates wireless frequencies, runs cable, and fixes the problem while the show keeps going around them.
+        reads-title: Site reliability eng
       - id: rf
         title: RF & Comms Coordinator
         short: RF & Comms
-        reads-title: Network engineer
         status: held
-        what: >
-          Owns the spectrum and the intercom.
-        room: >
-          Coordinates wireless frequencies so nothing steps on anything else,
-          and keeps crew communications working when they matter most.
-
+        what: Owns the spectrum and the intercom.
+        room: Coordinates wireless frequencies so nothing steps on anything else, and keeps crew communications working when they matter most.
+        reads-title: Network engineer
   - name: Video
     short: Video
-    color: "#D89A2C"
+    color: '#D89A2C'
     seats:
       - id: td
         title: Technical Director
         short: Technical Director
-        reads-title: Release engineer
         status: held
-        what: >
-          Executes the show live on the switcher.
-        room: >
-          Every cut and every transition, in real time, on the producer's call.
-          There is no undo.
-
+        what: Executes the show live on the switcher.
+        room: Every cut and every transition, in real time, on the producer's call. There is no undo.
+        reads-title: Release engineer
       - id: v1
         title: Video Engineer (V1)
         short: Video Eng V1
-        reads-title: Platform engineer
         status: held
-        what: >
-          Owns signal integrity.
-        room: >
-          Shades and matches cameras so ten sources look like one show, and
-          handles routing, formats, and conversion between them.
-
+        what: Owns signal integrity.
+        room: Shades and matches cameras so ten sources look like one show, and handles routing, formats, and conversion between them.
+        reads-title: Platform engineer
       - id: cam
         title: Camera Operator
         short: Camera Op
-        reads-title: Individual contributor
         status: held
-        what: >
-          Owns the frame.
-        room: >
-          Composes and operates, taking direction while anticipating the shot
-          that will be asked for next.
-
+        what: Owns the frame.
+        room: Composes and operates, taking direction while anticipating the shot that will be asked for next.
+        reads-title: Individual contributor
       - id: gfx
         title: Graphics Operator
         short: Graphics Op
-        reads-title: Design operations
         status: held
-        what: >
-          Owns everything on screen that isn't a camera.
-        room: >
-          Builds lower thirds, titles, and slide playback, then triggers them
-          live on cue.
-
+        what: Owns everything on screen that isn't a camera.
+        room: Builds lower thirds, titles, and slide playback, then triggers them live on cue.
+        reads-title: Design operations
       - id: pb
         title: Playback Operator
         short: Playback Op
-        reads-title: Content operations
         status: held
-        what: >
-          Rolls recorded content on cue.
-        room: >
-          Owns the media, its formats, and hitting the frame exactly when the
-          call comes.
-
+        what: Rolls recorded content on cue.
+        room: Owns the media, its formats, and hitting the frame exactly when the call comes.
+        reads-title: Content operations
   - name: Systems & delivery
     short: Systems
-    color: "#47539B"
+    color: '#47539B'
     seats:
       - id: bcast
         title: Broadcast / Streaming Engineer
         short: Broadcast Eng
-        reads-title: Infrastructure / SRE
         status: held
-        what: >
-          Owns delivery to everyone who isn't in the room.
-        room: >
-          Encoders, bonded connections, platform endpoints, and the bitrate
-          math that keeps a stream stable for an audience you cannot see.
-
+        what: Owns delivery to everyone who isn't in the room.
+        room: Encoders, bonded connections, platform endpoints, and the bitrate math that keeps a stream stable for an audience you cannot see.
+        reads-title: Infrastructure / SRE
       - id: ops
         title: Studio Operations
-        short: Studio Ops
-        reads-title: Workplace IT ops
+        short: Technical Ops
         status: led
-        what: >
-          Owns readiness between shows.
-        room: >
-          Preventative maintenance, spares strategy, and room certification.
-          The unglamorous work that makes it just works true on the day.
-
+        what: Owns readiness between shows.
+        room: Preventative maintenance, spares strategy, and room certification. The unglamorous work that makes it just works true on the day.
+        reads-title: Workplace IT ops
       - id: sd
         title: Systems Designer
         short: Systems Designer
+        status: adjacent
+        what: Designs the room before there is a room.
+        room: Signal flow drawings, rack elevations, and as-built documentation. Decides what a space will be capable of for the next decade.
         reads-title: Solutions architect
-        status: adjacent
-        what: >
-          Designs the room before there is a room.
-        room: >
-          Signal flow drawings, rack elevations, and as-built documentation.
-          Decides what a space will be capable of for the next decade.
-
       - id: ld
-        title: Lighting Director
+        title: Lighting Operatot
         short: Lighting Dir
+        status: held
+        what: Owns what the camera sees.
+        room: Designs and operates lighting for the room and for the lens at once — two requirements that routinely disagree.
         reads-title: Specialist domain lead
-        status: adjacent
-        what: >
-          Owns what the camera sees.
-        room: >
-          Designs and operates lighting for the room and for the lens at once —
-          two requirements that routinely disagree.
