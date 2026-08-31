@@ -25,7 +25,6 @@ const seat = z.object({
   }),
   what: required("A one-line description"),
   room: required('An "in the room" description'),
-  reads: required('A "reads as" translation'),
 });
 
 const dept = z.object({

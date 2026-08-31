@@ -63,11 +63,11 @@ top. Set it to whichever role type you're most actively going for.
 indentation. Give it either a `note:` (fixed paragraph) or a `lensKey:`
 (bullets that change with the lens), not both.
 
-**Fix a crew seat's description** — `crew.yaml`. Find the seat, edit `what`,
-`room`, or `reads`.
+**Fix a crew seat's description** — `crew.yaml`. Find the seat, edit `what`
+or `room`.
 
 **Add a crew seat** — copy a whole seat block into the right department. It
-needs `id`, `title`, `short`, `status`, `what`, `room`, `reads`. Keep `short`
+needs `id`, `title`, `short`, `status`, `what`, `room`. Keep `short`
 under about 20 characters or labels collide on the diagram. The station appears
 automatically and the "worked N of M" sentence recounts itself.
 

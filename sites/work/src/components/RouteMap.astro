@@ -142,7 +142,6 @@ const spell = (n: number) => words[n] ?? String(n);
             <p class="detail-what">{s.what}</p>
             <dl class="xlate">
               <dt>In the room</dt><dd>{s.room}</dd>
-              <dt>Reads as</dt><dd set:html={s.reads} />
             </dl>
           </div>
         ))}
