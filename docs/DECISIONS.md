@@ -1,79 +1,95 @@
 # Decisions
 
-Fuller strategy notes live in the "Update personal website" Claude project
-(brainstorm, domain search, crew map, build log). This file is the short version
-the repo needs to stand on its own.
+Why this repo is shaped the way it is. Strategy and content notes live
+elsewhere; this covers the build.
 
-## Architecture
+## Two sites, one repo
 
-**Two domains, one repo.** An artist brand and a program-management resume
-undercut each other on a shared front page. Two front doors means each visitor
-lands somewhere built for them; one codebase means near-zero extra maintenance.
+An artist brand and a program-management resume undercut each other on a shared
+front page, so they get separate front doors. One codebase keeps the
+maintenance cost near zero and the design language identical.
 
-`milkshakeoneil.com` stays the music door — it carries link equity from the
-Spotify, Apple Music, and YouTube artist profiles. The professional site gets
-its own domain.
-
-## Domain — DEFERRED
-
-Not yet chosen. Build on temporary `*.pages.dev` URLs and name it once the site
-is visible enough to decide against.
-
-Ruled out: plain firstname/lastname (`ianduran.com`, `iduran.com`, and
-`ian-duran.com` are all long taken), and the production-vocabulary concept names.
-
-Best remaining lead: **`duranian.com`** — available, and already Ian's LinkedIn
-handle. Also available: `housetohalf.com`, `standbyandgo.com`, `cuetocue.io`,
-`unitygain.io`, and `ianduran.{io,dev,me,net}`.
-
-Whatever gets picked, register `ianduran.net` (~$12/yr) as a 301 redirect.
-A concept domain is a better writing brand but slightly worse at "a recruiter
-googles Ian Duran" — mitigated far more by the name in `<title>`, `<h1>`, and
-schema.org `Person` data than by the domain string.
+| Site | Workspace | Domain |
+| --- | --- | --- |
+| Professional / writing | `sites/work` | not yet set |
+| Milkshake O'neil (music) | `sites/music` | milkshakeoneil.com |
 
 ## Stack
 
-Astro + Markdown, no CMS. At a few posts a year a CMS is overhead that never
-pays for itself. Cloudflare Pages for hosting — free tier covers this many times
-over (500 builds/month, unmetered bandwidth), and it consolidates DNS and
-registrar in one place.
+Astro, static output, Markdown and YAML content, no CMS. At a few posts a year
+a CMS is overhead that never pays for itself. Cloudflare Pages for hosting.
 
-## Design
+## Content is separated from markup
 
-Accent is **tally red** — the light that tells you which camera is live. Chosen
-because it's the most specific object in Ian's working world and already means
-"this one's on." Warm grey paper against blue-biased ink. Familjen Grotesk /
-Newsreader / DM Mono. Layout is a technical rider: mono eyebrow labels, hairline
-rules, a spec table, a timeline rail.
+Everything editable is YAML and Markdown in `sites/work/content/`. `src/data/`
+holds schemas that read and validate those files — it holds no content itself.
+Changing the resume never means opening a component. See `CONTENT.md`.
+
+Validation reports mistakes by file and field name in plain language, and
+resolves list positions to names by walking the parsed data. The three failure
+modes that actually happen — a bad enum value, an unquoted colour, broken
+indentation — were each tested to confirm the message is useful.
+
+## Both interactions render every state server-side
+
+The lens switcher and the crew map render all their states into the HTML and
+hide the inactive ones with the `hidden` attribute; the scripts only flip
+visibility. Two consequences worth preserving:
+
+1. The page is fully readable with JavaScript disabled.
+2. No content is duplicated into a `<script>` tag, so the YAML stays the single
+   source of truth.
+
+**This depends on the global `[hidden] { display: none !important }` rule in
+`packages/theme/src/base.css`.** The browser's default is a bare attribute
+selector, so any class setting `display` silently defeats it — which is exactly
+what happened, and one role rendered bullets from two lenses at once.
 
 ## The crew map
 
-The strongest idea on the site. Production titles don't travel — outside the
-industry nobody knows what an A1 does, which makes eleven years unreadable to
-the exact people Ian is trying to reach. The map translates each seat into its
-technology-org analogue.
+Departments are lines, seats are stations, all lines terminate at ON AIR.
+Solid station = seat held, dashed = worked alongside. Geometry is computed from
+`content/crew.yaml`, so adding a seat moves the diagram correctly.
 
-It never argues that the experience transfers. It lays out the translation and
-lets the reader conclude it, which is much harder to dismiss.
+Three seats look adjacent but are deliberately distinct — **do not collapse
+them**, the separation is the argument that the same person operated at three
+different altitudes:
 
-**Three seats look adjacent but are deliberately separate. Do not collapse them:**
-
-- `pm` — Program Management: the portfolio of *events and programs*
-- `resm` — Regional Event Studio Manager: the portfolio of *rooms*, with budget
+- `pm` Program Management — the portfolio of *events and programs*
+- `resm` Regional Event Studio Manager — the portfolio of *rooms*, with budget
   and vendor accountability
-- `ops` — Studio Operations: readiness *between* shows, the maintenance function
+- `ops` Studio Operations — readiness *between* shows, the maintenance function
 
-That separation is the argument that Ian operated at three different altitudes.
+The "worked N of M seats" figure is computed, never typed.
 
-Statuses (led / held / adjacent) were confirmed by Ian on 2026-08-31 and are
-load-bearing. An overclaim here is the kind a single interview question exposes.
+## The drafting plate
+
+`--draft-*` tokens are theme-independent on purpose. A schematic printed on
+dark paper is not a thing, and the route colours only read correctly on light
+ground, so in dark mode the drawing sits as a lit plate against the dark page.
+Anything inside `.diagram` must use `--draft-*`; using `--ink` there produces an
+invisible border in dark mode.
 
 ## Deliberate omissions
 
-- **Phone number is not on the site**, though it is in the resume data. It
-  belongs on a resume sent to a person, not a public page.
-- **The sabbatical is stated plainly**, framed as executed long-range planning
-  rather than a gap needing an excuse. Three sentences, then stop — length
-  signals defensiveness.
-- **Hands on names capabilities without explaining them.** The crew map already
-  does the explaining; prose there was saying the same thing twice, weaker.
+- **No phone number on the site.** It belongs on a resume sent to a person.
+- **Drafts never build.** `getStaticPaths` filters `draft: true`, so an
+  unfinished note gets no public URL rather than merely going unlinked.
+
+## Before launch
+
+- [ ] Choose the domain, then set `site:` in both `astro.config.mjs` files
+- [ ] Music site: replace the dead sample-pack link — ToneDen shut down in 2024
+- [ ] Music site: pull hero and profile images off the current Wix site
+- [ ] Unlock `milkshakeoneil.com` in Wix; it carries `clientUpdateProhibited`,
+      which blocks nameserver changes until cleared
+- [ ] Cancel the Wix plan only after DNS has propagated
+
+## Deploying
+
+Cloudflare Pages, one project per site, both pointed at this repo.
+
+| | Work site | Music site |
+| --- | --- | --- |
+| Build command | `npm run build:work` | `npm run build:music` |
+| Output directory | `sites/work/dist` | `sites/music/dist` |
