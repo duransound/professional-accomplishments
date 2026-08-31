@@ -1,0 +1,237 @@
+# =============================================================================
+# Sveltia CMS — the browser editor at /admin
+#
+# Editing here commits straight to GitHub, which triggers a Cloudflare build,
+# which puts the change live. Roughly a minute end to end.
+#
+# NOTE: saving from the CMS rewrites the whole YAML file, so the explanatory
+# comments that used to live in content/*.yaml do not survive. That guidance
+# now lives in the "hint" lines below, where it shows up next to the field
+# you are actually filling in.
+# =============================================================================
+
+backend:
+  name: github
+  repo: duransound/professional-accomplishments
+  branch: main
+  # Points at the Cloudflare auth worker. Fill in after deploying it.
+  base_url: https://sveltia-cms-auth.iduran87.workers.dev
+
+# Commit messages that read sensibly in the repo history.
+site_url: https://duran.show
+display_url: https://duran.show
+
+media_folder: sites/work/public/uploads
+public_folder: /uploads
+
+collections:
+  # ---------------------------------------------------------------------------
+  - name: crew
+    label: Crew map
+    files:
+      - name: crew
+        label: Crew map
+        file: sites/work/content/crew.yaml
+        description: >-
+          Departments are the coloured lines on the diagram. Seats are the
+          stations on them. The "worked N of M seats" sentence counts itself
+          from this file, so there is no number to update by hand.
+        fields:
+          - name: departments
+            label: Departments
+            widget: list
+            label_singular: Department
+            summary: '{{fields.name}}'
+            fields:
+              - { name: name, label: Department name, widget: string }
+              - name: short
+                label: Line label
+                widget: string
+                hint: Short name shown on the diagram, e.g. Program
+              - name: color
+                label: Line colour
+                widget: string
+                pattern: ['^#[0-9a-fA-F]{6}$', 'Must be a six-digit hex colour like #C2372A']
+                hint: Six-digit hex, e.g. #C2372A
+              - name: seats
+                label: Seats
+                widget: list
+                label_singular: Seat
+                summary: '{{fields.title}}  ·  {{fields.status}}'
+                fields:
+                  - name: id
+                    label: ID
+                    widget: string
+                    hint: Lowercase, no spaces. Must be unique. Changing it is fine; it is only used internally.
+                  - { name: title, label: Full title, widget: string }
+                  - name: short
+                    label: Diagram label
+                    widget: string
+                    pattern: ['^.{1,24}$', 'Keep this under about 20 characters or labels collide on the diagram']
+                    hint: Abbreviated name for the diagram. Under ~20 characters.
+                  - name: status
+                    label: Status
+                    widget: select
+                    options:
+                      - { label: 'Led or owned  (red station)', value: led }
+                      - { label: 'Held personally  (solid station)', value: held }
+                      - { label: 'Worked alongside  (dashed station)', value: adjacent }
+                    hint: >-
+                      This drives the diagram and the seats-worked count. Worth
+                      being accurate — an overclaim here is the kind a single
+                      interview question exposes.
+                  - name: what
+                    label: What it owns
+                    widget: text
+                    hint: One sentence.
+                  - name: room
+                    label: In the room
+                    widget: text
+                    hint: What the work actually looks like during a show.
+
+  # ---------------------------------------------------------------------------
+  - name: lenses
+    label: Lenses
+    files:
+      - name: lenses
+        label: Lenses
+        file: sites/work/content/lenses.yaml
+        description: >-
+          Four framings of the same eleven years. The buttons at the top of the
+          page switch between them, rewriting the summary and the bullets.
+        fields:
+          - name: default
+            label: Lens shown first
+            widget: string
+            hint: >-
+              Must exactly match one of the lens IDs below. Set it to whichever
+              kind of role you are most actively going for.
+          - name: lenses
+            label: Lenses
+            widget: list
+            label_singular: Lens
+            summary: '{{fields.label}}'
+            fields:
+              - { name: id, label: ID, widget: string, hint: 'Lowercase, no spaces.' }
+              - { name: label, label: Button label, widget: string }
+              - name: summary
+                label: Summary paragraph
+                widget: text
+                hint: >-
+                  Wrap one phrase in <em>…</em> to give it the red underline.
+                  Use it once, on the claim carrying the most weight.
+              - name: studio
+                label: Bullets — Event Studio Manager
+                widget: list
+                hint: One bullet per entry.
+              - name: crew
+                label: Bullets — Event Technician / Crew Lead
+                widget: list
+                hint: One bullet per entry.
+
+  # ---------------------------------------------------------------------------
+  - name: experience
+    label: Experience
+    files:
+      - name: experience
+        label: Experience
+        file: sites/work/content/experience.yaml
+        fields:
+          - name: roles
+            label: Roles
+            widget: list
+            label_singular: Role
+            summary: '{{fields.years}}  ·  {{fields.title}}'
+            fields:
+              - { name: years, label: Dates, widget: string, hint: 'e.g. 2022 — 2024' }
+              - { name: title, label: Job title, widget: string }
+              - { name: org, label: Organisation, widget: string, required: false }
+              - name: lensKey
+                label: Bullets come from
+                widget: select
+                required: false
+                options:
+                  - { label: 'The lens — studio bullets', value: studio }
+                  - { label: 'The lens — crew bullets', value: crew }
+                  - { label: 'Neither — use the fixed note below', value: '' }
+                hint: >-
+                  Use this OR the note below, never both. This one makes the
+                  bullets change when the reader switches lens.
+              - name: note
+                label: Fixed paragraph
+                widget: text
+                required: false
+                hint: A paragraph that never changes with the lens. Leave empty if using the lens above.
+              - name: current
+                label: Draw the red marker
+                widget: boolean
+                default: false
+                hint: Only one role should have this on.
+          - name: education
+            label: Education
+            widget: object
+            fields:
+              - { name: degree, label: Degree, widget: string }
+              - { name: school, label: School, widget: string }
+              - { name: note, label: Note, widget: text, required: false }
+
+  # ---------------------------------------------------------------------------
+  - name: kit
+    label: Hands on
+    files:
+      - name: kit
+        label: Hands on
+        file: sites/work/content/kit.yaml
+        description: >-
+          Named capabilities only, no explanations. The crew map already does
+          the explaining.
+        fields:
+          - name: groups
+            label: Groups
+            widget: list
+            label_singular: Group
+            summary: '{{fields.label}}'
+            fields:
+              - { name: label, label: Group name, widget: string }
+              - { name: items, label: Items, widget: list, hint: 'One per entry. These render as small tags.' }
+
+  # ---------------------------------------------------------------------------
+  - name: site
+    label: Site details
+    files:
+      - name: site
+        label: Site details
+        file: sites/work/content/site.yaml
+        fields:
+          - { name: name, label: Name, widget: string }
+          - { name: location, label: Location, widget: string }
+          - { name: email, label: Email, widget: string }
+          - { name: linkedin, label: LinkedIn URL, widget: string }
+          - { name: linkedinLabel, label: LinkedIn label, widget: string, hint: 'Short form shown on the page, e.g. in/duranian' }
+          - name: tagline
+            label: Search description
+            widget: text
+            hint: Shown by search engines and when the link is shared. Two sentences.
+
+  # ---------------------------------------------------------------------------
+  - name: notes
+    label: Notes
+    label_singular: Note
+    folder: sites/work/content/notes
+    create: true
+    extension: md
+    format: frontmatter
+    slug: '{{slug}}'
+    summary: '{{title}}'
+    fields:
+      - { name: title, label: Title, widget: string }
+      - { name: date, label: Date, widget: datetime, date_format: 'YYYY-MM-DD', time_format: false, picker_utc: true }
+      - { name: summary, label: Summary, widget: text, hint: 'One sentence, shown in the list on the homepage.' }
+      - name: draft
+        label: Draft
+        widget: boolean
+        default: true
+        hint: >-
+          While this is on, the note gets no public page at all — not even an
+          unlinked URL. Turn it off to publish.
+      - { name: body, label: Body, widget: markdown }
