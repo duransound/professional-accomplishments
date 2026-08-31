@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@duran/theme": "*",
-    "astro": "^5.6.0"
+    "astro": "^5.6.0",
+    "yaml": "^2.6.0",
+    "zod": "^3.24.0"
   }
 }

@@ -1,0 +1,18 @@
+# ============================================================================
+# Your name, contact details, and the description search engines show.
+# ============================================================================
+
+name: Ian Duran
+location: San Francisco
+email: ian.duran.sf@gmail.com
+
+linkedin: https://www.linkedin.com/in/duranian/
+linkedinLabel: in/duranian
+
+# Deliberately no phone number. It belongs on a resume you send to a person,
+# not on a page anyone can load.
+
+# Shown to search engines and when the link is shared. Two sentences.
+tagline: >
+  Eleven years running technical execution for executive programs. Now looking
+  for work where rooms, vendors, and programs all have to hold at once.

@@ -5,3 +5,6 @@ dist/
 .env
 .env.production
 *.log
+
+# generated snapshot for double-click viewing
+preview.html

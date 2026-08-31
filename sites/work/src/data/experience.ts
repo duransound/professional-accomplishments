@@ -1,51 +1,36 @@
-/**
- * Roles are static; bullets come from the active lens (see lenses.ts).
- * `lensKey` names which lens field supplies this role's bullets.
- */
-export interface Role {
-  years: string;
-  title: string;
-  org?: string;
-  lensKey?: "studio" | "crew";
-  /** Static prose used instead of lens bullets. */
-  note?: string;
-  current?: boolean;
-}
+import { z } from "zod";
+import { loadContent, required } from "./load";
 
-export const roles: Role[] = [
-  {
-    years: "May 2024 — 2026",
-    title: "Career sabbatical",
-    current: true,
-    note: "Planned roughly a decade in advance and taken on schedule. Freelance production work, music, and time. It is finished, and I am looking forward.",
-  },
-  {
-    years: "2022 — 2024",
-    title: "Event Studio Manager, Americas & LatAm",
-    org: "Google",
-    lensKey: "studio",
-  },
-  {
-    years: "2013 — 2022",
-    title: "Event Technician → Crew Lead, Executive & Event Production",
-    org: "Google",
-    lensKey: "crew",
-  },
-  {
-    years: "2012 — 2013",
-    title: "Freelance Audio Engineer",
-    org: "Astreya Partners",
-  },
-  {
-    years: "2005 — 2012",
-    title: "Operations & Quality Control",
-    org: "Video Equipment Rentals",
-    note: "Seven years on the equipment side, before ever standing in the room it shipped to.",
-  },
-];
+const role = z
+  .object({
+    years: required("A date range"),
+    title: required("A job title"),
+    org: z.string().optional(),
+    lensKey: z
+      .enum(["studio", "crew"], {
+        errorMap: () => ({ message: 'must be either "studio" or "crew"' }),
+      })
+      .optional(),
+    note: z.string().optional(),
+    current: z.boolean().default(false),
+  })
+  .refine((r) => !(r.lensKey && r.note), {
+    message:
+      'a role can have "lensKey" or "note", but not both — pick whether its bullets change with the lens or stay fixed',
+    path: ["lensKey"],
+  });
 
-export const education = {
-  degree: "B.A.S., Sound Arts",
-  school: "Ex'pression College for Digital Arts",
-  note: "Graduated valedictorian. Elected chair of the campus Audio Engineering Society chapter.",
-};
+const schema = z.object({
+  roles: z.array(role).min(1, { message: "needs at least one role" }),
+  education: z.object({
+    degree: required("A degree"),
+    school: required("A school"),
+    note: z.string().optional(),
+  }),
+});
+
+const data = loadContent("experience.yaml", schema);
+
+export type Role = z.infer<typeof role>;
+export const roles = data.roles;
+export const education = data.education;

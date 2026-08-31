@@ -7,6 +7,12 @@ Two sites, one repo, one shared design system.
 | Professional / writing | `sites/work` | not yet chosen | building |
 | Milkshake O'neil (music) | `sites/music` | milkshakeoneil.com | stub |
 
+## Editing content
+
+All editable text lives in `sites/work/content/` as YAML and Markdown.
+**See [CONTENT.md](./CONTENT.md)** — that is the file to read if you just want
+to change words.
+
 ## Running it
 
 ```sh
@@ -21,14 +27,15 @@ npm run build        # builds both
 ```
 packages/theme/      design tokens + base styles, shared by both sites
 sites/work/
-  src/data/          all content lives here — edit these, not the markup
-    crew.ts          the crew map: 17 seats and their translations
-    lenses.ts        four framings of the same experience
-    experience.ts    roles and education
-    kit.ts           hands-on capability list
-    site.ts          name, contact, tagline
+  content/           EVERYTHING EDITABLE — see CONTENT.md
+    site.yaml        name, contact, tagline
+    lenses.yaml      four framings + all resume bullets
+    experience.yaml  roles and education
+    crew.yaml        the crew map: 17 seats and their translations
+    kit.yaml         hands-on tags
+    notes/           Markdown posts
+  src/data/          schemas that read + validate the YAML above
   src/components/    presentation only
-  src/content/notes/ Markdown posts
 sites/music/         stub
 docs/                strategy: brainstorm, domain search, crew map, build log
 ```

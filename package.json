@@ -2,12 +2,16 @@
   "name": "duran-web",
   "private": true,
   "type": "module",
-  "workspaces": ["packages/*", "sites/*"],
+  "workspaces": [
+    "packages/*",
+    "sites/*"
+  ],
   "scripts": {
     "dev": "npm run dev -w @duran/work",
     "dev:music": "npm run dev -w @duran/music",
     "build": "npm run build --workspaces --if-present",
     "build:work": "npm run build -w @duran/work",
-    "build:music": "npm run build -w @duran/music"
+    "build:music": "npm run build -w @duran/music",
+    "check": "npm run build -w @duran/work"
   }
 }
