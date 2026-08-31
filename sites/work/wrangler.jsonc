@@ -13,9 +13,9 @@
   // Plain `npx wrangler deploy` fails at the root of a workspace, because
   // wrangler cannot guess which of the two sites you meant.
   //
-  // "name" MUST match the Worker that already exists in the dashboard.
-  // If it doesn't, wrangler creates a second one instead of updating yours.
-  "name": "interactive-resume",
+  // MUST match the Worker that already exists in the dashboard. If it does
+  // not, wrangler creates a second Worker instead of updating this one.
+  "name": "professional-accomplishments",
 
   "compatibility_date": "2026-08-31",
 
