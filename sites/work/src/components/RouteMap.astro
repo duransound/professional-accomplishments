@@ -63,6 +63,14 @@ const spell = (n: number) => words[n] ?? String(n);
             role="img"
             aria-label="Transit-style diagram of a live production crew. Each department is a line, each seat a station, all terminating at On Air."
           >
+            <defs>
+              {/* 50% ben-day dot. A dot means PARTIAL — here, a seat worked
+                  alongside but never held. It is a value in crew.yaml. */}
+              <pattern id="benday" width="4" height="4" patternUnits="userSpaceOnUse">
+                <circle cx="1.2" cy="1.2" r="1.05" fill="var(--draft-mid)" />
+              </pattern>
+            </defs>
+
             {lines.map((l) => (
               <path class="rt" d={l.path} style={`stroke:${l.dept.color}`} />
             ))}
@@ -73,8 +81,7 @@ const spell = (n: number) => words[n] ?? String(n);
 
             {lines.map((l) => (
               <text
-                class="line-lbl" x={LBL_X} y={l.y} dy="0.34em"
-                text-anchor="end" style={`fill:${l.dept.color}`}
+                class="line-lbl" x={LBL_X} y={l.y} dy="0.34em" text-anchor="end"
               >{l.dept.short}</text>
             ))}
 
@@ -130,7 +137,7 @@ const spell = (n: number) => words[n] ?? String(n);
           <div data-seat-panel={s.id} hidden={s.id !== defaultSeat} class="panel">
             <div class="detail-head">
               <h3>{s.title}</h3>
-              <span class="status" data-s={s.status}>{statusLabel[s.status]}</span>
+              <span class="state" data-s={s.status}>{statusLabel[s.status]}</span>
             </div>
             <p class="detail-what">{s.what}</p>
             <dl class="xlate">
@@ -169,91 +176,106 @@ const spell = (n: number) => words[n] ?? String(n);
   .intro { color: var(--ink-mid); max-width: 62ch; }
 
   .tallyline {
-    font-size: 1.1875rem; line-height: 1.5; font-weight: 300;
+    font-size: 1.1875rem; line-height: 1.5;
     max-width: 54ch; color: var(--ink);
-    padding-left: 1.15rem; border-left: 2px solid var(--tally);
+    padding-left: 1.15rem; border-left: var(--lw-key) solid var(--tally);
   }
   .tallyline strong { font-weight: 500; box-shadow: inset 0 -0.4em 0 var(--tally-wash); }
 
   /* The drawing is the widest thing on the page, so it reclaims the label
      rail rather than being squeezed into the text column — otherwise the
-     terminus falls outside the visible area on a laptop. */
-  .diagram { margin: 0; border: 1px solid var(--draft-ink); background: var(--draft); }
+     terminus falls outside the visible area on a laptop. On a phone it
+     bleeds to the sheet border instead. */
+  .diagram {
+    position: relative; z-index: 1;
+    margin: 0 calc(-1 * var(--plate-pad));
+    border-block: var(--lw-key) solid var(--draft-ink);
+    background: var(--draft);
+  }
   @media (min-width: 48.0625rem) {
     .diagram {
+      margin: 0;
       margin-left: calc(-1 * (var(--rail) + 3rem));
       width: calc(100% + var(--rail) + 3rem);
+      border: var(--lw-key) solid var(--draft-ink);
     }
   }
   .scroller { overflow-x: auto; }
   .scroller > svg { display: block; width: 100%; min-width: 840px; height: auto; }
 
-  .rt { fill: none; stroke-width: 9; stroke-linecap: round; stroke-linejoin: round; }
+  .rt { fill: none; stroke-width: 9; stroke-linecap: butt; stroke-linejoin: miter; }
 
   .term-ring { fill: var(--draft); stroke: var(--draft-ink); stroke-width: 4; }
   .term-core { fill: var(--draft-accent); }
   .term-lbl {
     font-family: var(--f-display); font-size: 15px; font-weight: 700;
-    letter-spacing: 0.08em; fill: var(--draft-ink);
+    letter-spacing: 0.1em; fill: var(--draft-ink);
   }
+
+  /* Set in keyline black, never in the department colour: Video is amber,
+     2.17:1 on stock, and fails as text at any size. The 9 px route stroke
+     starts 20 px to the right and carries the colour instead. */
   .line-lbl {
     font-family: var(--f-display); font-size: 11px; font-weight: 700;
-    letter-spacing: 0.16em; text-transform: uppercase;
+    letter-spacing: 0.16em; text-transform: uppercase; fill: var(--draft-ink);
   }
 
   .station { cursor: pointer; }
   .hit { fill: transparent; }
-  .halo { fill: transparent; transition: fill 0.14s; }
+  .halo { fill: transparent; transition: fill 90ms linear; }
   .station:hover .halo { fill: var(--draft-wash); }
-  .station[data-selected] .halo { fill: var(--draft-wash); stroke: var(--draft-accent); stroke-width: 1.5; }
+  .station[data-selected] .halo { fill: var(--draft-wash); stroke: var(--draft-accent); stroke-width: 2; }
   .station:focus-visible { outline: none; }
-  .station:focus-visible .halo { fill: var(--draft-wash); stroke: var(--draft-accent); stroke-width: 2; }
+  .station:focus-visible .halo { fill: var(--draft-wash); stroke: var(--focus); stroke-width: 2.5; }
 
-  .st-held { fill: var(--draft); stroke: var(--draft-ink); stroke-width: 3.2; }
+  /* Object keyline weight, 2.5 px, on every station. */
+  .st-held { fill: var(--draft); stroke: var(--draft-ink); stroke-width: 2.5; }
   .st-core { fill: var(--draft-ink); }
-  .st-adj  { fill: var(--draft); stroke: var(--draft-soft); stroke-width: 2.2; stroke-dasharray: 3 2.6; }
+  .st-adj  {
+    fill: url(#benday); stroke: var(--draft-ink);
+    stroke-width: 1.5; stroke-dasharray: 3.4 2.6;
+  }
 
   /* The label is part of the target. People aim at the name, not the dot. */
   .st-lbl {
-    font-family: var(--f-mono); font-size: 10px; fill: var(--draft-ink);
-    letter-spacing: 0.03em; text-transform: uppercase;
+    font-family: var(--f-mono); font-weight: 500; font-size: 10px;
+    fill: var(--draft-ink); letter-spacing: 0.04em; text-transform: uppercase;
   }
-  .station[data-selected] .st-lbl { font-weight: 500; fill: var(--draft-accent); }
+  .station[data-selected] .st-lbl { fill: var(--draft-accent); }
 
   .legend {
     display: flex; flex-wrap: wrap; gap: 0.5rem 1.35rem; align-items: center;
-    padding: 0.8rem 1rem; border-top: 1px solid var(--draft-ink); background: var(--draft-panel);
-    font-family: var(--f-mono); font-size: 0.625rem; letter-spacing: 0.12em;
-    text-transform: uppercase; color: var(--draft-ink);
+    padding: 0.75rem 1rem; border-top: var(--lw-key) solid var(--draft-ink);
+    background: var(--draft-panel);
+    font-family: var(--f-mono); font-weight: 500; font-size: 0.625rem;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--draft-ink);
   }
   .legend > span { display: flex; align-items: center; gap: 0.4rem; }
-  .lg-bar { width: 20px; height: 6px; border-radius: 3px; }
+  .lg-bar {
+    width: 22px; height: 8px; border-radius: 0;
+    border: var(--lw-thin) solid var(--draft-ink);
+  }
   .lg-ico { flex: none; }
-  .lg-sep { width: 1px; height: 14px; background: var(--draft-rule); }
+  .lg-sep { width: var(--lw-thin); height: 14px; background: var(--draft-ink); }
 
+  /* The readout is a callout card: vellum, object keyline. */
   .detail {
-    background: var(--surface); border: 1px solid var(--rule);
+    background: var(--surface); border: var(--lw-key) solid var(--ink);
     padding: 1.35rem 1.5rem 1.5rem;
   }
   .panel { display: flex; flex-direction: column; gap: 0.9rem; }
 
-  .detail-head { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: baseline; }
+  .detail-head { display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; align-items: baseline; }
   .detail-head h3 { font-size: 1.25rem; margin-right: auto; }
-
-  .status {
-    font-family: var(--f-mono); font-size: 0.625rem; letter-spacing: 0.13em;
-    text-transform: uppercase; padding: 0.22rem 0.5rem; white-space: nowrap;
-  }
-  .status[data-s="led"]      { color: var(--tally); background: var(--tally-wash); }
-  .status[data-s="held"]     { color: var(--held);  background: var(--held-wash); }
-  .status[data-s="adjacent"] { color: var(--ink-soft); border: 1px solid var(--rule); }
 
   .detail-what { font-size: 1.0625rem; line-height: 1.5; max-width: 60ch; }
 
+  /* Two-column translation table, at dimension weight. */
   .xlate { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); gap: 0.55rem 1.25rem; margin: 0; }
   .xlate dt {
-    font-family: var(--f-mono); font-size: 0.6875rem; letter-spacing: 0.11em;
-    text-transform: uppercase; color: var(--ink-soft); padding-top: 0.18rem;
+    font-family: var(--f-mono); font-weight: 500; font-size: 0.6875rem;
+    letter-spacing: 0.13em; text-transform: uppercase; color: var(--ink-mid);
+    padding-top: 0.18rem;
   }
   .xlate dd { margin: 0; color: var(--ink-mid); font-size: 0.9375rem; line-height: 1.55; max-width: 58ch; }
   .xlate dd :global(strong) { color: var(--ink); font-weight: 500; }

@@ -31,7 +31,7 @@ const stamp = built.toISOString().slice(0, 10).replace(/-/g, "·");
       <div><span class="tb-k">Drawn by</span><span class="tb-v">I. Duran</span></div>
       <div><span class="tb-k">Location</span><span class="tb-v">{site.location}</span></div>
       <div><span class="tb-k">Issued</span><span class="tb-v">{stamp}</span></div>
-      <div><span class="tb-k">Sheet</span><span class="tb-v">1 / 1</span></div>
+      <div><span class="tb-k">Sheets</span><span class="tb-v tb-sheets"></span></div>
       <div><span class="tb-k">Seats held</span><span class="tb-v">{seatCount.worked} / {seatCount.total}</span></div>
       <div><span class="tb-k">Scale</span><span class="tb-v">NTS</span></div>
       <div><span class="tb-k">Rev</span><span class="tb-v">A</span></div>
@@ -43,10 +43,28 @@ const stamp = built.toISOString().slice(0, 10).replace(/-/g, "·");
 <style>
   .pitch { font-size: 1.125rem; max-width: 56ch; }
   .links {
-    display: flex; flex-wrap: wrap; gap: 0.7rem 2rem;
-    font-family: var(--f-mono); font-size: 0.875rem;
+    display: flex; flex-wrap: wrap; gap: 0.75rem 0.7rem;
   }
-  .links a { text-decoration: none; border-bottom: 1px solid var(--tally); padding-bottom: 1px; }
+  /* The one filled control on the sheet, and the only tally-red surface. */
+  .links a {
+    text-decoration: none;
+    font-family: var(--f-mono); font-weight: 500; font-size: 0.75rem;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    border: var(--lw-key) solid var(--ink);
+    padding: 0.5rem 0.8rem 0.46rem;
+    box-shadow: var(--lift);
+    transition: transform 90ms linear, box-shadow 90ms linear;
+  }
+  .links a:first-child { background: var(--tally); color: var(--paper); }
+  .links a:hover { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--ink); color: inherit; }
+  .links a:active { transform: translate(4px, 4px); box-shadow: 0 0 0 var(--ink); }
 
-  footer { border-top: 1px solid var(--rule); padding-block: 1.75rem 3rem; }
+  /* Counted, never typed: 00 is the cover plate, the counter lands on the
+     last section. A page with fewer sections reports fewer sheets by itself. */
+  .tb-sheets::before { content: "00 \2013 " counter(sheet, decimal-leading-zero); }
+
+  /* The titleblock is the sheet the whole page terminates at, so it sits in
+     the plate gutter like every other sheet rather than inside one. */
+  footer { border-top: 0; padding: var(--plate-gap) clamp(0.625rem, 2.4vw, 1.375rem) 0; }
+  footer > .wrap { padding: 0; }
 </style>

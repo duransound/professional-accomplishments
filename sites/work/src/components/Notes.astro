@@ -35,17 +35,19 @@ const notes = (await getCollection("notes"))
   .note {
     display: grid; grid-template-columns: minmax(0, 1fr) auto;
     gap: 0.35rem 1.5rem; align-items: baseline;
-    padding: 1.05rem 0; border-bottom: 1px solid var(--rule-soft);
-    text-decoration: none;
+    padding: 1.05rem 0; border-bottom: var(--lw-thin) solid var(--rule);
+    text-decoration: none; color: var(--ink);
   }
-  .note:first-child { border-top: 1px solid var(--rule-soft); }
+  .note:first-child { border-top: var(--lw-thin) solid var(--rule); }
+  .note:hover { color: var(--ink); }
   .note:hover h3 { color: var(--tally); }
   .note p {
-    grid-column: 1 / -1; color: var(--ink-soft);
+    grid-column: 1 / -1; color: var(--ink-mid);
     font-size: 0.9375rem; max-width: 58ch;
   }
   .date {
-    font-family: var(--f-mono); font-size: 0.6875rem; letter-spacing: 0.1em;
-    text-transform: uppercase; color: var(--ink-soft); white-space: nowrap;
+    font-family: var(--f-mono); font-weight: 500; font-size: 0.6875rem;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-mid);
+    white-space: nowrap; font-variant-numeric: tabular-nums;
   }
 </style>

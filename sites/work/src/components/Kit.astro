@@ -21,17 +21,20 @@ import { kit } from "../data/kit";
   .kit { display: flex; flex-direction: column; gap: 1.1rem; }
   .kit-row {
     display: grid; grid-template-columns: 7rem minmax(0, 1fr);
-    gap: 0.5rem 1.5rem; align-items: start;
-    padding-bottom: 1.1rem; border-bottom: 1px solid var(--rule-soft);
+    gap: 0.55rem 1.5rem; align-items: start;
+    padding-bottom: 1.1rem; border-bottom: var(--lw-thin) solid var(--rule);
   }
   .kit-row:last-child { border-bottom: 0; padding-bottom: 0; }
-  .kit-row > .label { padding-top: 0.3rem; }
+  .kit-row > .label { padding-top: 0.34rem; color: var(--ink-mid); }
 
-  .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  /* Chips are objects, so they take the object keyline. */
+  .chips { display: flex; flex-wrap: wrap; gap: 0.45rem; }
   .chips span {
-    font-family: var(--f-mono); font-size: 0.75rem;
-    color: var(--ink-mid); border: 1px solid var(--rule);
-    border-radius: 2px; padding: 0.26rem 0.52rem; white-space: nowrap;
+    font-family: var(--f-mono); font-weight: 500; font-size: 0.6875rem;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--ink); background: var(--paper);
+    border: var(--lw-med) solid var(--ink);
+    border-radius: 0; padding: 0.28rem 0.5rem 0.24rem; white-space: nowrap;
   }
 
   @media (max-width: 34rem) {

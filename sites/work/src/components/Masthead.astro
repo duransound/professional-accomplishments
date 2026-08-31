@@ -4,7 +4,7 @@ import { site } from "../data/site";
 <header class="masthead">
   <div class="wrap masthead-inner">
     <a class="wordmark" href="/">
-      <span class="tally-dot" aria-hidden="true"></span>{site.name}
+      <span class="tally-dot" aria-hidden="true"></span><span class="wordmark-name">{site.name}</span>
     </a>
     <div class="masthead-meta">
       <span class="label">{site.location}</span>
@@ -15,17 +15,45 @@ import { site } from "../data/site";
 </header>
 
 <style>
-  .masthead { border-bottom: 1px solid var(--rule); background: var(--surface); }
+  /* Sheet 00 — the cover plate. Same chassis as every other sheet, with the
+     one ben-day ground on the site: at this density the dots are stock
+     texture, not state. Anything at 25% or above encodes "partial". */
+  .masthead { padding: var(--plate-gap) clamp(0.625rem, 2.4vw, 1.375rem) 0; }
   .masthead-inner {
-    display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.6rem 1.5rem;
-    padding-block: 1.5rem 1.35rem;
+    position: relative;
+    background-color: var(--paper);
+    background-image: radial-gradient(rgba(21, 24, 30, 0.09) 0.9px, transparent 1.1px);
+    background-size: 4px 4px;
+    color: var(--ink);
+    border: var(--lw-edge) solid var(--ink);
+    box-shadow: var(--lamp);
+    padding: var(--plate-pad);
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.85rem 1.5rem;
   }
+  .masthead-inner::before {
+    content: "Sheet 00";
+    position: absolute; top: 0; right: 0;
+    background: var(--ink); color: var(--paper);
+    font-family: var(--f-mono); font-weight: 500; font-size: 0.625rem;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    padding: 0.3rem 0.55rem 0.26rem;
+  }
+
+  /* The one piece of lettering set in caps with a hard offset in tally red.
+     It is the wordmark, and it is the whole comic half in one object. */
   .wordmark {
-    font-family: var(--f-display); font-weight: 700; font-size: 1.75rem;
-    letter-spacing: -0.03em; margin-right: auto; text-decoration: none;
-    display: flex; align-items: center; gap: 0.7rem;
+    font-family: var(--f-display); font-weight: 700;
+    font-size: clamp(1.85rem, 6vw, 2.6rem);
+    text-transform: uppercase; letter-spacing: -0.015em; line-height: 1;
+    margin-right: auto; text-decoration: none;
+    display: flex; align-items: center; gap: 0.75rem;
   }
+  .wordmark-name { text-shadow: 3px 3px 0 var(--tally); }
   .wordmark:hover { color: inherit; }
+  .wordmark:hover .wordmark-name { text-shadow: 3px 3px 0 var(--ink); }
+
   .masthead-meta { display: flex; flex-wrap: wrap; gap: 0.4rem 1.25rem; align-items: center; }
-  .masthead-meta a { text-decoration: none; border-bottom: 1px solid var(--tally); }
+  .masthead-meta .label { color: var(--ink-mid); }
+  .masthead-meta a { text-decoration: none; border-bottom: var(--lw-med) solid var(--tally); }
+  .masthead-meta a:hover { color: var(--tally); }
 </style>

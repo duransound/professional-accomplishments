@@ -39,8 +39,11 @@ const { Content } = await render(note);
   .prose :global(p) { max-width: 63ch; }
   .prose :global(h2) { font-size: 1.375rem; margin-top: 1.1rem; }
   .prose :global(blockquote) {
-    margin: 0; padding-left: 1.15rem; border-left: 2px solid var(--tally); color: var(--ink-mid);
+    margin: 0; padding-left: 1.15rem; border-left: var(--lw-key) solid var(--tally); color: var(--ink-mid);
   }
   .prose :global(code) { font-family: var(--f-mono); font-size: 0.875em; }
-  .prose :global(pre) { overflow-x: auto; padding: 1rem; background: var(--sunk); border-radius: 3px; }
+  .prose :global(pre) {
+    overflow-x: auto; padding: 1rem; background: var(--sunk);
+    border: var(--lw-med) solid var(--ink); border-radius: 0;
+  }
 </style>
