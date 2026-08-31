@@ -53,11 +53,11 @@
   --lw-key:  2.5px;   /* 0.70 mm  object outline — cards, chips, buttons   */
   --lw-edge: 4px;     /* 1.00 mm  sheet border. Nothing else, ever.        */
 
-  /* --- SHADOW. Exactly two, and they do different jobs. -----------------
-     --lift is hard, no blur, only on things you can press.
-     --lamp is the light-table glow under a plate, and only exists in dark. */
+  /* --- SHADOW. Exactly one, and it has no blur. -------------------------
+     Only on things you can press: hover moves 2px and halves it, active
+     moves 4px and collapses it. There is no soft shadow anywhere in this
+     system — a plate sits flat on the desk, held by its border. */
   --lift: 4px 4px 0 var(--ink);
-  --lamp: none;
 
   --gutter: clamp(1.25rem, 4.5vw, 3.25rem);
   --rail: 8.5rem;
@@ -65,7 +65,7 @@
   --plate-pad: clamp(1.15rem, 3.2vw, 2.5rem);
   --plate-gap: 0.75rem;
 
-  /* --- PAGE. Flips. The desk, the margins, off-plate copy. --------------- */
+  /* --- PAGE. The desk the plates lie on, the margins, off-plate copy. --- */
   --page:      #E4E2DB;
   --page-ink:  #15181E;
   --page-dim:  #5A616C;
@@ -74,28 +74,22 @@
   color-scheme: light;
 }
 
-/* Dark redefines PAGE TOKENS ONLY. The ink set above is untouched, because a
-   schematic printed on dark paper is not a thing and the route colours only
-   read correctly on light ground. At night the sheets sit lit on a dark desk
-   — a light table. Do not "fix" this by inverting the plate. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --page:      #0E1116;
-    --page-ink:  #E8E6E0;
-    --page-dim:  #8B93A0;
-    --grid-line: rgba(232, 230, 224, 0.055);
-    --lamp: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 18px 46px -18px rgba(0, 0, 0, 0.9);
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --page:      #0E1116;
-  --page-ink:  #E8E6E0;
-  --page-dim:  #8B93A0;
-  --grid-line: rgba(232, 230, 224, 0.055);
-  --lamp: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 18px 46px -18px rgba(0, 0, 0, 0.9);
-  color-scheme: dark;
-}
+/* THIS SITE IS LIGHT ONLY, AND THAT IS THE DESIGN.
+
+   `color-scheme: light` above is load-bearing: it keeps scrollbars, form
+   controls and the browser's own chrome light for a viewer whose OS is dark.
+   Without it they get dark widgets on warm paper.
+
+   Why there is no dark theme. A schematic printed on dark paper is not a
+   thing — the four route colours only read correctly on light ground, which
+   is why the plate was never allowed to invert even when a dark mode existed.
+   What dark was left to change was the desk behind the sheets, and a dark desk
+   under bright sheets is glare, not atmosphere. One theme also deletes a whole
+   class of bug: there is no longer any state in which a colour is defined for
+   the wrong ground.
+
+   Do not add a `prefers-color-scheme` block here. If a dark treatment is ever
+   wanted it is a redesign of the ink set, not a token override. */
 
 /* --------------------------------------------------------------------------
    The drafting plate used to be the diagram only. Under the Plate System the
@@ -187,7 +181,6 @@ main { counter-reset: sheet; }
   background: var(--paper);
   color: var(--ink);
   border: var(--lw-edge) solid var(--ink);
-  box-shadow: var(--lamp);
   padding: var(--plate-pad);
 }
 
@@ -402,7 +395,6 @@ main { counter-reset: sheet; }
   border: var(--lw-edge) solid var(--ink);
   background: var(--paper);
   color: var(--ink);
-  box-shadow: var(--lamp);
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   font-family: var(--f-mono);

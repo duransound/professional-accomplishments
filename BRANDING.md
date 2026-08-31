@@ -43,7 +43,7 @@ INK — theme-independent. Everything that sits on a plate.
   --lift --lamp                   the only two shadows
   --gutter --rail --max --plate-pad --plate-gap
 
-PAGE — flips with the theme. The desk the plates lie on, and nothing else.
+PAGE — the desk the plates lie on, the margins, off-plate copy.
   --page --page-ink --page-dim --grid-line
 ```
 
@@ -54,12 +54,15 @@ set**. The rule they encode is unchanged: anything inside `.diagram` uses
 
 ## Five rules that will bite otherwise
 
-**1. Dark mode redefines PAGE TOKENS ONLY.** The ink set never changes. A
-schematic printed on dark paper is not a thing, and the route colours only read
-correctly on light ground — so at night the sheets sit lit on a dark desk, like
-a light table. Do not "fix" this by inverting the plate. Define every page
-colour on bare `:root` first: the viewer's theme has three states, and the
-default "system" setting stamps no attribute at all.
+**1. The site is light only, and that is the design.** There is no
+`prefers-color-scheme` block and no `data-theme` handling — do not add one. A
+schematic printed on dark paper is not a thing; the four route colours only
+read correctly on light ground, which is why the plate was never allowed to
+invert even when a dark mode existed. All dark was left to change was the desk
+behind the sheets, and a dark desk under bright sheets is glare, not
+atmosphere. `color-scheme: light` on `:root` is load-bearing — it keeps
+scrollbars and form controls light for a viewer whose OS is dark. A dark
+treatment would be a redesign of the ink set, not a token override.
 
 **2. `.wrap` and `.section-grid` are the same element.** The markup is
 `<div class="wrap section-grid">`. `::before` on that element is the sheet
@@ -81,13 +84,15 @@ defeats it. Both interactive sections toggle state with `hidden`.
 included. The single exception is `.tally-dot`, which is round because it is a
 light and not a box.
 
-## Two shadows, and they do different jobs
+## One shadow, and it has no blur
 
-- `--lift` — `4px 4px 0 var(--ink)`, hard, no blur. Only on things you can
-  press. Hover moves 2 px and halves it; active moves 4 px and collapses it.
-- `--lamp` — the light-table glow under a plate. `none` in light, a soft drop
-  in dark. This is the only blurred shadow in the system and it exists solely
-  to lift a lit sheet off a dark desk.
+`--lift` — `4px 4px 0 var(--ink)`, hard. Only on things you can press: hover
+moves 2 px and halves it, active moves 4 px and collapses it.
+
+That is the whole list. A plate sits flat on the desk, held by its border, not
+by a shadow. `--lamp` used to exist as a soft glow lifting a lit sheet off a
+dark desk; dropping dark mode removed the only reason for a blurred shadow to
+be in the system, which puts it back to the one shadow it always wanted.
 
 ## The three instruments
 
@@ -150,10 +155,11 @@ shouted. A fourth face is a bug.
 npm run dev
 ```
 
-Then look at it in **both** themes — macOS System Settings → Appearance, or
-your browser's dev tools. Most theming bugs are invisible in the theme you
-happened to be designing in.
+There is one theme, so there is no second state to check. Do switch macOS to
+dark once after any change to the token block, though — not to see a dark
+design, but to confirm the page still renders light and the scrollbars and form
+controls come with it. That is what `color-scheme: light` is guarding.
 
-The previous "as-built" direction is kept at
-`sites/work/src/styles/brand.css.as-built.bak` if you ever want to diff against
-it. Delete it once you are sure.
+`sites/work/src/styles/brand.css.as-built.bak` is the original "as-built"
+direction, two revisions stale now. Nothing imports it. Delete it whenever:
+`rm sites/work/src/styles/brand.css.as-built.bak`
