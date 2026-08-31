@@ -1,34 +1,102 @@
 ---
+/**
+ * Sheet 00 — the cover plate, drawn as a lower third.
+ *
+ * A lower third is a name and a role, keyed over picture, hard-edged, and it
+ * does not move. That was already this component's job; this gives it the
+ * graphic it has always been. The one motion is the take: a five-step wipe,
+ * once, on load. Never tied to scroll.
+ *
+ * The vocabulary switch lives here because the role line is the clearest
+ * demonstration of what it does — a lower third is the one graphic whose whole
+ * job is telling you who someone is.
+ */
 import { site } from "../data/site";
 ---
 <header class="masthead">
   <div class="wrap masthead-inner">
-    <a class="wordmark" href="/">
-      <span class="tally-dot" aria-hidden="true"></span><span class="wordmark-name">{site.name}</span>
+
+    <a class="l3" href="/" aria-label={`${site.name} — home`}>
+      <span class="l3-bar">
+        <span class="l3-flag" aria-hidden="true"></span>
+        <span class="l3-name">{site.name}</span>
+      </span>
+      <span class="l3-role">
+        <span class="v-prod">{site.roleProduction}</span>
+        <span class="v-tech">{site.roleTechnology}</span>
+      </span>
     </a>
-    <div class="masthead-meta">
-      <span class="label">{site.location}</span>
-      <a class="label" href={`mailto:${site.email}`}>{site.email}</a>
-      <a class="label" href={site.linkedin}>{site.linkedinLabel}</a>
+
+    <div class="masthead-side">
+      <div class="vocab">
+        <span class="label" id="vocab-label">Read the room as</span>
+        <button
+          class="switch"
+          id="vocab"
+          type="button"
+          data-pos="prod"
+          aria-labelledby="vocab-label"
+          aria-pressed="false"
+        >
+          <span class="switch-throw" aria-hidden="true"></span>
+          <span class="switch-lbl" data-v="prod">Production</span>
+          <span class="switch-lbl" data-v="tech">Technology</span>
+        </button>
+      </div>
+      <div class="masthead-meta">
+        <span class="label">{site.location}</span>
+        <a class="label" href={`mailto:${site.email}`}>{site.email}</a>
+        <a class="label" href={site.linkedin}>{site.linkedinLabel}</a>
+      </div>
     </div>
+
   </div>
 </header>
 
+<script>
+  // One attribute on <html> drives every translated label on the page. The
+  // markup for both vocabularies is already server-rendered, so this only ever
+  // flips a flag — nothing here rewrites text.
+  const sw = document.getElementById("vocab");
+  const root = document.documentElement;
+
+  sw?.addEventListener("click", () => {
+    const tech = root.dataset.vocab === "tech";
+    root.dataset.vocab = tech ? "prod" : "tech";
+    sw.dataset.pos = tech ? "prod" : "tech";
+    sw.setAttribute("aria-pressed", tech ? "false" : "true");
+
+    // Misregistration: the plate shifts, the ink lands twice, then it snaps
+    // clean. 150ms, and the only expressive use of colour in the system.
+    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      root.classList.remove("misreg");
+      void root.offsetWidth;
+      root.classList.add("misreg");
+    }
+  });
+
+  // The take. Once, on load, and only if the viewer wants motion.
+  const l3 = document.querySelector(".l3");
+  if (l3 && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    l3.classList.add("l3-take");
+  }
+</script>
+
 <style>
-  /* Sheet 00 — the cover plate. Same chassis as every other sheet, with the
-     one ben-day ground on the site: at this density the dots are stock
-     texture, not state. Anything at 25% or above encodes "partial". */
   .masthead { padding: var(--plate-gap) clamp(0.625rem, 2.4vw, 1.375rem) 0; }
   .masthead-inner {
     position: relative;
     background-color: var(--paper);
+    /* Below 10% a halftone is stock texture, not state. This is the one
+       ground in the system allowed to carry it. */
     background-image: radial-gradient(rgba(21, 24, 30, 0.09) 0.9px, transparent 1.1px);
     background-size: 4px 4px;
     color: var(--ink);
     border: var(--lw-edge) solid var(--ink);
     box-shadow: var(--lamp);
     padding: var(--plate-pad);
-    display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.85rem 1.5rem;
+    display: flex; flex-wrap: wrap; align-items: flex-end;
+    gap: 1.5rem 2rem;
   }
   .masthead-inner::before {
     content: "Sheet 00";
@@ -39,21 +107,86 @@ import { site } from "../data/site";
     padding: 0.3rem 0.55rem 0.26rem;
   }
 
-  /* The one piece of lettering set in caps with a hard offset in tally red.
-     It is the wordmark, and it is the whole comic half in one object. */
-  .wordmark {
-    font-family: var(--f-display); font-weight: 700;
-    font-size: clamp(1.85rem, 6vw, 2.6rem);
-    text-transform: uppercase; letter-spacing: -0.015em; line-height: 1;
-    margin-right: auto; text-decoration: none;
-    display: flex; align-items: center; gap: 0.75rem;
+  /* ---- the lower third ---- */
+  .l3 { text-decoration: none; margin-right: auto; display: block; }
+  .l3:hover { color: inherit; }
+  .l3-bar { display: flex; align-items: stretch; }
+  .l3-flag {
+    width: 15px; flex: none; background: var(--tally);
+    border: var(--lw-key) solid var(--ink); border-right: 0;
   }
-  .wordmark-name { text-shadow: 3px 3px 0 var(--tally); }
-  .wordmark:hover { color: inherit; }
-  .wordmark:hover .wordmark-name { text-shadow: 3px 3px 0 var(--ink); }
+  .l3-name {
+    background: var(--ink); color: var(--paper);
+    border: var(--lw-key) solid var(--ink);
+    font-family: var(--f-display); font-weight: 700;
+    text-transform: uppercase; letter-spacing: -0.012em; line-height: 1.12;
+    font-size: clamp(1.5rem, 5vw, 2.35rem);
+    padding: 0.3rem 0.85rem 0.26rem;
+  }
+  .l3-role {
+    display: inline-block; margin-left: 15px;
+    background: var(--tally); color: var(--paper);
+    border: var(--lw-key) solid var(--ink); border-top: 0;
+    font-family: var(--f-mono); font-weight: 500; font-size: 0.6875rem;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    padding: 0.32rem 0.85rem 0.28rem;
+  }
 
-  .masthead-meta { display: flex; flex-wrap: wrap; gap: 0.4rem 1.25rem; align-items: center; }
+  /* The take: a hard wipe in five steps, name first, role just behind. This
+     is how a graphic is keyed in. One shot — it never repeats, and it is
+     never attached to scroll. */
+  .l3-take .l3-bar  { animation: l3-key 200ms steps(5, end) 1; }
+  .l3-take .l3-role { animation: l3-key 200ms steps(5, end) 90ms 1 backwards; }
+  @keyframes l3-key {
+    from { clip-path: inset(0 100% 0 0); }
+    to   { clip-path: inset(0 0 0 0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .l3-take .l3-bar, .l3-take .l3-role { animation: none; }
+  }
+
+  /* ---- the throw switch ---- */
+  .masthead-side { display: flex; flex-direction: column; align-items: flex-end; gap: 0.9rem; }
+  .vocab { display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem; }
+  .vocab > .label { color: var(--ink-mid); }
+
+  .switch {
+    display: inline-grid; grid-template-columns: auto auto; align-items: stretch;
+    position: relative; overflow: hidden; padding: 0; cursor: pointer;
+    border: var(--lw-key) solid var(--ink); background: var(--paper);
+    box-shadow: var(--lift);
+    font-family: var(--f-mono); font-weight: 500; font-size: 0.6875rem;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink);
+  }
+  /* Two traps in this component, both from .switch-throw being a <span>:
+     1. A bare `.switch span` rule clobbers its absolute positioning and drops
+        it into the grid as a third cell.
+     2. :nth-of-type() counts spans, not classes — so the throw is span 1 and
+        the labels are 2 and 3. Match the labels by data-v, not by position. */
+  .switch-lbl {
+    padding: 0.5rem 0.8rem 0.46rem; position: relative; z-index: 2;
+    transition: color 120ms steps(2, end);
+  }
+  .switch-lbl + .switch-lbl { border-left: var(--lw-key) solid var(--ink); }
+  .switch-throw {
+    position: absolute; inset: 0 auto 0 0; width: 50%; z-index: 1;
+    background: var(--tally);
+    transition: transform 140ms steps(3, end);
+  }
+  .switch[data-pos="tech"] .switch-throw { transform: translateX(100%); }
+  .switch[data-pos="prod"] .switch-lbl[data-v="prod"],
+  .switch[data-pos="tech"] .switch-lbl[data-v="tech"] { color: var(--paper); }
+  .switch:hover { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--ink); }
+  .switch:active { transform: translate(4px, 4px); box-shadow: 0 0 0 var(--ink); }
+
+  .masthead-meta { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 0.4rem 1.25rem; align-items: center; }
   .masthead-meta .label { color: var(--ink-mid); }
   .masthead-meta a { text-decoration: none; border-bottom: var(--lw-med) solid var(--tally); }
   .masthead-meta a:hover { color: var(--tally); }
+
+  @media (max-width: 40rem) {
+    .masthead-side { align-items: flex-start; width: 100%; }
+    .vocab { align-items: flex-start; }
+    .masthead-meta { justify-content: flex-start; }
+  }
 </style>

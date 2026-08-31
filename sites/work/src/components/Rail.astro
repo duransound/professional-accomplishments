@@ -1,0 +1,71 @@
+---
+/**
+ * The tally rail — sheet index across the top, one lamp lit.
+ *
+ * A section-highlighting nav is structurally a row of lamps with exactly one
+ * on, which is what a tally rail is. So it is built as the thing it resembles
+ * rather than styled to look like it. Snap transitions, steps(1), no fade: a
+ * tally light does not glow up.
+ *
+ * The lamps are read out of the DOM rather than listed here, so the rail can
+ * never disagree with the sheets or their numbering. That costs the rail on a
+ * no-JS load, which is acceptable — it is a shortcut, not a route. Every
+ * section is still reachable by scrolling.
+ */
+---
+<nav class="rail" id="rail" aria-label="Sheet index" hidden>
+  <span class="rail-brand"><span class="tally-dot" aria-hidden="true"></span>Ian Duran</span>
+  <div class="rail-lamps" id="rail-lamps"></div>
+  <span class="rail-state"><i aria-hidden="true"></i><span id="rail-state">Sheet 00</span></span>
+</nav>
+
+<script>
+  const rail = document.getElementById("rail");
+  const box = document.getElementById("rail-lamps");
+  const state = document.getElementById("rail-state");
+  const sections = Array.from(document.querySelectorAll<HTMLElement>("main .section"));
+
+  if (rail && box && state && sections.length) {
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // Names come from each sheet's own callout tag, so renaming a section
+    // renames its lamp. Numbering matches the CSS counter by construction.
+    const lamps = sections.map((section, i) => {
+      const name = section.querySelector(".label")?.textContent?.trim() ?? `Sheet ${i + 1}`;
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "lamp";
+      b.innerHTML = '<i aria-hidden="true"></i>';
+      b.append(name);
+      b.setAttribute("aria-current", "false");
+      b.addEventListener("click", () => {
+        section.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+      });
+      box.appendChild(b);
+      return b;
+    });
+
+    rail.hidden = false;
+
+    const ratios = new Map<Element, number>();
+    const light = (i: number) => {
+      lamps.forEach((l, j) => l.setAttribute("aria-current", j === i ? "true" : "false"));
+      state.textContent = "Sheet " + String(i + 1).padStart(2, "0");
+    };
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => ratios.set(e.target, e.intersectionRatio));
+        let best = -1;
+        let bestRatio = 0;
+        sections.forEach((s, i) => {
+          const r = ratios.get(s) ?? 0;
+          if (r > bestRatio) { bestRatio = r; best = i; }
+        });
+        if (best >= 0) light(best);
+      },
+      { threshold: [0, 0.15, 0.35, 0.6, 0.9], rootMargin: "-52px 0px -40% 0px" }
+    );
+    sections.forEach((s) => io.observe(s));
+  }
+</script>

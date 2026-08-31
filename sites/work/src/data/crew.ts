@@ -25,6 +25,12 @@ const seat = z.object({
   }),
   what: required("A one-line description"),
   room: required('An "in the room" description'),
+  // Shown in place of `short` when the vocabulary switch is thrown, so it is
+  // held to the same length limit — a long title collides at 40 degrees.
+  "reads-title": required("A technology-org job title").max(24, {
+    message:
+      "is too long for the diagram — keep it under about 20 characters or labels collide",
+  }),
 });
 
 const dept = z.object({

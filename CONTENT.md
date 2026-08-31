@@ -7,7 +7,7 @@ sites/work/content/
 ├── site.yaml         your name, contact details, search description
 ├── lenses.yaml       the four framings + all the resume bullets
 ├── experience.yaml   jobs and education
-├── crew.yaml         the crew map — every seat and its translation
+├── crew.yaml         the crew map — every seat and its tech-title translation
 ├── kit.yaml          the "Hands on" tags
 └── notes/            blog posts, one Markdown file each
 ```
@@ -66,10 +66,16 @@ indentation. Give it either a `note:` (fixed paragraph) or a `lensKey:`
 **Fix a crew seat's description** — `crew.yaml`. Find the seat, edit `what`
 or `room`.
 
+**Change what a seat is called in tech terms** — `crew.yaml`, the
+`reads-title` field. Just the job title, no sentence. It is what the
+**vocabulary switch** in the masthead shows in place of `short`, so keep it
+under about 20 characters too or the labels collide.
+
 **Add a crew seat** — copy a whole seat block into the right department. It
-needs `id`, `title`, `short`, `status`, `what`, `room`. Keep `short`
-under about 20 characters or labels collide on the diagram. The station appears
-automatically and the "worked N of M" sentence recounts itself.
+needs `id`, `title`, `short`, `reads-title`, `status`, `what`, `room`. Keep
+both `short` and `reads-title` under about 20 characters or labels collide on
+the diagram. The station appears automatically and the "worked N of M"
+sentence recounts itself.
 
 **Write a note** — add a file to `content/notes/`:
 

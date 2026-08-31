@@ -176,6 +176,9 @@ main { counter-reset: sheet; }
 .section {
   border-top: 0;
   counter-increment: sheet;
+  /* The rail is sticky, so a sheet jumped to from a lamp must stop below it
+     rather than under it. */
+  scroll-margin-top: 3rem;
   padding: var(--plate-gap) clamp(0.625rem, 2.4vw, 1.375rem);
 }
 
@@ -307,6 +310,90 @@ main { counter-reset: sheet; }
   background-image: radial-gradient(var(--ink-mid) 1px, transparent 1.2px);
   background-size: 4px 4px;
 }
+
+/* ==========================================================================
+   THE VOCABULARY SWITCH
+   Both title sets are server-rendered; one attribute on <html> decides which
+   is shown. No JavaScript rewrites text, and with JS off the production
+   vocabulary is the one that renders.
+   ========================================================================== */
+
+:root[data-vocab="tech"] .v-prod { display: none; }
+:root:not([data-vocab="tech"]) .v-tech { display: none; }
+
+/* Misregistration — the plate shifted and the ink landed twice, then it snaps
+   clean. One shot, 150 ms, fired on the throw. This is the only place in the
+   system where colour is purely expressive; everywhere else the red means
+   live and nothing else. */
+.misreg .st-lbl,
+.misreg .detail-head h3,
+.misreg .l3-role { animation: misreg 150ms steps(2, end) 1; }
+@keyframes misreg {
+  0%   { text-shadow: 2px 0 var(--tally), -2px 0 var(--focus); }
+  60%  { text-shadow: 1px 0 var(--tally), -1px 0 var(--focus); }
+  100% { text-shadow: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .misreg .st-lbl, .misreg .detail-head h3, .misreg .l3-role { animation: none; }
+}
+
+/* ==========================================================================
+   THE TALLY RAIL
+   One lamp lit, snapped. A tally light does not glow up, so nothing here
+   fades — every transition is steps(1).
+   ========================================================================== */
+
+.rail {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: stretch;
+  background: var(--ink); color: var(--paper);
+  border: var(--lw-edge) solid var(--ink);
+  overflow-x: auto; scrollbar-width: none;
+}
+.rail::-webkit-scrollbar { display: none; }
+
+.rail-brand {
+  display: flex; align-items: center; gap: 0.55rem;
+  padding: 0.5rem 0.8rem; white-space: nowrap;
+  border-right: var(--lw-thin) solid var(--paper);
+  font-family: var(--f-display); font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.02em; font-size: 0.75rem;
+}
+.rail-lamps { display: flex; align-items: stretch; }
+
+.lamp {
+  display: flex; align-items: center; gap: 0.45rem;
+  padding: 0.5rem 0.75rem; white-space: nowrap; cursor: pointer;
+  background: transparent; border: 0;
+  border-right: var(--lw-thin) solid rgba(242, 241, 237, 0.28);
+  color: rgba(242, 241, 237, 0.62);
+  font-family: var(--f-mono); font-weight: 500; font-size: 0.625rem;
+  letter-spacing: 0.11em; text-transform: uppercase;
+  transition: color 90ms steps(1, end), background 90ms steps(1, end);
+}
+.lamp i {
+  width: 7px; height: 7px; border-radius: 50%; flex: none;
+  background: rgba(242, 241, 237, 0.28);
+  transition: background 90ms steps(1, end), box-shadow 90ms steps(1, end);
+}
+.lamp:hover { color: var(--paper); }
+.lamp[aria-current="true"] { color: var(--paper); background: rgba(194, 55, 42, 0.22); }
+.lamp[aria-current="true"] i { background: var(--tally); box-shadow: 0 0 0 3px rgba(194, 55, 42, 0.35); }
+
+.rail-state {
+  margin-left: auto; position: sticky; right: 0; flex: none;
+  display: flex; align-items: center; gap: 0.45rem;
+  padding: 0.5rem 0.8rem; white-space: nowrap;
+  background: var(--ink);
+  border-left: var(--lw-thin) solid var(--paper);
+  font-family: var(--f-mono); font-weight: 500; font-size: 0.625rem;
+  letter-spacing: 0.13em; text-transform: uppercase;
+}
+.rail-state i { width: 8px; height: 8px; border-radius: 50%; background: var(--tally); flex: none; }
+
+/* The rail is the page's top edge, so the first plate should not float
+   away from it. */
+.rail + .masthead { padding-top: var(--plate-gap); }
 
 /* ==========================================================================
    TITLEBLOCK — real drafting convention, at sheet-border weight.

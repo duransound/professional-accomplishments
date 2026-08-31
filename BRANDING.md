@@ -89,6 +89,30 @@ light and not a box.
   in dark. This is the only blurred shadow in the system and it exists solely
   to lift a lit sheet off a dark desk.
 
+## The three instruments
+
+The Plate System bans the usual ways of making a page pop, so the ones that
+shipped are mechanisms, not effects.
+
+- **The vocabulary switch** (`Masthead.astro`). One control retitles the crew
+  map and the role line between production and technology vocabulary. Both
+  title sets are **server-rendered**; the switch only sets `data-vocab` on
+  `<html>` and CSS shows one. Nothing rewrites text, and with JS off the
+  production vocabulary renders. Data is `reads-title` in `crew.yaml`.
+- **The tally rail** (`Rail.astro`). Sticky sheet index, one lamp lit. Lamps
+  are read out of the DOM — names from each sheet's callout tag — so the rail
+  can never disagree with the sheets or their numbering. No rail without JS,
+  which is fine: it is a shortcut, not a route.
+- **The lower third** (`Masthead.astro`). Name and role, hard-edged, static.
+  The one motion is the take: a five-step wipe, once, on load, never on scroll.
+
+Two traps in the switch, both because `.switch-throw` is a `<span>`. A bare
+`.switch span` rule clobbers its `position: absolute` and drops it into the
+grid as a third cell; and `:nth-of-type()` counts spans, not classes, so the
+throw is span 1 and the labels are 2 and 3. **Match the labels by `data-v`,
+never by position.** This is the same family as the `.wrap` / `.section-grid`
+collision in rule 2 — positional selectors in this codebase are a trap.
+
 ## Motion
 
 90–120 ms, linear. Nothing eases, nothing springs, nothing fades in on scroll.
@@ -101,6 +125,7 @@ snaps on, it does not glow up.
   section renumbers the page by itself.
 - **`SHEETS 00 – nn`** in the titleblock reads the same counter.
 - **`SEATS HELD 14 / 17`** is computed from `crew.yaml`.
+- **The rail's lamps** are read from the sheets themselves at run time.
 
 None of these three may be hand-edited. An overclaim in the seat count is the
 kind an interview question exposes.

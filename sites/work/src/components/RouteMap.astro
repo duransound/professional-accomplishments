@@ -48,6 +48,7 @@ const spell = (n: number) => words[n] ?? String(n);
         Production job titles don't travel. Outside this industry almost nobody knows what an A1
         does, which makes eleven years of experience hard to read. So here is the room drawn as
         what it actually is — a signal chain, every seat feeding the same terminus.
+        Throw the switch in the masthead and every station retitles itself.
       </p>
 
       <p class="tallyline">
@@ -93,7 +94,7 @@ const spell = (n: number) => words[n] ?? String(n);
                   data-selected={seat.id === defaultSeat ? "" : null}
                   role="button"
                   tabindex="0"
-                  aria-label={`${seat.title} — ${statusLabel[seat.status]}`}
+                  aria-label={`${seat.title} — ${statusLabel[seat.status]}. Reads as ${seat["reads-title"]}.`}
                 >
                   <circle class="hit" cx={x} cy={y} r="18" />
                   <circle class="halo" cx={x} cy={y} r="14" />
@@ -105,8 +106,14 @@ const spell = (n: number) => words[n] ?? String(n);
                       <circle class="st-core" cx={x} cy={y} r="3.2" />
                     </>
                   )}
-                  <text class="st-lbl" x={x} y={y - 14} transform={`rotate(-40 ${x} ${y - 14})`}>
+                  {/* Both vocabularies are rendered; CSS shows one. That keeps
+                      the production labels correct with JavaScript off, and
+                      means the switch never has to rewrite the drawing. */}
+                  <text class="st-lbl v-prod" x={x} y={y - 14} transform={`rotate(-40 ${x} ${y - 14})`}>
                     {seat.short}
+                  </text>
+                  <text class="st-lbl v-tech" x={x} y={y - 14} transform={`rotate(-40 ${x} ${y - 14})`}>
+                    {seat["reads-title"]}
                   </text>
                 </g>
               ))
@@ -136,7 +143,7 @@ const spell = (n: number) => words[n] ?? String(n);
         {allSeats.map((s) => (
           <div data-seat-panel={s.id} hidden={s.id !== defaultSeat} class="panel">
             <div class="detail-head">
-              <h3>{s.title}</h3>
+              <h3><span class="v-prod">{s.title}</span><span class="v-tech">{s["reads-title"]}</span></h3>
               <span class="state" data-s={s.status}>{statusLabel[s.status]}</span>
             </div>
             <p class="detail-what">{s.what}</p>

@@ -18,6 +18,10 @@
 #          or labels collide with their neighbours
 #   what   one sentence: what this seat owns
 #   room   what the work actually looks like during a show
+#   reads-title
+#          the closest job title in a technology company. Just the title —
+#          no sentence. It is what the vocabulary switch shows in place of
+#          `short` on the diagram, so it lives under the same length limit.
 #
 # NOTE: colours start with # so they MUST stay in quotes. Everything else can
 # be written plainly.
@@ -33,6 +37,7 @@ departments:
       - id: resm
         title: Regional Event Studio Manager
         short: Regional Studio Mgr
+        reads-title: Workplace tech manager
         status: led
         what: >
           Owns a portfolio of rooms across a region — the budget, the standard,
@@ -46,6 +51,7 @@ departments:
       - id: pm
         title: Program Management
         short: Program Mgmt
+        reads-title: Program manager
         status: led
         what: >
           Owns the portfolio of programs rather than any single show.
@@ -57,6 +63,7 @@ departments:
       - id: tp
         title: Technical Producer
         short: Technical Producer
+        reads-title: Technical PM
         status: held
         what: >
           Owns the technical plan for a show, its budget, and the people who
@@ -69,6 +76,7 @@ departments:
       - id: prod
         title: Producer
         short: Producer
+        reads-title: Product owner
         status: adjacent
         what: >
           Owns the outcome. Decides what the show is and whether it worked.
@@ -79,6 +87,7 @@ departments:
       - id: sm
         title: Stage Manager / Show Caller
         short: Show Caller
+        reads-title: Incident commander
         status: held
         what: >
           Owns time and sequence once the show is running.
@@ -94,6 +103,7 @@ departments:
       - id: a1
         title: A1 — Audio Lead
         short: A1 Audio Lead
+        reads-title: Principal engineer
         status: held
         what: >
           Owns everything anyone hears.
@@ -104,6 +114,7 @@ departments:
       - id: a2
         title: A2 — Audio Assistant
         short: A2 Audio Asst
+        reads-title: Site reliability eng
         status: held
         what: >
           The A1's hands in the room.
@@ -114,6 +125,7 @@ departments:
       - id: rf
         title: RF & Comms Coordinator
         short: RF & Comms
+        reads-title: Network engineer
         status: held
         what: >
           Owns the spectrum and the intercom.
@@ -128,6 +140,7 @@ departments:
       - id: td
         title: Technical Director
         short: Technical Director
+        reads-title: Release engineer
         status: held
         what: >
           Executes the show live on the switcher.
@@ -138,6 +151,7 @@ departments:
       - id: v1
         title: Video Engineer (V1)
         short: Video Eng V1
+        reads-title: Platform engineer
         status: held
         what: >
           Owns signal integrity.
@@ -148,6 +162,7 @@ departments:
       - id: cam
         title: Camera Operator
         short: Camera Op
+        reads-title: Individual contributor
         status: held
         what: >
           Owns the frame.
@@ -158,6 +173,7 @@ departments:
       - id: gfx
         title: Graphics Operator
         short: Graphics Op
+        reads-title: Design operations
         status: held
         what: >
           Owns everything on screen that isn't a camera.
@@ -168,6 +184,7 @@ departments:
       - id: pb
         title: Playback Operator
         short: Playback Op
+        reads-title: Content operations
         status: held
         what: >
           Rolls recorded content on cue.
@@ -182,6 +199,7 @@ departments:
       - id: bcast
         title: Broadcast / Streaming Engineer
         short: Broadcast Eng
+        reads-title: Infrastructure / SRE
         status: held
         what: >
           Owns delivery to everyone who isn't in the room.
@@ -192,6 +210,7 @@ departments:
       - id: ops
         title: Studio Operations
         short: Studio Ops
+        reads-title: Workplace IT ops
         status: led
         what: >
           Owns readiness between shows.
@@ -202,6 +221,7 @@ departments:
       - id: sd
         title: Systems Designer
         short: Systems Designer
+        reads-title: Solutions architect
         status: adjacent
         what: >
           Designs the room before there is a room.
@@ -212,6 +232,7 @@ departments:
       - id: ld
         title: Lighting Director
         short: Lighting Dir
+        reads-title: Specialist domain lead
         status: adjacent
         what: >
           Owns what the camera sees.

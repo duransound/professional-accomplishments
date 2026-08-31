@@ -6,6 +6,12 @@ name: Ian Duran
 location: San Francisco
 email: ian.duran.sf@gmail.com
 
+# The role line under your name in the masthead — a broadcast lower third.
+# The vocabulary switch flips between these two. Keep both short: they sit on
+# one line and they are the clearest thing on the page.
+roleProduction: Event Studio Manager · Americas & LatAm
+roleTechnology: Technical program & workplace technology
+
 linkedin: https://www.linkedin.com/in/duranian/
 linkedinLabel: in/duranian
 

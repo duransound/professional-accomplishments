@@ -1,6 +1,7 @@
 ---
 import Base from "../layouts/Base.astro";
 import Masthead from "../components/Masthead.astro";
+import Rail from "../components/Rail.astro";
 import Resume from "../components/Resume.astro";
 import RouteMap from "../components/RouteMap.astro";
 import Kit from "../components/Kit.astro";
@@ -23,6 +24,7 @@ const person = {
 ---
 <Base title={site.name} description={site.tagline}>
   <script slot="head" type="application/ld+json" set:html={JSON.stringify(person)} is:inline />
+  <Rail />
   <Masthead />
   <main>
     <Resume />
