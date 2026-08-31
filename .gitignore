@@ -8,3 +8,6 @@ dist/
 
 # generated snapshot for double-click viewing
 preview.html
+
+# editor / hand-edit backups
+*.bak
