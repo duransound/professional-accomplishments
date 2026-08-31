@@ -1,5 +1,9 @@
 ---
 import { site } from "../data/site";
+import { seatCount } from "../data/crew";
+
+const built = new Date();
+const stamp = built.toISOString().slice(0, 10).replace(/-/g, "·");
 ---
 <section class="section" id="contact">
   <div class="wrap section-grid">
@@ -18,9 +22,21 @@ import { site } from "../data/site";
 </section>
 
 <footer>
-  <div class="wrap footer-inner">
-    <span class="label">{site.name} — {site.location}</span>
-    <span class="label">{new Date().getFullYear()}</span>
+  <div class="wrap">
+    <div class="titleblock">
+      <div class="tb-wide">
+        <span class="tb-k">Title</span>
+        <span class="tb-v">{site.name} — Technical Program &amp; Workplace Technology</span>
+      </div>
+      <div><span class="tb-k">Drawn by</span><span class="tb-v">I. Duran</span></div>
+      <div><span class="tb-k">Location</span><span class="tb-v">{site.location}</span></div>
+      <div><span class="tb-k">Issued</span><span class="tb-v">{stamp}</span></div>
+      <div><span class="tb-k">Sheet</span><span class="tb-v">1 / 1</span></div>
+      <div><span class="tb-k">Seats held</span><span class="tb-v">{seatCount.worked} / {seatCount.total}</span></div>
+      <div><span class="tb-k">Scale</span><span class="tb-v">NTS</span></div>
+      <div><span class="tb-k">Rev</span><span class="tb-v">A</span></div>
+      <div><span class="tb-k">Status</span><span class="tb-v">Available {built.getFullYear()}</span></div>
+    </div>
   </div>
 </footer>
 
@@ -32,6 +48,5 @@ import { site } from "../data/site";
   }
   .links a { text-decoration: none; border-bottom: 1px solid var(--tally); padding-bottom: 1px; }
 
-  footer { border-top: 1px solid var(--rule); padding-block: 1.6rem 2.5rem; color: var(--ink-soft); }
-  .footer-inner { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; justify-content: space-between; }
+  footer { border-top: 1px solid var(--rule); padding-block: 1.75rem 3rem; }
 </style>

@@ -10,6 +10,9 @@ export type SeatStatus = "led" | "held" | "adjacent";
 export interface Seat {
   id: string;
   title: string;
+  /** Abbreviated form for the route diagram, where labels sit at 40 degrees
+   *  and long names collide with their neighbours. */
+  short: string;
   status: SeatStatus;
   /** One line: what this seat owns. */
   what: string;
@@ -21,6 +24,10 @@ export interface Seat {
 
 export interface Dept {
   name: string;
+  /** Route-line label on the crew diagram. */
+  short: string;
+  /** Route colour. Departments are lines; seats are stations. */
+  color: string;
   seats: Seat[];
 }
 
@@ -33,10 +40,13 @@ export const statusLabel: Record<SeatStatus, string> = {
 export const depts: Dept[] = [
   {
     name: "Program & content",
+    short: "Program",
+    color: "#C2372A",
     seats: [
       {
         id: "resm",
         title: "Regional Event Studio Manager",
+        short: "Regional Studio Mgr",
         status: "led",
         what: "Owns a portfolio of rooms across a region — the budget, the standard, and the partners who keep them working.",
         room: "Decides what every studio in the region must be capable of, funds it, and holds vendor teams to it. Answerable for a room in São Paulo behaving exactly like a room in the Bay Area, so a traveling executive program never has to care which one it landed in.",
@@ -45,6 +55,7 @@ export const depts: Dept[] = [
       {
         id: "pm",
         title: "Program Management",
+        short: "Program Mgmt",
         status: "led",
         what: "Owns the portfolio of programs rather than any single show.",
         room: "Intake criteria, scheduling across venues, staffing models, vendor contracts, and a budget that spans a year of events instead of one night.",
@@ -53,6 +64,7 @@ export const depts: Dept[] = [
       {
         id: "tp",
         title: "Technical Producer",
+        short: "Technical Producer",
         status: "held",
         what: "Owns the technical plan for a show, its budget, and the people who execute it.",
         room: "Turns what the producer wants into gear, crew, lead times, and a number. Present through rehearsal to catch what the plan missed while there is still time to fix it.",
@@ -61,6 +73,7 @@ export const depts: Dept[] = [
       {
         id: "prod",
         title: "Producer",
+        short: "Producer",
         status: "adjacent",
         what: "Owns the outcome. Decides what the show is and whether it worked.",
         room: "Sets content and rehearsal priorities, and makes the calls that trade scope against time. Talks to the client, not to the rack.",
@@ -69,6 +82,7 @@ export const depts: Dept[] = [
       {
         id: "sm",
         title: "Stage Manager / Show Caller",
+        short: "Show Caller",
         status: "held",
         what: "Owns time and sequence once the show is running.",
         room: "Calls every cue — “standby camera two… take two.” Holds the entire sequence in their head and communicates continuously without editorializing.",
@@ -78,10 +92,13 @@ export const depts: Dept[] = [
   },
   {
     name: "Audio",
+    short: "Audio",
+    color: "#2E7A6B",
     seats: [
       {
         id: "a1",
         title: "A1 — Audio Lead",
+        short: "A1 Audio Lead",
         status: "held",
         what: "Owns everything anyone hears.",
         room: "Designs the audio system, sets gain structure, and mixes the show live. One person, one mix, and no second take.",
@@ -90,6 +107,7 @@ export const depts: Dept[] = [
       {
         id: "a2",
         title: "A2 — Audio Assistant",
+        short: "A2 Audio Asst",
         status: "held",
         what: "The A1's hands in the room.",
         room: "Mics talent, coordinates wireless frequencies, runs cable, and fixes the problem while the show keeps going around them.",
@@ -98,6 +116,7 @@ export const depts: Dept[] = [
       {
         id: "rf",
         title: "RF & Comms Coordinator",
+        short: "RF & Comms",
         status: "held",
         what: "Owns the spectrum and the intercom.",
         room: "Coordinates wireless frequencies so nothing steps on anything else, and keeps crew communications working when they matter most.",
@@ -107,10 +126,13 @@ export const depts: Dept[] = [
   },
   {
     name: "Video",
+    short: "Video",
+    color: "#D89A2C",
     seats: [
       {
         id: "td",
         title: "Technical Director",
+        short: "Technical Director",
         status: "held",
         what: "Executes the show live on the switcher.",
         room: "Every cut and every transition, in real time, on the producer's call. There is no undo.",
@@ -119,6 +141,7 @@ export const depts: Dept[] = [
       {
         id: "v1",
         title: "Video Engineer (V1)",
+        short: "Video Eng V1",
         status: "held",
         what: "Owns signal integrity.",
         room: "Shades and matches cameras so ten sources look like one show, and handles routing, formats, and conversion between them.",
@@ -127,6 +150,7 @@ export const depts: Dept[] = [
       {
         id: "cam",
         title: "Camera Operator",
+        short: "Camera Op",
         status: "held",
         what: "Owns the frame.",
         room: "Composes and operates, taking direction while anticipating the shot that will be asked for next.",
@@ -135,6 +159,7 @@ export const depts: Dept[] = [
       {
         id: "gfx",
         title: "Graphics Operator",
+        short: "Graphics Op",
         status: "held",
         what: "Owns everything on screen that isn't a camera.",
         room: "Builds lower thirds, titles, and slide playback, then triggers them live on cue.",
@@ -143,6 +168,7 @@ export const depts: Dept[] = [
       {
         id: "pb",
         title: "Playback Operator",
+        short: "Playback Op",
         status: "held",
         what: "Rolls recorded content on cue.",
         room: "Owns the media, its formats, and hitting the frame exactly when the call comes.",
@@ -152,10 +178,13 @@ export const depts: Dept[] = [
   },
   {
     name: "Systems & delivery",
+    short: "Systems",
+    color: "#47539B",
     seats: [
       {
         id: "bcast",
         title: "Broadcast / Streaming Engineer",
+        short: "Broadcast Eng",
         status: "held",
         what: "Owns delivery to everyone who isn't in the room.",
         room: "Encoders, bonded connections, platform endpoints, and the bitrate math that keeps a stream stable for an audience you cannot see.",
@@ -164,6 +193,7 @@ export const depts: Dept[] = [
       {
         id: "ops",
         title: "Studio Operations",
+        short: "Studio Ops",
         status: "led",
         what: "Owns readiness between shows.",
         room: "Preventative maintenance, spares strategy, and room certification. The unglamorous work that makes “it just works” true on the day.",
@@ -172,6 +202,7 @@ export const depts: Dept[] = [
       {
         id: "sd",
         title: "Systems Designer",
+        short: "Systems Designer",
         status: "adjacent",
         what: "Designs the room before there is a room.",
         room: "Signal flow drawings, rack elevations, and as-built documentation. Decides what a space will be capable of for the next decade.",
@@ -180,6 +211,7 @@ export const depts: Dept[] = [
       {
         id: "ld",
         title: "Lighting Director",
+        short: "Lighting Dir",
         status: "adjacent",
         what: "Owns what the camera sees.",
         room: "Designs and operates lighting for the room and for the lens at once — two requirements that routinely disagree.",

@@ -4,9 +4,21 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
+/* The browser's default [hidden] rule is a bare attribute selector, so ANY
+   class that sets display (flex, grid) silently defeats it and the element
+   stays visible. Both interactive sections rely on [hidden] to toggle state,
+   so this has to win. */
+[hidden] { display: none !important; }
+
 body {
   margin: 0;
-  background: var(--paper);
+  /* Drafting ground. The grid sits under everything at low contrast — present
+     when you look for it, invisible when you're reading. */
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(var(--draft-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--draft-grid) 1px, transparent 1px);
+  background-size: 22px 22px;
   color: var(--ink);
   font-family: var(--f-body);
   font-size: 1.0313rem;
@@ -80,4 +92,59 @@ p { margin: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   .tally-dot { animation: none; }
+}
+
+
+/* --------------------------------------------------------------------------
+   As-built chassis. Section labels read as drawing stage callouts; the
+   titleblock at the foot is real drafting convention.
+   -------------------------------------------------------------------------- */
+
+.section-grid > .label {
+  position: relative;
+  padding-bottom: 0.4rem;
+}
+.section-grid > .label::after {
+  content: "";
+  position: absolute; left: 0; right: 1.5rem; bottom: 0;
+  height: 1px; background: var(--rule);
+}
+@media (max-width: 48rem) {
+  .section-grid > .label::after { right: 0; }
+}
+
+/* Titleblock — bordered cells, mono, tabular. */
+.titleblock {
+  border: 1px solid var(--ink);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  font-family: var(--f-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
+.titleblock > div {
+  padding: 0.5rem 0.65rem 0.55rem;
+  border-right: 1px solid var(--rule);
+  border-top: 1px solid var(--rule);
+  display: flex; flex-direction: column; gap: 0.18rem;
+  min-width: 0;
+}
+.titleblock > div:nth-child(-n + 4) { border-top: 0; }
+.titleblock > div:nth-child(4n) { border-right: 0; }
+.titleblock .tb-k { color: var(--ink-soft); font-size: 0.5625rem; }
+.titleblock .tb-v { color: var(--ink); overflow-wrap: anywhere; }
+.titleblock .tb-wide { grid-column: span 4; border-right: 0; }
+.titleblock .tb-wide .tb-v {
+  font-family: var(--f-display); font-size: 0.9375rem; font-weight: 600;
+  letter-spacing: -0.01em; text-transform: none;
+}
+
+@media (max-width: 40rem) {
+  .titleblock { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .titleblock > div:nth-child(-n + 4) { border-top: 1px solid var(--rule); }
+  .titleblock > div:nth-child(4n) { border-right: 1px solid var(--rule); }
+  .titleblock > div:nth-child(2n) { border-right: 0; }
+  .titleblock .tb-wide { grid-column: span 2; border-top: 0; }
 }

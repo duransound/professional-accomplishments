@@ -60,3 +60,19 @@
   --held:       #5FBFA4;
   --held-wash:  rgba(95, 191, 164, 0.14);
 }
+
+/* --------------------------------------------------------------------------
+   Drafting plate. A drawing is a drawing: these do NOT flip with the theme,
+   because a schematic printed on dark paper is not a thing. The plate keeps
+   its own ink so route colours stay correct on both grounds.
+   -------------------------------------------------------------------------- */
+:root {
+  --draft:        #F6F5F1;
+  --draft-panel:  #EFEDE7;
+  --draft-ink:    #1A2027;
+  --draft-soft:   #A6A8A4;
+  --draft-rule:   #C9C7C0;
+  --draft-accent: #C2372A;
+  --draft-wash:   rgba(194, 55, 42, 0.13);
+  --draft-grid:   rgba(38, 52, 74, 0.05);
+}

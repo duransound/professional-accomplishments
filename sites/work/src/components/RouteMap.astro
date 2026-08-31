@@ -1,0 +1,265 @@
+---
+/**
+ * The crew map as a transit diagram. Departments are lines, seats are
+ * stations, and every line terminates at ON AIR because that is genuinely
+ * what they all feed.
+ *
+ * Geometry is COMPUTED from the data in crew.ts — station spacing, line
+ * bends and the label ladder all derive from array position. Adding a seat
+ * moves the diagram correctly instead of requiring hand-edited coordinates.
+ *
+ * Solid station = seat held. Dashed = worked alongside. That distinction is
+ * the argument this section exists to make, so it is carried by the drawing
+ * rather than by a legend the reader has to consult.
+ */
+import { depts, allSeats, statusLabel, defaultSeat, seatCount } from "../data/crew";
+
+const VB = { w: 1040, h: 505 };
+const TERM = { x: 950, y: 300, r: 26 };
+const LINE_Y = [140, 240, 350, 460];
+const START_X = 185;
+const SPACING = 128;   // > the horizontal reach of the longest 40-degree label
+const ORIGIN_X = 145;
+const LBL_X = 125;     // line names sit in their own column, right-aligned
+
+const lines = depts.map((dept, i) => {
+  const y = LINE_Y[i] ?? LINE_Y[LINE_Y.length - 1]! + (i - LINE_Y.length + 1) * 110;
+  const stations = dept.seats.map((seat, j) => ({ seat, x: START_X + j * SPACING, y }));
+  const lastX = stations[stations.length - 1]!.x;
+  // 45-degree run into the terminus, pushed out if stations would collide with it.
+  const bendX = Math.max(TERM.x - Math.abs(TERM.y - y), lastX + 50);
+  return {
+    dept,
+    y,
+    stations,
+    path: `M${ORIGIN_X} ${y} H${bendX} L${TERM.x} ${TERM.y}`,
+  };
+});
+
+const words = ["zero","one","two","three","four","five","six","seven","eight","nine","ten",
+  "eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen","twenty"];
+const spell = (n: number) => words[n] ?? String(n);
+---
+<section class="section" id="crew">
+  <div class="wrap section-grid">
+    <div class="label">Crew map</div>
+    <div class="section-body">
+      <p class="intro">
+        Production job titles don't travel. Outside this industry almost nobody knows what an A1
+        does, which makes eleven years of experience hard to read. So here is the room drawn as
+        what it actually is — a signal chain, every seat feeding the same terminus.
+      </p>
+
+      <p class="tallyline">
+        Of the {spell(seatCount.total)} seats below, I have personally worked
+        <strong>{spell(seatCount.worked)}</strong>. The remaining {spell(seatCount.adjacent)} I have
+        scoped, budgeted, and staffed without ever sitting in the chair.
+      </p>
+
+      <figure class="diagram">
+        <div class="scroller">
+          <svg
+            viewBox={`0 0 ${VB.w} ${VB.h}`}
+            role="img"
+            aria-label="Transit-style diagram of a live production crew. Each department is a line, each seat a station, all terminating at On Air."
+          >
+            {lines.map((l) => (
+              <path class="rt" d={l.path} style={`stroke:${l.dept.color}`} />
+            ))}
+
+            <circle class="term-ring" cx={TERM.x} cy={TERM.y} r={TERM.r} />
+            <circle class="term-core" cx={TERM.x} cy={TERM.y} r="9" />
+            <text class="term-lbl" x={TERM.x} y={TERM.y + 52} text-anchor="middle">ON AIR</text>
+
+            {lines.map((l) => (
+              <text
+                class="line-lbl" x={LBL_X} y={l.y} dy="0.34em"
+                text-anchor="end" style={`fill:${l.dept.color}`}
+              >{l.dept.short}</text>
+            ))}
+
+            {lines.map((l) =>
+              l.stations.map(({ seat, x, y }) => (
+                <g
+                  class="station"
+                  data-seat={seat.id}
+                  data-selected={seat.id === defaultSeat ? "" : null}
+                  role="button"
+                  tabindex="0"
+                  aria-label={`${seat.title} — ${statusLabel[seat.status]}`}
+                >
+                  <circle class="hit" cx={x} cy={y} r="18" />
+                  <circle class="halo" cx={x} cy={y} r="14" />
+                  {seat.status === "adjacent" ? (
+                    <circle class="st-adj" cx={x} cy={y} r="8" />
+                  ) : (
+                    <>
+                      <circle class="st-held" cx={x} cy={y} r="8" />
+                      <circle class="st-core" cx={x} cy={y} r="3.2" />
+                    </>
+                  )}
+                  <text class="st-lbl" x={x} y={y - 14} transform={`rotate(-40 ${x} ${y - 14})`}>
+                    {seat.short}
+                  </text>
+                </g>
+              ))
+            )}
+          </svg>
+        </div>
+
+        <figcaption class="legend">
+          {depts.map((d) => (
+            <span><span class="lg-bar" style={`background:${d.color}`}></span>{d.short}</span>
+          ))}
+          <span class="lg-sep" aria-hidden="true"></span>
+          <span>
+            <svg width="16" height="16" aria-hidden="true" class="lg-ico">
+              <circle cx="8" cy="8" r="6" class="st-held" /><circle cx="8" cy="8" r="2.4" class="st-core" />
+            </svg>Seat held
+          </span>
+          <span>
+            <svg width="16" height="16" aria-hidden="true" class="lg-ico">
+              <circle cx="8" cy="8" r="6" class="st-adj" />
+            </svg>Worked alongside
+          </span>
+        </figcaption>
+      </figure>
+
+      <div class="detail" aria-live="polite">
+        {allSeats.map((s) => (
+          <div data-seat-panel={s.id} hidden={s.id !== defaultSeat} class="panel">
+            <div class="detail-head">
+              <h3>{s.title}</h3>
+              <span class="status" data-s={s.status}>{statusLabel[s.status]}</span>
+            </div>
+            <p class="detail-what">{s.what}</p>
+            <dl class="xlate">
+              <dt>In the room</dt><dd>{s.room}</dd>
+              <dt>Reads as</dt><dd set:html={s.reads} />
+            </dl>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const stations = document.querySelectorAll<SVGGElement>(".station");
+  const panels = document.querySelectorAll<HTMLElement>("[data-seat-panel]");
+
+  function select(id: string) {
+    panels.forEach((p) => { p.hidden = p.dataset.seatPanel !== id; });
+    stations.forEach((s) => {
+      if (s.dataset.seat === id) s.dataset.selected = "";
+      else delete s.dataset.selected;
+    });
+  }
+
+  stations.forEach((s) => {
+    const id = s.dataset.seat!;
+    s.addEventListener("click", () => select(id));
+    s.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); select(id); }
+    });
+  });
+</script>
+
+<style>
+  .intro { color: var(--ink-mid); max-width: 62ch; }
+
+  .tallyline {
+    font-size: 1.1875rem; line-height: 1.5; font-weight: 300;
+    max-width: 54ch; color: var(--ink);
+    padding-left: 1.15rem; border-left: 2px solid var(--tally);
+  }
+  .tallyline strong { font-weight: 500; box-shadow: inset 0 -0.4em 0 var(--tally-wash); }
+
+  /* The drawing is the widest thing on the page, so it reclaims the label
+     rail rather than being squeezed into the text column — otherwise the
+     terminus falls outside the visible area on a laptop. */
+  .diagram { margin: 0; border: 1px solid var(--draft-ink); background: var(--draft); }
+  @media (min-width: 48.0625rem) {
+    .diagram {
+      margin-left: calc(-1 * (var(--rail) + 3rem));
+      width: calc(100% + var(--rail) + 3rem);
+    }
+  }
+  .scroller { overflow-x: auto; }
+  .scroller > svg { display: block; width: 100%; min-width: 840px; height: auto; }
+
+  .rt { fill: none; stroke-width: 9; stroke-linecap: round; stroke-linejoin: round; }
+
+  .term-ring { fill: var(--draft); stroke: var(--draft-ink); stroke-width: 4; }
+  .term-core { fill: var(--draft-accent); }
+  .term-lbl {
+    font-family: var(--f-display); font-size: 15px; font-weight: 700;
+    letter-spacing: 0.08em; fill: var(--draft-ink);
+  }
+  .line-lbl {
+    font-family: var(--f-display); font-size: 11px; font-weight: 700;
+    letter-spacing: 0.16em; text-transform: uppercase;
+  }
+
+  .station { cursor: pointer; }
+  .hit { fill: transparent; }
+  .halo { fill: transparent; transition: fill 0.14s; }
+  .station:hover .halo { fill: var(--draft-wash); }
+  .station[data-selected] .halo { fill: var(--draft-wash); stroke: var(--draft-accent); stroke-width: 1.5; }
+  .station:focus-visible { outline: none; }
+  .station:focus-visible .halo { fill: var(--draft-wash); stroke: var(--draft-accent); stroke-width: 2; }
+
+  .st-held { fill: var(--draft); stroke: var(--draft-ink); stroke-width: 3.2; }
+  .st-core { fill: var(--draft-ink); }
+  .st-adj  { fill: var(--draft); stroke: var(--draft-soft); stroke-width: 2.2; stroke-dasharray: 3 2.6; }
+
+  /* The label is part of the target. People aim at the name, not the dot. */
+  .st-lbl {
+    font-family: var(--f-mono); font-size: 10px; fill: var(--draft-ink);
+    letter-spacing: 0.03em; text-transform: uppercase;
+  }
+  .station[data-selected] .st-lbl { font-weight: 500; fill: var(--draft-accent); }
+
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 0.5rem 1.35rem; align-items: center;
+    padding: 0.8rem 1rem; border-top: 1px solid var(--draft-ink); background: var(--draft-panel);
+    font-family: var(--f-mono); font-size: 0.625rem; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--draft-ink);
+  }
+  .legend > span { display: flex; align-items: center; gap: 0.4rem; }
+  .lg-bar { width: 20px; height: 6px; border-radius: 3px; }
+  .lg-ico { flex: none; }
+  .lg-sep { width: 1px; height: 14px; background: var(--draft-rule); }
+
+  .detail {
+    background: var(--surface); border: 1px solid var(--rule);
+    padding: 1.35rem 1.5rem 1.5rem;
+  }
+  .panel { display: flex; flex-direction: column; gap: 0.9rem; }
+
+  .detail-head { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: baseline; }
+  .detail-head h3 { font-size: 1.25rem; margin-right: auto; }
+
+  .status {
+    font-family: var(--f-mono); font-size: 0.625rem; letter-spacing: 0.13em;
+    text-transform: uppercase; padding: 0.22rem 0.5rem; white-space: nowrap;
+  }
+  .status[data-s="led"]      { color: var(--tally); background: var(--tally-wash); }
+  .status[data-s="held"]     { color: var(--held);  background: var(--held-wash); }
+  .status[data-s="adjacent"] { color: var(--ink-soft); border: 1px solid var(--rule); }
+
+  .detail-what { font-size: 1.0625rem; line-height: 1.5; max-width: 60ch; }
+
+  .xlate { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr); gap: 0.55rem 1.25rem; margin: 0; }
+  .xlate dt {
+    font-family: var(--f-mono); font-size: 0.6875rem; letter-spacing: 0.11em;
+    text-transform: uppercase; color: var(--ink-soft); padding-top: 0.18rem;
+  }
+  .xlate dd { margin: 0; color: var(--ink-mid); font-size: 0.9375rem; line-height: 1.55; max-width: 58ch; }
+  .xlate dd :global(strong) { color: var(--ink); font-weight: 500; }
+
+  @media (max-width: 34rem) {
+    .xlate { grid-template-columns: 1fr; gap: 0.15rem; }
+    .xlate dd { margin-bottom: 0.7rem; }
+  }
+</style>
