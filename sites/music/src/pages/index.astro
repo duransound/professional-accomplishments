@@ -10,8 +10,8 @@
  *  - Pull the hero and profile images off the current Wix site.
  *  - Releases list that grows, rather than a static bio.
  */
-import "@duran/theme/tokens.css";
-import "@duran/theme/base.css";
+import "@duran/theme/reset.css";
+import "../styles/brand.css";
 
 const links = [
   { label: "Spotify", href: "https://open.spotify.com/artist/4jsDAwTiXLfwp77EBqqHup" },
@@ -46,7 +46,7 @@ const links = [
 <style>
   .stub { display: flex; flex-direction: column; gap: 1.15rem; padding-block: 5rem; }
   h1 { font-size: clamp(2.5rem, 8vw, 4.5rem); line-height: 0.95; letter-spacing: -0.035em; }
-  p { max-width: 50ch; color: var(--ink-mid); }
+  p { max-width: 50ch; color: var(--fg-mid); }
   .links { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; font-family: var(--f-mono); font-size: 0.875rem; }
-  .links a { text-decoration: none; border-bottom: 1px solid var(--tally); }
+  .links a { text-decoration: none; border-bottom: 1px solid var(--accent); }
 </style>

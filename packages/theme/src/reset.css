@@ -1,0 +1,20 @@
+/* ==========================================================================
+   The only stylesheet both sites share. Structure and browser behaviour —
+   no colours, no fonts, no brand. Each site owns its own look entirely.
+   ========================================================================== */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body { margin: 0; -webkit-font-smoothing: antialiased; }
+
+img, svg, video { max-width: 100%; height: auto; }
+
+h1, h2, h3, h4 { margin: 0; text-wrap: balance; }
+p { margin: 0; }
+
+/* The browser's default [hidden] rule is a bare attribute selector, so ANY
+   class that sets display (flex, grid) silently defeats it and the element
+   stays visible. Interactive sections rely on [hidden] to toggle state, so
+   this has to win. Removing it is how one role ends up showing bullets from
+   two lenses at once. */
+[hidden] { display: none !important; }

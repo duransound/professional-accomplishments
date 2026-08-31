@@ -1,0 +1,46 @@
+/* ==========================================================================
+   BRAND — Milkshake O'neil.
+   Deliberately unrelated to the professional site. An artist page should not
+   look like a resume, and the two share nothing but a reset.
+
+   This is a PLACEHOLDER, not a direction. It exists so the music site renders
+   with its own tokens instead of quietly inheriting someone else's brand.
+   Replace the values below wholesale when the music identity is decided.
+   ========================================================================== */
+
+:root {
+  --bg:      #0E0E10;
+  --raised:  #17171A;
+  --fg:      #F2F0EA;
+  --fg-mid:  #A5A29B;
+  --line:    #2A2A2E;
+  --accent:  #E8734A;
+
+  --f-display: "Familjen Grotesk", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --f-body:    system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono:    ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
+  --gutter: clamp(1.25rem, 5vw, 3rem);
+  --max: 52rem;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--f-body);
+  font-size: 1.0313rem;
+  line-height: 1.6;
+}
+
+a { color: inherit; }
+a:hover { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+h1, h2, h3 { font-family: var(--f-display); font-weight: 700; letter-spacing: -0.03em; }
+
+.wrap { max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter); }
+
+.label {
+  font-family: var(--f-mono); font-size: 0.6875rem; letter-spacing: 0.16em;
+  text-transform: uppercase; color: var(--fg-mid);
+}

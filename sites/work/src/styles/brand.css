@@ -1,0 +1,191 @@
+/* ==========================================================================
+   BRAND — the professional site.
+   This file is the whole look. Change it and the site changes.
+   The music site has its own; the two share nothing but a reset.
+   ==========================================================================
+
+   Current direction: "as-built". A drafting document — warm grey paper,
+   blue-biased ink, hairline rules, mono callouts, and a titleblock at the
+   foot. The accent is tally red: the light that tells you which camera is
+   live, used once and never decoratively.
+   ========================================================================== */
+
+:root {
+  --paper:      #F2F1ED;
+  --surface:    #FBFAF8;
+  --sunk:       #EAE8E2;
+  --ink:        #15181E;
+  --ink-mid:    #454B55;
+  --ink-soft:   #6E747E;
+  --rule:       #DAD8D1;
+  --rule-soft:  #E6E4DE;
+  --tally:      #C0342A;
+  --tally-wash: rgba(192, 52, 42, 0.10);
+  --held:       #1F6F5C;
+  --held-wash:  rgba(31, 111, 92, 0.12);
+
+  --f-display: "Familjen Grotesk", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --f-body:    "Newsreader", Georgia, "Times New Roman", serif;
+  --f-mono:    "DM Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
+  --gutter: clamp(1.25rem, 4.5vw, 3.25rem);
+  --rail: 8.5rem;
+  --max: 64rem;
+}
+
+/* Dark redefines TOKENS ONLY, never component rules, so the un-stamped
+   "system" state resolves correctly. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper:      #14161B;
+    --surface:    #1A1D23;
+    --sunk:       #1F232A;
+    --ink:        #E9E7E2;
+    --ink-mid:    #AEB4BE;
+    --ink-soft:   #868D98;
+    --rule:       #2B2F37;
+    --rule-soft:  #23272E;
+    --tally:      #E4594C;
+    --tally-wash: rgba(228, 89, 76, 0.14);
+    --held:       #5FBFA4;
+    --held-wash:  rgba(95, 191, 164, 0.14);
+  }
+}
+:root[data-theme="dark"] {
+  --paper:      #14161B;
+  --surface:    #1A1D23;
+  --sunk:       #1F232A;
+  --ink:        #E9E7E2;
+  --ink-mid:    #AEB4BE;
+  --ink-soft:   #868D98;
+  --rule:       #2B2F37;
+  --rule-soft:  #23272E;
+  --tally:      #E4594C;
+  --tally-wash: rgba(228, 89, 76, 0.14);
+  --held:       #5FBFA4;
+  --held-wash:  rgba(95, 191, 164, 0.14);
+}
+
+/* --------------------------------------------------------------------------
+   Drafting plate. Deliberately NOT theme-reactive: a schematic printed on
+   dark paper is not a thing, and the route colours only read correctly on
+   light ground. In dark mode the drawing sits as a lit plate on a dark page.
+   Anything inside .diagram must use these, never the page tokens.
+   -------------------------------------------------------------------------- */
+:root {
+  --draft:        #F6F5F1;
+  --draft-panel:  #EFEDE7;
+  --draft-ink:    #1A2027;
+  --draft-soft:   #A6A8A4;
+  --draft-rule:   #C9C7C0;
+  --draft-accent: #C2372A;
+  --draft-wash:   rgba(194, 55, 42, 0.13);
+  --draft-grid:   rgba(38, 52, 74, 0.05);
+}
+
+/* ==========================================================================
+   BASE
+   ========================================================================== */
+
+body {
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(var(--draft-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--draft-grid) 1px, transparent 1px);
+  background-size: 22px 22px;
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: 1.0313rem;
+  line-height: 1.6;
+}
+
+::selection { background: var(--tally); color: #FBFAF8; }
+
+a { color: inherit; text-decoration-color: var(--tally); text-underline-offset: 0.22em; }
+a:hover { color: var(--tally); }
+:focus-visible { outline: 2px solid var(--tally); outline-offset: 3px; border-radius: 2px; }
+
+h1, h2, h3, h4 { font-family: var(--f-display); font-weight: 600; letter-spacing: -0.018em; }
+h3 { font-size: 1.0625rem; line-height: 1.3; }
+h4 { font-size: 0.9375rem; }
+
+.wrap { max-width: var(--max); margin: 0 auto; padding: 0 var(--gutter); }
+
+.label {
+  font-family: var(--f-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+/* Section scaffold: mono callout in a left rail, content beside it. */
+.section { border-top: 1px solid var(--rule); padding-block: clamp(2.25rem, 5vw, 3.5rem); }
+.section-grid {
+  display: grid;
+  grid-template-columns: var(--rail) minmax(0, 1fr);
+  gap: 0 3rem;
+  align-items: start;
+}
+.section-grid > .label { position: relative; padding-top: 0.35rem; padding-bottom: 0.4rem; }
+.section-grid > .label::after {
+  content: "";
+  position: absolute; left: 0; right: 1.5rem; bottom: 0;
+  height: 1px; background: var(--rule);
+}
+.section-body { display: flex; flex-direction: column; gap: 1.5rem; min-width: 0; }
+
+@media (max-width: 48rem) {
+  .section-grid { grid-template-columns: 1fr; gap: 1rem; }
+  .section-grid > .label { padding-top: 0; }
+  .section-grid > .label::after { right: 0; }
+}
+
+/* One animated element on the page. That is the budget. */
+.tally-dot {
+  width: 0.5rem; height: 0.5rem; border-radius: 50%;
+  background: var(--tally); flex: none;
+  animation: tally-pulse 3.4s ease-out infinite;
+}
+@keyframes tally-pulse {
+  0%, 72%, 100% { box-shadow: 0 0 0 0 var(--tally-wash); }
+  36%           { box-shadow: 0 0 0 0.3rem var(--tally-wash); }
+}
+@media (prefers-reduced-motion: reduce) { .tally-dot { animation: none; } }
+
+/* Titleblock — real drafting convention. */
+.titleblock {
+  border: 1px solid var(--ink);
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  font-family: var(--f-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+}
+.titleblock > div {
+  padding: 0.5rem 0.65rem 0.55rem;
+  border-right: 1px solid var(--rule);
+  border-top: 1px solid var(--rule);
+  display: flex; flex-direction: column; gap: 0.18rem;
+  min-width: 0;
+}
+.titleblock > div:nth-child(-n + 4) { border-top: 0; }
+.titleblock > div:nth-child(4n) { border-right: 0; }
+.titleblock .tb-k { color: var(--ink-soft); font-size: 0.5625rem; }
+.titleblock .tb-v { color: var(--ink); overflow-wrap: anywhere; }
+.titleblock .tb-wide { grid-column: span 4; border-right: 0; }
+.titleblock .tb-wide .tb-v {
+  font-family: var(--f-display); font-size: 0.9375rem; font-weight: 600;
+  letter-spacing: -0.01em; text-transform: none;
+}
+
+@media (max-width: 40rem) {
+  .titleblock { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .titleblock > div:nth-child(-n + 4) { border-top: 1px solid var(--rule); }
+  .titleblock > div:nth-child(4n) { border-right: 1px solid var(--rule); }
+  .titleblock > div:nth-child(2n) { border-right: 0; }
+  .titleblock .tb-wide { grid-column: span 2; border-top: 0; }
+}
