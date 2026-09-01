@@ -153,10 +153,10 @@ collections:
                 options:
                   - { label: 'The lens — studio bullets', value: studio }
                   - { label: 'The lens — crew bullets', value: crew }
-                  - { label: 'Neither — use the fixed note below', value: '' }
                 hint: >-
-                  Use this OR the note below, never both. This one makes the
-                  bullets change when the reader switches lens.
+                  Use this OR the note below, never both. This makes the
+                  bullets change when the reader switches lens. Leave it unset
+                  for a role whose text never changes.
               - name: note
                 label: Fixed paragraph
                 widget: text

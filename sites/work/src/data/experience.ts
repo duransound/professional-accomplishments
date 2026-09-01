@@ -1,17 +1,27 @@
 import { z } from "zod";
 import { loadContent, required } from "./load";
 
+/**
+ * The CMS writes an empty string for a field left blank, where hand-written
+ * YAML simply omits the key. Both mean "not set", so normalise before
+ * validating — otherwise clearing a field in the browser breaks the build.
+ */
+const blank = (v: unknown) => (v === "" || v === null ? undefined : v);
+
 const role = z
   .object({
     years: required("A date range"),
     title: required("A job title"),
-    org: z.string().optional(),
-    lensKey: z
-      .enum(["studio", "crew"], {
-        errorMap: () => ({ message: 'must be either "studio" or "crew"' }),
-      })
-      .optional(),
-    note: z.string().optional(),
+    org: z.preprocess(blank, z.string().optional()),
+    lensKey: z.preprocess(
+      blank,
+      z
+        .enum(["studio", "crew"], {
+          errorMap: () => ({ message: 'must be either "studio" or "crew"' }),
+        })
+        .optional()
+    ),
+    note: z.preprocess(blank, z.string().optional()),
     current: z.boolean().default(false),
   })
   .refine((r) => !(r.lensKey && r.note), {
@@ -25,7 +35,7 @@ const schema = z.object({
   education: z.object({
     degree: required("A degree"),
     school: required("A school"),
-    note: z.string().optional(),
+    note: z.preprocess(blank, z.string().optional()),
   }),
 });
 
