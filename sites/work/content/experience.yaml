@@ -1,16 +1,16 @@
 roles:
   - years: May 2024 — 2026
-    title: Career sabbatical
+    title: Freelance
     org: ''
     lensKey: ''
-    note: Planned roughly a decade in advance and taken on schedule. Freelance production work, music, and time. It is finished, and I am looking forward.
-    current: true
+    note: Freelance gig work for Audio, Video and Music Production. Focus on passion projects
+    current: false
   - years: 2022 — 2024
     title: Event Studio Manager, Americas & LatAm
     org: Google
     lensKey: studio
     note: ''
-    current: false
+    current: true
   - years: 2013 — 2022
     title: Event Technician → Crew Lead, Executive & Event Production
     org: Google
