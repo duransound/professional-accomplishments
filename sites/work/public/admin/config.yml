@@ -34,9 +34,67 @@ collections:
         file: sites/work/content/crew.yaml
         description: >-
           Departments are the coloured lines on the diagram. Seats are the
-          stations on them. The "worked N of M seats" sentence counts itself
-          from this file, so there is no number to update by hand.
+          stations on them, and every seat also sits in a zone — the place a
+          body actually is during a show. The "worked N of M seats" sentence
+          counts itself from this file, so there is no number to update by
+          hand, and a zone nobody sits in reports itself empty.
         fields:
+          - name: zones
+            label: Zones — where a body is during a show
+            widget: list
+            label_singular: Zone
+            summary: '{{fields.name}}  ·  {{fields.kind}}'
+            collapsed: true
+            hint: >-
+              Zones are physical locations, not departments. That is the whole
+              point of the plate — audio alone sits in three of them, listening
+              to three different things. Adding a zone here makes it selectable
+              on every seat.
+            fields:
+              - name: id
+                label: ID
+                widget: string
+                hint: >-
+                  Lowercase, no spaces. Seats point at this. If you change it,
+                  change every seat that uses it — otherwise the build stops and
+                  tells you which seat is orphaned.
+              - { name: name, label: Zone name, widget: string }
+              - name: kind
+                label: Kind
+                widget: select
+                options:
+                  - { label: 'Physical  (a place in the building)', value: physical }
+                  - { label: 'Detached  (floats, drawn dashed — Remote)', value: detached }
+                  - { label: 'Between shows  (no show-time position at all)', value: program }
+              - name: plan
+                label: Plan rectangle
+                widget: list
+                field: { name: n, label: Number, widget: number, value_type: float }
+                hint: >-
+                  Four numbers — x, y, width, depth — in floor-grid units. The
+                  isometric drawing is computed from these, and seats pack into
+                  the rectangle automatically, so nothing is placed by hand.
+              - name: lift
+                label: Riser height
+                widget: number
+                value_type: float
+                default: 0
+                hint: >-
+                  Same floor-grid units. 0 is floor level. The stage and the
+                  front-of-house riser are raised in reality, so they are raised
+                  on the drawing.
+              - name: perceives
+                label: What can be sensed from here
+                widget: text
+                hint: >-
+                  What someone standing in this zone can actually see and hear.
+                  This is the argument the zone makes, so it is worth being
+                  specific — "every output on a monitor wall, through headphones"
+                  says more than "the control room".
+              - name: reads
+                label: Reads as
+                widget: string
+                hint: The workplace-org analogue, e.g. The platform team watching dashboards.
           - name: departments
             label: Departments
             widget: list
@@ -88,6 +146,53 @@ collections:
                     label: In the room
                     widget: text
                     hint: What the work actually looks like during a show.
+                  - name: reads-title
+                    label: Reads as (technology title)
+                    widget: string
+                    pattern: ['^.{1,24}$', 'Keep this under about 20 characters or labels collide on the diagram']
+                    hint: >-
+                      Just the job title, no sentence. This is what the
+                      vocabulary switch in the masthead shows in place of the
+                      diagram label, so it is held to the same length limit.
+                  - name: zone
+                    label: Zone
+                    widget: select
+                    options: [stage, camera, client, foh, control, rack, remote, program]
+                    hint: >-
+                      Where the body actually is during a show. Must match an id
+                      in the Zones list above — if it does not, the build stops
+                      and names the seat. Use "program" for a role with no
+                      show-time position at all.
+                  - name: visibility
+                    label: How long before anyone notices it is empty
+                    widget: select
+                    options:
+                      - { label: 'Immediate — the room notices', value: immediate }
+                      - { label: 'Delayed — it turns up in the recording', value: delayed }
+                      - { label: 'Invisible — months, or never', value: invisible }
+                    hint: >-
+                      The argument the whole plate makes is that the seats
+                      costing the most to leave empty are the ones whose absence
+                      nobody can see on the day. Worth being honest rather than
+                      dramatic — if the room notices in ten seconds, say
+                      immediate.
+                  - name: consequence
+                    label: What goes dark
+                    widget: text
+                    hint: >-
+                      One or two sentences on what actually goes wrong when
+                      nobody is in this seat. Plain cause and effect, not a
+                      warning. Avoid a colon followed by a space — YAML reads
+                      that as a new field.
+                  - name: contested
+                    label: Contested placement
+                    widget: text
+                    required: false
+                    hint: >-
+                      Only for a seat whose zone is genuinely arguable — the
+                      technical producer sitting in control versus at the client
+                      table, say. Renders as a note on the seat panel. Leave it
+                      empty otherwise; an honest note beats a confident wrong one.
 
   # ---------------------------------------------------------------------------
   - name: lenses
