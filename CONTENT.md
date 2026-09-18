@@ -72,10 +72,33 @@ or `room`.
 under about 20 characters too or the labels collide.
 
 **Add a crew seat** — copy a whole seat block into the right department. It
-needs `id`, `title`, `short`, `reads-title`, `status`, `what`, `room`. Keep
-both `short` and `reads-title` under about 20 characters or labels collide on
-the diagram. The station appears automatically and the "worked N of M"
-sentence recounts itself.
+needs `id`, `title`, `short`, `reads-title`, `status`, `what`, `room`, plus the
+three zone-plate fields below. Keep both `short` and `reads-title` under about
+20 characters or labels collide on the diagram. The station appears
+automatically and the "worked N of M" sentence recounts itself.
+
+**The three zone-plate fields** — every seat also carries:
+
+- `zone` — which zone the body is actually in during a show. Must match an `id`
+  in the `zones` block at the top of the file, or the build stops and tells you
+  which ids would have worked. Use `program` for a role with no show-time
+  position at all.
+- `visibility` — `immediate`, `delayed` or `invisible`. How long it takes
+  anyone to notice the seat is empty. This is the argument the plate makes, so
+  it is worth being honest: `immediate` means the room notices, `delayed` means
+  it turns up in the recording, `invisible` means months.
+- `consequence` — one or two sentences on what actually goes wrong when nobody
+  is in the seat. Written as plain cause and effect, not as a warning.
+- `contested` — optional, and only for a seat whose placement is genuinely
+  arguable. It renders as a note on the seat panel. An honest one reads better
+  than a confident wrong one.
+
+**Move a zone, or add one** — the `zones` block at the top of `crew.yaml`.
+`plan` is `[x, y, width, depth]` in floor-grid units and `lift` is riser
+height; the isometric is computed from those, and seats pack into their zone in
+the order they appear under `departments`. Nothing on the plate is positioned
+by hand, so adding a seat moves the drawing correctly. A zone nobody sits in
+renders as NO SEAT ASSIGNED — that hole is counted, not typed.
 
 **Write a note** — add a file to `content/notes/`:
 

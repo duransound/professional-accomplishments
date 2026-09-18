@@ -1,3 +1,81 @@
+# ---------------------------------------------------------------------------
+# ZONES — where a body actually is during a show.
+#
+# Zones are physical locations, not departments. That distinction is the whole
+# point of the plate: audio alone sits in three different zones, listening to
+# three different things, which is why the A1 and the broadcast mixer disagree
+# about whether it sounded good.
+#
+#   plan   [x, y, width, depth] in floor-grid units. The component computes the
+#          isometric from this, and packs each zone's seats into it in the order
+#          they appear under departments — so adding a seat re-packs correctly
+#          and you never place a seat by hand.
+#   lift   riser height in the same units. 0 is floor level.
+#   kind   physical | detached | program.
+#            detached  drawn dashed and floating, with drop lines. Remote.
+#            program   no show-time position at all. Drawn off the plan.
+#
+# A zone with no seats renders as NO SEAT ASSIGNED. That emptiness is computed,
+# not typed, so it stays true when seats move.
+# ---------------------------------------------------------------------------
+zones:
+  - id: stage
+    name: Stage
+    kind: physical
+    plan: [0, 0, 10, 4]
+    lift: 1.2
+    perceives: Talent and microphones up close. No view of the output.
+    reads: The engineer embedded on the customer site.
+  - id: camera
+    name: Camera positions
+    kind: physical
+    plan: [0, 5.5, 10, 3.5]
+    lift: 0
+    perceives: One framed slice of the room, and no way to leave it mid-show.
+    reads: The individual contributor with deep context on one surface.
+  - id: client
+    name: Client table
+    kind: physical
+    plan: [0, 10.5, 4.2, 3.5]
+    lift: 0
+    perceives: The room, plus the stakeholder's reaction. No controls.
+    reads: The product owner in the room without deploy access.
+  - id: foh
+    name: Front of house
+    kind: physical
+    plan: [5.5, 10.5, 4.5, 3.5]
+    lift: 0.6
+    perceives: The actual room, unmediated. What the live audience gets.
+    reads: The person who uses the product the way customers do.
+  - id: control
+    name: Control room
+    kind: physical
+    plan: [0, 15.5, 8, 6]
+    lift: 0
+    perceives: Every output on a monitor wall, through headphones. Sealed off from the room on purpose.
+    reads: The platform team watching dashboards.
+  - id: rack
+    name: Rack room
+    kind: physical
+    plan: [9, 15.5, 3.5, 6]
+    lift: 0
+    perceives: Nothing. Usually unattended. Where things fail silently.
+    reads: Infrastructure nobody funds until it breaks.
+  - id: remote
+    name: Remote
+    kind: detached
+    plan: [16, 11, 4, 4]
+    lift: 2.6
+    perceives: The stream only. No hallway, no room, no side conversation.
+    reads: The distributed contributor with no informal channel.
+  - id: program
+    name: Between shows
+    kind: program
+    plan: [0, 0, 0, 0]
+    lift: 0
+    perceives: The portfolio across time. Never in the room on show day.
+    reads: The manager or architect whose work is invisible on any single day.
+
 departments:
   - name: Program & content
     short: Program
@@ -10,6 +88,9 @@ departments:
         what: Owns a portfolio of rooms across a region — the budget, the standard, and the partners who keep them working.
         room: Decides what every studio in the region must be capable of, funds it, and holds vendor teams to it. Answerable for a room in São Paulo behaving exactly like a room in the Bay Area, so a traveling executive program never has to care which one it landed in.
         reads-title: Workplace tech manager
+        zone: program
+        visibility: invisible
+        consequence: Each room drifts to its own standard. Crew stop being able to move between rooms without a re-learn, and every vendor quotes against a different baseline.
       - id: pm
         title: Program Management
         short: Program Mgmt
@@ -17,6 +98,9 @@ departments:
         what: Owns the portfolio of programs rather than any single show.
         room: Intake criteria, scheduling across venues, staffing models, vendor contracts, and a budget that spans a year of events instead of one night.
         reads-title: Program manager
+        zone: program
+        visibility: delayed
+        consequence: Events collide. Two studios want the same crew on the same Thursday and the tiebreak becomes seniority rather than stakes.
       - id: tp
         title: Technical Producer
         short: Technical Producer
@@ -24,6 +108,10 @@ departments:
         what: Owns the technical plan for a show, its budget, and the people who execute it.
         room: Turns what the producer wants into gear, crew, lead times, and a number. Present through rehearsal to catch what the plan missed while there is still time to fix it.
         reads-title: Technical PM
+        zone: control
+        visibility: delayed
+        consequence: The plan becomes whatever the caller remembers. Late changes get absorbed rather than costed, so the overage lands on the invoice instead of in a decision.
+        contested: Control room or client table. Sat in control the client is unrepresented; sat at the table the show caller has no partner.
       - id: prod
         title: Producer
         short: Producer
@@ -31,6 +119,9 @@ departments:
         what: Owns the outcome. Decides what the show is and whether it worked.
         room: Sets content and rehearsal priorities, and makes the calls that trade scope against time. Talks to the client, not to the rack.
         reads-title: Product owner
+        zone: client
+        visibility: delayed
+        consequence: Nobody owns the outcome, so scope follows whoever in the room talks loudest. The show runs beautifully and achieves the wrong thing.
       - id: sm
         title: Stage Manager / Show Caller
         short: Show Caller
@@ -38,6 +129,9 @@ departments:
         what: Owns time and sequence once the show is running.
         room: Calls every cue — standby camera two, take two. Holds the entire sequence in their head and communicates continuously without editorializing.
         reads-title: Incident commander
+        zone: control
+        visibility: immediate
+        consequence: The technical director calls their own show while switching it. Transitions slip, standbys vanish, and the first real change request has nowhere to land.
   - name: Audio
     short: Audio
     color: '#2E7A6B'
@@ -49,6 +143,9 @@ departments:
         what: Owns everything anyone hears.
         room: Designs the audio system, sets gain structure, and mixes the show live. One person, one mix, and no second take.
         reads-title: Principal engineer
+        zone: foh
+        visibility: immediate
+        consequence: Ten seconds. Everyone in the building knows.
       - id: a2
         title: A2 — Audio Assistant
         short: A2 Audio Asst
@@ -56,6 +153,9 @@ departments:
         what: The A1's hands in the room.
         room: Mics talent, coordinates wireless frequencies, runs cable, and fixes the problem while the show keeps going around them.
         reads-title: Site reliability eng
+        zone: stage
+        visibility: delayed
+        consequence: Microphone handoffs stop happening. A dead lav stays dead because the only person who can reach it is mixing, and the A1 gets blamed for a staffing decision.
       - id: rf
         title: RF & Comms Coordinator
         short: RF & Comms
@@ -63,6 +163,10 @@ departments:
         what: Owns the spectrum and the intercom.
         room: Coordinates wireless frequencies so nothing steps on anything else, and keeps crew communications working when they matter most.
         reads-title: Network engineer
+        zone: rack
+        visibility: invisible
+        consequence: Works perfectly until it does not. A dropout mid-keynote with nobody who can diagnose spectrum live, and the post-mortem concludes the microphone was bad.
+        contested: No fixed seat at all. Spectrum in the rack, antennas in the room, body on stage.
   - name: Video
     short: Video
     color: '#D89A2C'
@@ -74,6 +178,9 @@ departments:
         what: Executes the show live on the switcher.
         room: Every cut and every transition, in real time, on the producer's call. There is no undo.
         reads-title: Release engineer
+        zone: control
+        visibility: immediate
+        consequence: There is no show. The one seat whose absence is unarguable, which is why it is the easiest to fund and the worst proxy for staffing judgement.
       - id: v1
         title: Video Engineer (V1)
         short: Video Eng V1
@@ -81,6 +188,10 @@ departments:
         what: Owns signal integrity.
         room: Shades and matches cameras so ten sources look like one show, and handles routing, formats, and conversion between them.
         reads-title: Platform engineer
+        zone: control
+        visibility: delayed
+        consequence: Cameras drift apart in colour and exposure. Live it reads as slightly off. In the recording the executive is a different person on every angle.
+        contested: Control room or rack room, depending on the build.
       - id: cam
         title: Camera Operator
         short: Camera Op
@@ -88,6 +199,9 @@ departments:
         what: Owns the frame.
         room: Composes and operates, taking direction while anticipating the shot that will be asked for next.
         reads-title: Individual contributor
+        zone: camera
+        visibility: delayed
+        consequence: The shot is locked off and fine, right up until the speaker steps two feet left and delivers the close to an empty frame.
       - id: gfx
         title: Graphics Operator
         short: Graphics Op
@@ -95,6 +209,9 @@ departments:
         what: Owns everything on screen that isn't a camera.
         room: Builds lower thirds, titles, and slide playback, then triggers them live on cue.
         reads-title: Design operations
+        zone: control
+        visibility: immediate
+        consequence: Lower thirds go manual or go away, and the technical director absorbs it while doing two jobs during the only three minutes that matter.
       - id: pb
         title: Playback Operator
         short: Playback Op
@@ -102,6 +219,9 @@ departments:
         what: Rolls recorded content on cue.
         room: Owns the media, its formats, and hitting the frame exactly when the call comes.
         reads-title: Content operations
+        zone: control
+        visibility: immediate
+        consequence: The technical director absorbs the roll. Timing degrades on every cue that follows a video, which is most of them.
   - name: Systems & delivery
     short: Systems
     color: '#47539B'
@@ -113,6 +233,10 @@ departments:
         what: Owns delivery to everyone who isn't in the room.
         room: Encoders, bonded connections, platform endpoints, and the bitrate math that keeps a stream stable for an audience you cannot see.
         reads-title: Infrastructure / SRE
+        zone: control
+        visibility: invisible
+        consequence: The stream dies and the room never finds out. The in-person event is a success and the four thousand people it was actually for saw a spinner.
+        contested: Sits in control, but the failure domain is the rack room.
       - id: ops
         title: Studio Operations
         short: Technical Ops
@@ -120,6 +244,9 @@ departments:
         what: Owns readiness between shows.
         room: Preventative maintenance, spares strategy, and room certification. The unglamorous work that makes it just works true on the day.
         reads-title: Workplace IT ops
+        zone: program
+        visibility: invisible
+        consequence: Nothing fails today. Everything fails in six months, all at once, and it reads as bad luck rather than the predictable result of an unstaffed seat.
       - id: sd
         title: Systems Designer
         short: Systems Designer
@@ -127,6 +254,9 @@ departments:
         what: Designs the room before there is a room.
         room: Signal flow drawings, rack elevations, and as-built documentation. Decides what a space will be capable of for the next decade.
         reads-title: Solutions architect
+        zone: program
+        visibility: invisible
+        consequence: The room is built wrong and nobody finds out for two years. By then it is a capital problem instead of a design decision, at twenty times the cost.
       - id: ld
         title: Lighting Operatot
         short: Lighting Dir
@@ -134,3 +264,6 @@ departments:
         what: Owns what the camera sees.
         room: Designs and operates lighting for the room and for the lens at once — two requirements that routinely disagree.
         reads-title: Specialist domain lead
+        zone: foh
+        visibility: delayed
+        consequence: The room looks fine to the naked eye and wrong on camera. Nobody in the building can tell, because nobody in the building is watching the camera.
