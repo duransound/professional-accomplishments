@@ -1,12 +1,8 @@
 # Cloudflare Pages headers.
 #
-# NOTE: the noindex line below keeps this out of Google while the brand and
-# domain are still being decided. DELETE THOSE TWO LINES AT LAUNCH — leaving
-# them in place means the site never appears in search results, which for a
-# site whose job is "a recruiter googles Ian Duran" would be self-defeating.
+# The X-Robots-Tag noindex line was removed at launch (2026-09-19). The site
+# is now indexable. Do not add it back without deciding to delist the site.
 /*
-  X-Robots-Tag: noindex, nofollow
-
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   X-Frame-Options: SAMEORIGIN

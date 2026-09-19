@@ -1,0 +1,53 @@
+---
+import Base from "../layouts/Base.astro";
+import { site } from "../data/site";
+---
+<Base
+  title="Sheet not in the set"
+  description="That address does not correspond to a sheet on this drawing."
+>
+  <main>
+    <section class="section notfound">
+      <div class="wrap section-grid">
+        <span class="label">404</span>
+        <div class="section-body">
+          <h1>Sheet not in the set.</h1>
+          <p>
+            The address you followed doesn't correspond to a sheet on this
+            drawing. It was either renumbered, or never issued.
+          </p>
+          <p class="notfound__meta label">
+            <span>Drawn by {site.name}</span> <span>· Issued 2026</span>
+            <span>· Rev D</span>
+          </p>
+          <p class="notfound__actions">
+            <a class="plate-btn" href="/">Back to sheet 00</a>
+            <a class="plate-btn" href="/#notes">Read the notes</a>
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+</Base>
+
+<style>
+  /* A 404 is not part of the drawing set, so it carries no sheet number.
+     The counter would otherwise print "Sheet 01" on a page that is, by
+     definition, not one of the sheets. */
+  .notfound > .wrap::before { content: none; }
+
+  .notfound h1 { font-size: clamp(1.75rem, 5vw, 2.125rem); margin: 0; }
+  .notfound p { margin: 0; max-width: 52ch; }
+
+  /* Each field is a token; a label that breaks mid-token reads as a fault. */
+  .notfound__meta { display: flex; flex-wrap: wrap; gap: 0 0.4rem; }
+  .notfound__meta span { white-space: nowrap; }
+
+  .notfound__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 0.5rem;
+  }
+  .notfound__actions .plate-btn { text-decoration: none; }
+</style>
