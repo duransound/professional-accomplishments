@@ -12,12 +12,49 @@ roleTechnology: Technical program & workplace technology
 projectsIntro: Demo projects, published whole rather than as extracts. The data is sample data; the methods are the ones I use.
 pitch: If you're building something where rooms, vendors, and executive programs all have to work at once — I'd like to hear about it.
 
+# The "Work with me" sheet, right after Projects. layout: both shows two
+# equal sides (companies first, then hiring teams); layout: roles puts hiring
+# first with the engagements in a quieter box underneath. Delete the whole block and
+# the sheet disappears. `subject` is the email subject line the button fills
+# in, so you can tell at a glance where a message came from.
+hire:
+  layout: roles
+  label: Looking for
+  heading: Full-time or contract roles running live events, studios, and the AV programs behind them.
+  rolesTitle: For hiring teams
+  offersButton: Start a project conversation
+  offersSubject: A project for Ian Duran
+  roles:
+    - title: AV & events technology
+      line: Owning studios, executive events and all-hands — the rooms, the standard, and the vendors who keep them working.
+    - title: Production & technical programs
+      line: Running a show or a program end to end, from scope and budget to the call on the day.
+    - title: Creative production & account management
+      line: The client side of the same work — shaping what gets made and keeping the relationship healthy.
+  note: San Francisco Bay Area. Open to full-time, contract, and temporary roles.
+  button: Email me about a role
+  subject: A role for Ian Duran
+  # The company offers are parked for now: showOffers: true brings them back.
+  showOffers: false
+  offersTitle: Also taking short engagements
+  offers:
+    - title: Room readiness program
+      line: Weekly room walkthroughs and a live dashboard, so problems surface before a show does.
+      subject: Room readiness program
+      href: /projects/room-readiness-dashboard/
+    - title: Show calling & technical producing
+      line: Calling or technical-producing executive events and all-hands, by the day or by the event.
+      subject: Show calling
+    - title: Room & vendor audit
+      line: A one-time look at your rooms and AV partners, ending in findings and a plan.
+      subject: Room and vendor audit
+
 # The status lamp in the masthead. Optional — delete the whole block and the
 # lamp disappears rather than showing an empty line. The month is shown beside
 # it on purpose: a "now" line with no date quietly becomes a lie, and a visible
 # stale date is better than an invisible one.
 now:
   label: Now
-  text: Publishing a room-readiness dashboard demo and a second edition of the crew map.
-  href: /projects/room-readiness-dashboard/
+  text: Two demo projects are live — a room-readiness dashboard and a crew map.
+  href: /#projects
   updated: 2026-09-21

@@ -1,0 +1,160 @@
+---
+/**
+ * The "Looking for" sheet — sits right after Projects, so a hiring manager
+ * who has just seen the work finds out what I want next, and how to say so.
+ *
+ * Roles first, for hiring managers. Short engagements second and quieter,
+ * for the companies that would rather borrow the skill than hire it. Every
+ * button is a plain mailto with the subject filled in: nothing to maintain,
+ * and each message arrives already saying where it came from.
+ *
+ * All words live in site.yaml › hire and can be edited on the page.
+ */
+import { site } from "../data/site";
+import { ed } from "../edit/attrs";
+
+const h = site.hire;
+const mail = (subject: string) => `mailto:${site.email}?subject=${encodeURIComponent(subject)}`;
+---
+{h && h.layout === "both" && (
+  <section class="section" id="looking-for">
+    <div class="wrap section-grid">
+      <div class="label" {...ed("site.yaml", "hire.label")}>{h.label}</div>
+      <div class="section-body">
+        <h2 {...ed("site.yaml", "hire.heading")}>{h.heading}</h2>
+        <div class="doors">
+          <div class="door">
+            {h.offersTitle && <div class="label door-k" {...ed("site.yaml", "hire.offersTitle")}>{h.offersTitle}</div>}
+            <ul class="items">
+              {h.offers.map((o, i) => (
+                <li>
+                  <h3 {...ed("site.yaml", `hire.offers.${i}.title`)}>{o.title}</h3>
+                  <p {...ed("site.yaml", `hire.offers.${i}.line`)}>{o.line}</p>
+                  {o.href && <a class="demo-link" href={o.href}>See the demo</a>}
+                </li>
+              ))}
+            </ul>
+            {h.offersButton && (
+              <a class="plate-btn on" href={mail(h.offersSubject ?? h.offersButton)}><span {...ed("site.yaml", "hire.offersButton")}>{h.offersButton}</span> →</a>
+            )}
+          </div>
+          <div class="door">
+            {h.rolesTitle && <div class="label door-k" {...ed("site.yaml", "hire.rolesTitle")}>{h.rolesTitle}</div>}
+            <ul class="items">
+              {h.roles.map((r, i) => (
+                <li>
+                  <h3 {...ed("site.yaml", `hire.roles.${i}.title`)}>{r.title}</h3>
+                  <p {...ed("site.yaml", `hire.roles.${i}.line`)}>{r.line}</p>
+                </li>
+              ))}
+            </ul>
+            {h.note && <p class="note" {...ed("site.yaml", "hire.note")}>{h.note}</p>}
+            <a class="plate-btn on" href={mail(h.subject)}><span {...ed("site.yaml", "hire.button")}>{h.button}</span> →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+)}
+
+{h && h.layout !== "both" && (
+  <section class="section" id="looking-for">
+    <div class="wrap section-grid">
+      <div class="label" {...ed("site.yaml", "hire.label")}>{h.label}</div>
+      <div class="section-body">
+        <h2 {...ed("site.yaml", "hire.heading")}>{h.heading}</h2>
+
+        <ol class="roles">
+          {h.roles.map((r, i) => (
+            <li>
+              <span class="n">{String(i + 1).padStart(2, "0")}</span>
+              <div>
+                <h3 {...ed("site.yaml", `hire.roles.${i}.title`)}>{r.title}</h3>
+                <p {...ed("site.yaml", `hire.roles.${i}.line`)}>{r.line}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+
+        <div class="ask">
+          <a class="plate-btn on" href={mail(h.subject)}><span {...ed("site.yaml", "hire.button")}>{h.button}</span> →</a>
+          {h.note && <p class="note" {...ed("site.yaml", "hire.note")}>{h.note}</p>}
+        </div>
+
+        {h.showOffers && h.offers.length > 0 && (
+          <div class="offers">
+            {h.offersTitle && <div class="label" {...ed("site.yaml", "hire.offersTitle")}>{h.offersTitle}</div>}
+            <ul>
+              {h.offers.map((o, i) => (
+                <li>
+                  <h4 {...ed("site.yaml", `hire.offers.${i}.title`)}>{o.title}</h4>
+                  <p {...ed("site.yaml", `hire.offers.${i}.line`)}>{o.line}</p>
+                  <span class="links">
+                    <a href={mail(o.subject)}>Ask about this</a>
+                    {o.href && <a href={o.href}>See the demo</a>}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    </div>
+  </section>
+)}
+
+<style>
+  h2 { font-size: clamp(1.35rem, 3.2vw, 1.85rem); line-height: 1.15; letter-spacing: -0.02em; max-width: 30ch; }
+
+  .roles { list-style: none; margin: 0; padding: 0; border-top: var(--lw-key) solid var(--ink); }
+  .roles li {
+    display: grid; grid-template-columns: 2.6rem minmax(0, 1fr); gap: 0.2rem 1rem;
+    padding: 0.95rem 0; border-bottom: var(--lw-thin) solid var(--rule);
+  }
+  .n {
+    font-family: var(--f-mono); font-weight: 500; font-size: 0.75rem;
+    color: var(--tally); letter-spacing: 0.08em; padding-top: 0.2rem;
+  }
+  .roles h3 { font-size: 1.125rem; letter-spacing: -0.01em; }
+  .roles p { margin: 0.25rem 0 0; color: var(--ink-mid); font-size: 0.9688rem; max-width: 60ch; }
+
+  .ask { display: flex; flex-wrap: wrap; align-items: center; gap: 0.8rem 1.4rem; }
+  .ask .plate-btn { text-decoration: none; }
+  .plate-btn.on { background: var(--tally); color: var(--paper); }
+  .plate-btn.on:hover { color: var(--paper); }
+  .note {
+    margin: 0; font-family: var(--f-mono); font-weight: 500; font-size: 0.6875rem;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-mid);
+  }
+
+  .offers { background: var(--sunk); border: var(--lw-thin) solid var(--rule); padding: 1rem 1.15rem 1.1rem; }
+  .offers > .label { color: var(--ink-mid); margin-bottom: 0.75rem; }
+  .offers ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem 1.5rem; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); }
+  .offers h4 { font-size: 1rem; letter-spacing: -0.01em; }
+  .offers p { margin: 0.3rem 0 0.45rem; color: var(--ink-mid); font-size: 0.9063rem; line-height: 1.5; }
+  .links { display: flex; flex-wrap: wrap; gap: 0.3rem 1rem; }
+  .links a {
+    font-family: var(--f-mono); font-weight: 500; font-size: 0.6875rem;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink);
+  }
+  .links a:hover { color: var(--tally); }
+
+  /* both: two equal doors */
+  .doors { display: grid; gap: var(--plate-gap); grid-template-columns: repeat(auto-fit, minmax(19rem, 1fr)); }
+  .door {
+    display: flex; flex-direction: column; align-items: flex-start; gap: 0.9rem;
+    background: var(--surface); border: var(--lw-key) solid var(--ink);
+    padding: clamp(1rem, 2.6vw, 1.4rem);
+  }
+  .door-k { background: var(--ink); color: var(--paper); padding: 0.3rem 0.55rem 0.26rem; }
+  .items { list-style: none; margin: 0; padding: 0; width: 100%; border-top: var(--lw-thin) solid var(--rule); flex: 1; }
+  .items li { padding: 0.75rem 0; border-bottom: var(--lw-thin) solid var(--rule); }
+  .items h3 { font-size: 1.0625rem; letter-spacing: -0.01em; }
+  .items p { margin: 0.25rem 0 0; color: var(--ink-mid); font-size: 0.9375rem; line-height: 1.5; }
+  .demo-link {
+    display: inline-block; margin-top: 0.35rem;
+    font-family: var(--f-mono); font-weight: 500; font-size: 0.6875rem;
+    letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink);
+  }
+  .door .plate-btn { text-decoration: none; }
+</style>

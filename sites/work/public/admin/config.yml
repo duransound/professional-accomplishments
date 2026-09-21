@@ -376,6 +376,38 @@ collections:
             hint: Shown by search engines and when the link is shared. Two sentences.
           - { name: projectsIntro, label: Line above the project cards, widget: text, required: false }
           - { name: pitch, label: Contact sentence, widget: text, required: false }
+          - name: hire
+            label: Looking for
+            widget: object
+            required: false
+            collapsed: true
+            fields:
+              - { name: layout, label: Layout, widget: select, options: [roles, both], default: roles, hint: 'roles = hiring first; both = two equal sides, hiring teams and companies' }
+              - { name: label, label: Sheet label, widget: string }
+              - { name: heading, label: Heading, widget: text }
+              - { name: rolesTitle, label: Hiring side title (both layout), widget: string, required: false }
+              - { name: offersButton, label: Companies button (both layout), widget: string, required: false }
+              - { name: offersSubject, label: Companies email subject (both layout), widget: string, required: false }
+              - name: roles
+                label: Roles
+                widget: list
+                fields:
+                  - { name: title, label: Title, widget: string }
+                  - { name: line, label: One line, widget: text }
+              - { name: note, label: Note, widget: string, required: false }
+              - { name: button, label: Button text, widget: string }
+              - { name: subject, label: Email subject, widget: string }
+              - { name: showOffers, label: Show the company offers, widget: boolean, default: true, required: false }
+              - { name: offersTitle, label: Offers heading, widget: string, required: false }
+              - name: offers
+                label: Short engagements
+                widget: list
+                required: false
+                fields:
+                  - { name: title, label: Title, widget: string }
+                  - { name: line, label: One line, widget: text }
+                  - { name: subject, label: Email subject, widget: string }
+                  - { name: href, label: Example link, widget: string, required: false }
           - name: now
             label: Status lamp — what you are working on
             widget: object

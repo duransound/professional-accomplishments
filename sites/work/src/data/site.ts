@@ -22,6 +22,37 @@ const schema = z.object({
   tagline: required("A tagline"),
   projectsIntro: z.string().optional(),
   pitch: z.string().optional(),
+  /** The "Looking for" sheet. Optional in full: no block, no sheet. */
+  hire: z
+    .object({
+      /** roles = hiring first, engagements in a quieter box underneath.
+       *  both  = two equal doors side by side: companies first, hiring teams second. */
+      layout: z.enum(["roles", "both"], { errorMap: () => ({ message: 'must be "roles" or "both"' }) }).default("roles"),
+      label: required("A sheet label"),
+      rolesTitle: z.string().optional(),
+      offersButton: z.string().optional(),
+      offersSubject: z.string().optional(),
+      heading: required("A heading"),
+      roles: z
+        .array(z.object({ title: required("A role title"), line: required("A one-line description") }))
+        .min(1, { message: "needs at least one role" }),
+      note: z.string().optional(),
+      button: required("The button text"),
+      subject: required("An email subject line"),
+      showOffers: z.boolean().default(true),
+      offersTitle: z.string().optional(),
+      offers: z
+        .array(
+          z.object({
+            title: required("An offer title"),
+            line: required("A one-line description"),
+            subject: required("An email subject line"),
+            href: z.string().optional(),
+          })
+        )
+        .default([]),
+    })
+    .optional(),
   /**
    * The status lamp in the masthead. Optional in full — the component renders
    * nothing when it is absent, so an unmaintained "now" line can be removed
