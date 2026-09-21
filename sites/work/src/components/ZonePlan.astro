@@ -90,7 +90,7 @@ const band: Placed[] = programSeats.map((seat, i) => ({
   y: bandY + 70,
 }));
 
-const code = (s: Seat) => s.id.toUpperCase() + (s.contested ? "*" : "");
+const code = (s: Seat) => s.id.toUpperCase();
 const markClass = (s: Seat) => `mk ${s.visibility}${s.status === "adjacent" ? " adj" : ""}`;
 const tri = (x: number, y: number) => `${x},${y - 8.5} ${x + 8.5},${y + 6} ${x - 8.5},${y + 6}`;
 const vis = (v: Visibility) => ({ immediate: "noticed immediately", delayed: "noticed later", invisible: "not noticed on the day" })[v];

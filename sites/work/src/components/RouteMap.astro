@@ -73,14 +73,6 @@ const lines = depts.map((dept, i) => {
 
         <div data-view="room">
           <ZonePlan />
-          <div class="legend">
-            {(["immediate", "delayed", "invisible"] as const).map((v) => (
-              <span><i class={`vk ${v}`} aria-hidden="true">{mark[v]}</i><span {...ed("crew.yaml", `page.visibility.${v}`)}>{visibilityLabel[v]}</span> · {visibilityCount[v]}</span>
-            ))}
-            <span class="lg-sep" aria-hidden="true"></span>
-            <span {...lb("solidHollow")}>{L.solidHollow}</span>
-            <span>* <span {...lb("contestedKey")}>{L.contestedKey}</span></span>
-          </div>
         </div>
 
         <div data-view="dept" hidden>
