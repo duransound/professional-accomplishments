@@ -7,6 +7,7 @@ import Footer from "../../components/Footer.astro";
 import FailureBars from "../../components/FailureBars.astro";
 import TrendCharts from "../../components/TrendCharts.astro";
 import RoomGrid from "../../components/RoomGrid.astro";
+import WalkthroughDemo from "../../components/WalkthroughDemo.astro";
 import Blocks from "../../components/Blocks.astro";
 import EditMode from "../../components/EditMode.astro";
 import { site } from "../../data/site";
@@ -52,6 +53,7 @@ const blocks = {
   pattern: await vb(doc.Pattern!.blocks),
   plan: await vb(doc.Plan!.blocks),
   limits: await vb(doc.Limits!.blocks),
+  walkthrough: doc.Walkthrough ? await vb(doc.Walkthrough.blocks) : [],
 };
 
 const issues = await Promise.all(
@@ -79,6 +81,7 @@ const critRooms = study.rooms.filter((r) => r.critical > 0).length;
 const H = {
   summary: "This week",
   trend: "{{weeks}} weeks of walkthroughs",
+  walkthrough: "What the technician sees",
   method: "How scoring works",
   scorecard: "Every room, worst first",
   findings: "{{findings}} open issues",
@@ -215,6 +218,36 @@ const signed = (n: number) => (n > 0 ? `+${n}` : String(n));
         </div>
       </div>
     </section>
+
+    {study.walkthrough && (
+      <section class="section">
+        <div class="wrap section-grid">
+          <div class="label">Input</div>
+          <div class="section-body">
+            <h2 data-edit={E("fm:headings.walkthrough")} data-mode={M} set:html={t(H.walkthrough)} />
+            <div class="walk-row">
+              <WalkthroughDemo
+                room={study.walkthrough.room}
+                roomUse={study.walkthrough.roomUse}
+                tech={study.walkthrough.tech}
+                pass={study.walkthrough.pass}
+                target={study.target}
+                checks={study.walkthrough.checks.map((c, i) => ({
+                  ...c, i, labelHtml: t(c.label), editAddr: E(`fm:walkthrough.checks.${i}.label`),
+                }))}
+              />
+              <div class="walk-side">
+                <div class="md"><Blocks blocks={blocks.walkthrough} edit={EDIT} /></div>
+                <p class="walk-note label">
+                  Showing {study.walkthrough.checks.length} of {study.walkthrough.of} checks ·
+                  the full list stays with the engagement · nothing here saves
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    )}
 
     <section class="section">
       <div class="wrap section-grid">
@@ -422,6 +455,12 @@ const signed = (n: number) => (n > 0 ? `+${n}` : String(n));
   .eff { font-family: var(--f-mono); font-weight: 500; font-size: 0.6875rem; color: var(--ink-mid); white-space: nowrap; }
 
   .colophon { color: var(--ink-mid); }
+
+  /* input demo */
+  .walk-row { display: grid; grid-template-columns: minmax(0, 23rem) minmax(0, 1fr); gap: clamp(1.25rem, 3vw, 2.5rem); align-items: start; }
+  .walk-side { display: flex; flex-direction: column; gap: 1rem; padding-top: 0.2rem; }
+  .walk-note { color: var(--ink-mid); line-height: 1.7; }
+  @media (max-width: 48rem) { .walk-row { grid-template-columns: minmax(0, 1fr); } }
 
   /* Markdown from the body arrives unscoped, so it is styled through :global. */
   .md { display: flex; flex-direction: column; gap: 1rem; }

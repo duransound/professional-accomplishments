@@ -86,7 +86,7 @@ const caseStudies = defineCollection({
     // and the page uses its default wording.
     headings: z
       .object({
-        summary: z.string(), trend: z.string(), method: z.string(), scorecard: z.string(),
+        summary: z.string(), trend: z.string(), walkthrough: z.string(), method: z.string(), scorecard: z.string(),
         findings: z.string(), plan: z.string(), limits: z.string(),
       })
       .partial()
@@ -104,6 +104,30 @@ const caseStudies = defineCollection({
       )
       .min(1),
     trendCaption: z.string().min(1),
+    // The technician's view. A sample of real checks for the demo; optional.
+    walkthrough: z
+      .object({
+        room: z.string().min(1),
+        roomUse: z.string().min(1),
+        tech: z.string().min(1),
+        pass: z.string().min(1),
+        of: z.number().int().min(1),
+        checks: z
+          .array(
+            z.object({
+              area: z.string().min(1),
+              weight: z.number().min(1),
+              label: z.string().min(1),
+              critical: z.boolean().default(false),
+              state: z.enum(["pass", "flag", "fail", "na"], {
+                errorMap: () => ({ message: "must be exactly one of: pass, flag, fail, na — or leave it out for unanswered" }),
+              }).optional(),
+              note: z.string().optional(),
+            })
+          )
+          .min(1),
+      })
+      .optional(),
     chartTitle: z.string().min(1),
     chartCaption: z.string().min(1),
     chart: z

@@ -12,7 +12,8 @@ import { applyBodyEdits } from "../data/md-blocks";
 const FM_ALLOWED = new RegExp(
   "^(" + [
     "title", "dek", "summaryLine", "chartTitle", "chartCaption", "trendCaption", "instrumentNote",
-    "headings\\.(summary|trend|method|scorecard|findings|plan|limits)",
+    "headings\\.(summary|trend|walkthrough|method|scorecard|findings|plan|limits)",
+    "walkthrough\\.checks\\.\\d+\\.label",
     "findings\\.\\d+\\.(problem|fix)",
     "statuses\\.\\d+\\.rule",
     "plan\\.\\d+\\.(title|when)",

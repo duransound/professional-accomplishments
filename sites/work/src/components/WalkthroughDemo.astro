@@ -1,0 +1,258 @@
+---
+/**
+ * The technician's side of the dashboard — a working demo that saves nothing.
+ *
+ * Rendered in full on the server, including the starting answers and the
+ * score they produce, so the page reads correctly with JavaScript off. The
+ * script only changes which button is pressed and recomputes the readout from
+ * the data attributes, using the same rules as scoreWalk() in
+ * src/data/case-studies.ts. No check text lives in the script.
+ */
+import { scoreWalk, statusMark, statusLabel, type WalkState } from "../data/case-studies";
+
+interface Check {
+  i: number; area: string; weight: number; labelHtml: string; editAddr?: string;
+  critical: boolean; state?: WalkState; note?: string;
+}
+interface Props {
+  room: string; roomUse: string; tech: string; pass: string; target: number; checks: Check[];
+}
+const { room, roomUse, tech, pass, target, checks } = Astro.props;
+const r = scoreWalk(checks, target);
+
+// consecutive checks in the same area share one header
+const groups: { area: string; weight: number; checks: Check[] }[] = [];
+for (const c of checks) {
+  const g = groups[groups.length - 1];
+  if (g && g.area === c.area) g.checks.push(c);
+  else groups.push({ area: c.area, weight: c.weight, checks: [c] });
+}
+const STATES: { v: WalkState; label: string }[] = [
+  { v: "pass", label: "Pass" }, { v: "flag", label: "Flag" }, { v: "fail", label: "Fail" }, { v: "na", label: "N/A" },
+];
+const pct = (n: number) => `${Math.round((100 * n) / checks.length)}%`;
+---
+<div class="phone" data-walk data-target={target}>
+  <div class="ph-head">
+    <div>
+      <p class="ph-room">{room} <span>· {roomUse}</span></p>
+      <p class="ph-sub">{pass} · {tech}</p>
+    </div>
+    <span class="ph-count" data-count>{r.answered} / {checks.length}</span>
+  </div>
+  <div class="ph-prog" aria-hidden="true"><i data-prog style={`width:${pct(r.answered)}`}></i></div>
+
+  <div class="ph-read" aria-live="polite">
+    <span class="rd-k">Score</span>
+    <span class="rd-score" data-score>{r.score ?? "—"}</span>
+    <span class={`rs ${r.status ?? "none"}`} data-status>
+      {r.status ? <><i>{statusMark[r.status]}</i>{statusLabel[r.status]}</> : "Not scored"}
+    </span>
+    <span class="rd-crit" data-crit>{r.critFails ? `${r.critFails} show-critical fail${r.critFails === 1 ? "" : "s"}` : ""}</span>
+  </div>
+
+  <div class="ph-body" data-form>
+    {groups.map((g) => (
+      <div class="grp">
+        <p class="grp-h"><span>{g.area}</span><span class="wt">×{g.weight}</span></p>
+        {g.checks.map((c) => (
+          <div class="chk" data-check data-weight={c.weight} data-crit={c.critical ? "1" : "0"} data-state={c.state ?? ""}>
+            <p class="chk-l">
+              {c.critical && <b class="crit" title="Fail this and the room is Down">Show-critical</b>}
+              <span data-label data-edit={c.editAddr} data-mode={c.editAddr ? "inline" : undefined} set:html={c.labelHtml} />
+            </p>
+            <div class="btns" role="group" aria-label="Result">
+              {STATES.map((s) => (
+                <button type="button" class={s.v} data-set={s.v} aria-pressed={c.state === s.v ? "true" : "false"}>{s.label}</button>
+              ))}
+            </div>
+            <textarea
+              class="note" rows="2" aria-label="Note"
+              placeholder="What did you see?"
+              hidden={!(c.state === "flag" || c.state === "fail")}
+            >{c.note ?? ""}</textarea>
+          </div>
+        ))}
+      </div>
+    ))}
+  </div>
+
+  <div class="ph-result" data-result hidden>
+    <p class="res-h">Walkthrough submitted</p>
+    <p class="res-line"><span data-res-score></span></p>
+    <ul class="res-list" data-res-list></ul>
+    <p class="res-note">
+      On the real board this would now update the room's tile, the open faults,
+      the trend and coverage. This demo doesn't save anything.
+    </p>
+  </div>
+
+  <div class="ph-foot">
+    <button type="button" class="plate-btn" data-reset>Reset demo</button>
+    <button type="button" class="plate-btn go" data-submit>Submit</button>
+  </div>
+</div>
+
+<script>
+  type S = "" | "pass" | "flag" | "fail" | "na";
+  const MARK: Record<string, string> = { down: "■", watch: "▲", ready: "●" };
+  const WORD: Record<string, string> = { down: "Down", watch: "Watch", ready: "Ready" };
+
+  for (const root of document.querySelectorAll<HTMLElement>("[data-walk]")) {
+    const target = Number(root.dataset.target);
+    const items = [...root.querySelectorAll<HTMLElement>("[data-check]")];
+    const start = items.map((it) => ({ state: (it.dataset.state ?? "") as S, note: it.querySelector("textarea")?.value ?? "" }));
+    const q = <T extends Element>(sel: string) => root.querySelector<T>(sel)!;
+    const form = q<HTMLElement>("[data-form]"), result = q<HTMLElement>("[data-result]");
+    const submit = q<HTMLButtonElement>("[data-submit]");
+
+    // Same rules as scoreWalk() on the server.
+    function score() {
+      let num = 0, den = 0, answered = 0, critFails = 0, fails = 0;
+      for (const it of items) {
+        const s = (it.dataset.state ?? "") as S;
+        if (!s) continue;
+        answered++;
+        if (s === "na") continue;
+        const w = Number(it.dataset.weight);
+        num += w * (s === "pass" ? 1 : s === "flag" ? 0.5 : 0);
+        den += w;
+        if (s === "fail") { fails++; if (it.dataset.crit === "1") critFails++; }
+      }
+      const sc = den ? Math.round((100 * num) / den) : null;
+      const st = sc === null ? null : critFails || sc < 70 ? "down" : fails || sc < target ? "watch" : "ready";
+      return { sc, st, answered, critFails };
+    }
+
+    function paint() {
+      const r = score();
+      q<HTMLElement>("[data-count]").textContent = `${r.answered} / ${items.length}`;
+      q<HTMLElement>("[data-prog]").style.width = `${Math.round((100 * r.answered) / items.length)}%`;
+      q<HTMLElement>("[data-score]").textContent = r.sc === null ? "—" : String(r.sc);
+      const chip = q<HTMLElement>("[data-status]");
+      chip.className = `rs ${r.st ?? "none"}`;
+      chip.innerHTML = r.st ? `<i>${MARK[r.st]}</i>${WORD[r.st]}` : "Not scored";
+      q<HTMLElement>("[data-crit]").textContent = r.critFails ? `${r.critFails} show-critical fail${r.critFails === 1 ? "" : "s"}` : "";
+      submit.disabled = r.answered === 0;
+    }
+
+    function set(it: HTMLElement, s: S) {
+      it.dataset.state = s;
+      it.querySelectorAll<HTMLButtonElement>("[data-set]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.set === s)));
+      const note = it.querySelector<HTMLTextAreaElement>("textarea")!;
+      note.hidden = !(s === "flag" || s === "fail");
+    }
+
+    root.addEventListener("click", (e) => {
+      const b = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-set]");
+      if (!b || !root.contains(b)) return;
+      const it = b.closest<HTMLElement>("[data-check]")!;
+      const v = b.dataset.set as S;
+      set(it, it.dataset.state === v ? "" : v); // tap again to clear
+      if (v === "flag" || v === "fail") it.querySelector<HTMLTextAreaElement>("textarea")!.focus({ preventScroll: true });
+      paint();
+    });
+
+    submit.addEventListener("click", () => {
+      const r = score();
+      q<HTMLElement>("[data-res-score]").textContent =
+        `${root.querySelector(".ph-room")!.childNodes[0]!.textContent!.trim()} scored ${r.sc ?? "—"} — ${r.st ? WORD[r.st] : "not scored"}`;
+      const list = q<HTMLUListElement>("[data-res-list]");
+      list.replaceChildren();
+      for (const it of items) {
+        const s = it.dataset.state;
+        if (s !== "fail" && s !== "flag") continue;
+        const li = document.createElement("li");
+        const tag = document.createElement("b");
+        tag.className = s === "fail" ? "t-fail" : "t-flag";
+        tag.textContent = s === "fail" ? "Fail" : "Flag";
+        const label = document.createElement("span");
+        label.textContent = it.querySelector("[data-label]")!.textContent ?? "";
+        li.append(tag, label);
+        const note = it.querySelector("textarea")!.value.trim();
+        if (note) { const n = document.createElement("em"); n.textContent = note; li.append(n); }
+        list.append(li);
+      }
+      if (!list.children.length) {
+        const li = document.createElement("li"); li.textContent = "Nothing flagged or failed."; list.append(li);
+      }
+      form.hidden = true; result.hidden = false; submit.hidden = true;
+    });
+
+    q<HTMLButtonElement>("[data-reset]").addEventListener("click", () => {
+      items.forEach((it, k) => { set(it, start[k]!.state); it.querySelector("textarea")!.value = start[k]!.note; });
+      form.hidden = false; result.hidden = true; submit.hidden = false;
+      paint();
+    });
+  }
+</script>
+
+<style>
+  .phone {
+    width: 100%; max-width: 23rem; background: var(--paper);
+    border: var(--lw-edge) solid var(--ink); box-shadow: var(--lift);
+    display: flex; flex-direction: column;
+  }
+  .ph-head { background: var(--ink); color: var(--paper); padding: 0.75rem 0.9rem; display: flex; justify-content: space-between; align-items: flex-start; gap: 0.6rem; }
+  .ph-room { margin: 0; font-family: var(--f-display); font-weight: 700; font-size: 1.05rem; letter-spacing: -0.01em; }
+  .ph-room span { font-weight: 500; opacity: 0.75; }
+  .ph-sub, .ph-count { margin: 0.15rem 0 0; font-family: var(--f-mono); font-weight: 500; font-size: 0.5625rem; letter-spacing: 0.12em; text-transform: uppercase; opacity: 0.75; }
+  .ph-count { margin: 0; opacity: 1; font-variant-numeric: tabular-nums; }
+  .ph-prog { height: 6px; background: var(--sunk); border-bottom: var(--lw-thin) solid var(--ink); }
+  .ph-prog i { display: block; height: 100%; background: var(--tally); transition: width 120ms steps(3, end); }
+
+  .ph-read { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.35rem 0.6rem; padding: 0.65rem 0.9rem; border-bottom: var(--lw-thin) solid var(--rule); background: var(--surface); }
+  .rd-k { font-family: var(--f-mono); font-weight: 500; font-size: 0.5625rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-mid); }
+  .rd-score { font-family: var(--f-mono); font-weight: 500; font-size: 1.6rem; line-height: 1; font-variant-numeric: tabular-nums; }
+  .rd-crit { flex-basis: 100%; font-family: var(--f-mono); font-weight: 500; font-size: 0.625rem; color: var(--tally); }
+  .rd-crit:empty { display: none; }
+  .rs { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.1rem 0.45rem 0.06rem; font-family: var(--f-mono); font-weight: 500; font-size: 0.5625rem; letter-spacing: 0.12em; text-transform: uppercase; }
+  .rs :global(i) { font-style: normal; font-size: 0.625rem; line-height: 1; }
+  .rs.down { background: var(--tally); color: var(--paper); }
+  .rs.watch { background: var(--tally-wash); color: var(--ink); box-shadow: inset 0 0 0 var(--lw-thin) var(--tally); }
+  .rs.ready { background: var(--held); color: var(--paper); }
+  .rs.none { color: var(--ink-mid); box-shadow: inset 0 0 0 var(--lw-thin) var(--rule); }
+
+  .ph-body { padding: 0.2rem 0.9rem 0.6rem; max-height: 30rem; overflow-y: auto; }
+  .ph-body[hidden] { display: none; }
+  .grp-h { position: sticky; top: 0; z-index: 1; display: flex; justify-content: space-between; margin: 0; padding: 0.6rem 0 0.4rem;
+    background: var(--paper); border-bottom: var(--lw-rule) solid var(--ink);
+    font-family: var(--f-mono); font-weight: 500; font-size: 0.5625rem; letter-spacing: 0.14em; text-transform: uppercase; }
+  .grp-h .wt { color: var(--ink-mid); }
+  .chk { padding: 0.65rem 0; border-bottom: var(--lw-hair) solid var(--rule); }
+  .chk:last-child { border-bottom: 0; }
+  .chk-l { margin: 0 0 0.5rem; font-size: 0.9375rem; line-height: 1.35; display: flex; flex-direction: column; gap: 0.3rem; align-items: flex-start; }
+  .crit { font-family: var(--f-mono); font-weight: 500; font-size: 0.5rem; letter-spacing: 0.12em; text-transform: uppercase; background: var(--tally); color: var(--paper); padding: 0.1rem 0.35rem 0.06rem; }
+  .btns { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.35rem; }
+  .btns button {
+    min-height: 2.75rem; cursor: pointer; border: var(--lw-thin) solid var(--ink); background: var(--surface); color: var(--ink-mid);
+    font-family: var(--f-mono); font-weight: 500; font-size: 0.625rem; letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  .btns button:hover { background: var(--sunk); color: var(--ink); }
+  .btns button[aria-pressed="true"] { box-shadow: 2px 2px 0 var(--ink); color: var(--ink); }
+  .btns .pass[aria-pressed="true"] { background: var(--held); color: var(--paper); }
+  .btns .flag[aria-pressed="true"] { background: var(--tally-wash); box-shadow: inset 0 0 0 var(--lw-thin) var(--tally), 2px 2px 0 var(--ink); }
+  .btns .fail[aria-pressed="true"] { background: var(--tally); color: var(--paper); }
+  .btns .na[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+  .note { width: 100%; margin-top: 0.5rem; font-family: var(--f-body); font-size: 0.9375rem; line-height: 1.4; color: var(--ink);
+    background: var(--surface); border: var(--lw-thin) solid var(--ink); border-radius: 0; padding: 0.45rem 0.55rem; resize: vertical; }
+  .note[hidden] { display: none; }
+  .note:focus { outline: 2px solid var(--focus); outline-offset: -1px; }
+
+  .ph-result { padding: 0.9rem; display: flex; flex-direction: column; gap: 0.6rem; }
+  .ph-result[hidden] { display: none; }
+  .res-h { margin: 0; font-family: var(--f-display); font-weight: 700; font-size: 1.05rem; }
+  .res-line { margin: 0; font-family: var(--f-mono); font-weight: 500; font-size: 0.8125rem; }
+  .res-list { list-style: none; margin: 0; padding: 0; border-top: var(--lw-hair) solid var(--rule); }
+  .res-list :global(li) { padding: 0.5rem 0; border-bottom: var(--lw-hair) solid var(--rule); font-size: 0.875rem; display: flex; flex-wrap: wrap; gap: 0.3rem 0.5rem; align-items: baseline; }
+  .res-list :global(b) { font-family: var(--f-mono); font-weight: 500; font-size: 0.5rem; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.1rem 0.35rem; }
+  .res-list :global(.t-fail) { background: var(--tally); color: var(--paper); }
+  .res-list :global(.t-flag) { background: var(--tally-wash); box-shadow: inset 0 0 0 var(--lw-thin) var(--tally); }
+  .res-list :global(em) { flex-basis: 100%; color: var(--ink-mid); font-size: 0.8125rem; }
+  .res-note { margin: 0; font-size: 0.8125rem; color: var(--ink-mid); }
+
+  .ph-foot { display: flex; justify-content: space-between; gap: 0.6rem; padding: 0.7rem 0.9rem; border-top: var(--lw-rule) solid var(--ink); background: var(--sunk); }
+  .ph-foot .go { background: var(--tally); color: var(--paper); }
+  .ph-foot .go[disabled] { opacity: 0.5; cursor: not-allowed; }
+  .ph-foot [hidden] { display: none; }
+</style>

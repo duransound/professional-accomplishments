@@ -29,6 +29,7 @@ headings:
   scorecard: "Fleet"
   findings: "{{findings}} open issues"
   plan: "Next steps"
+  walkthrough: "What the technician sees"
   method: "How scoring works"
   limits: "What this doesn't cover"
 
@@ -80,6 +81,25 @@ findings:
   - {ref: F-04, severity: high, rooms: [A-110, B-120, A-305, B-320, A-215, A-240, B-205, B-410, A-402], problem: "The Presenter preset frames an empty podium or a wall. Furniture moved; presets didn't.", fix: "Reset and relabel them, and check presets on the monthly walkthrough.", effort: "2½ days"}
   - {ref: F-05, severity: medium, rooms: all, problem: "Four different firmware versions across fourteen rooms. The monitoring tool shows it; nobody owns reading it.", fix: "One version for every room, and make the monthly check someone's job.", effort: "1 day"}
   - {ref: F-06, severity: medium, rooms: [B-410, A-402], problem: "B-410 hasn't been walked in twelve days and A-402 in nine. Their old scores are still showing.", fix: "Give every room a named backup walker, and flag anything past seven days.", effort: "Ongoing"}
+
+# The technician's view: a sample of the real checks, answered partway so the
+# first look shows it working. Nothing in the demo saves. weight is the area's
+# multiplier; critical: true means failing it makes the room Down.
+walkthrough:
+  room: "A-305"
+  roomUse: "Boardroom"
+  tech: "Sample technician"
+  pass: "Weekly pass"
+  of: 30
+  checks:
+    - {area: "Display & projection", weight: 3, critical: true, label: "Displays wake and show a source within 30 seconds", state: pass}
+    - {area: "Audio", weight: 3, critical: true, label: "Walk-and-talk: every seat picked up at a usable level", state: pass}
+    - {area: "Audio", weight: 3, label: "No hum or buzz at unity gain", state: pass}
+    - {area: "Camera & capture", weight: 3, critical: true, label: "Camera presets carry zoom and position as saved.", state: flag, note: "Presenter preset frames the wall since the table moved."}
+    - {area: "Control & codec", weight: 3, critical: true, label: "One-touch join completes a test call", state: pass}
+    - {area: "Network & signal path", weight: 2, label: "Every AV endpoint reachable, no packet loss in 24 hours", state: pass}
+    - {area: "Table & peripherals", weight: 2, critical: true, label: "Table connection passes video, audio and USB", state: fail, note: "USB drops after about ten minutes. Camera and mic vanish from the laptop."}
+    - {area: "Room condition", weight: 1, label: "Lighting scenes recall, no lamp out"}
 
 chartTitle: "Where problems cluster"
 chartCaption: "{{topTwoPct}} per cent of all failed or flagged checks sit in two areas. Neither is broken hardware."
@@ -138,6 +158,16 @@ A room at 94 with a broken join button still can't host Thursday's all-hands.
 ## Scorecard
 
 Scores are from each room's latest walkthrough. A room not walked in ten days is marked overdue.
+
+## Walkthrough
+
+This is how the numbers above get made. Once a week a technician walks each room with a phone or laptop:
+
+- Pick the room and your name. The weekly pass is 19 checks, about ten minutes.
+- Tap a result for each check. Flag or fail opens a note, written while you're
+  still standing in the room.
+- Submit. The room's score, its faults and the trend update for everyone
+  watching the dashboard.
 
 ## Findings
 

@@ -28,7 +28,7 @@ export interface StudyData {
   instrumentNote: string;
   rooms: Room[];
   findings: { ref: string; severity: "critical" | "high" | "medium"; rooms: string[] | "all"; problem: string; fix: string; effort?: string }[];
-  headings?: Partial<Record<"summary" | "trend" | "method" | "scorecard" | "findings" | "plan" | "limits", string>>;
+  headings?: Partial<Record<"summary" | "trend" | "walkthrough" | "method" | "scorecard" | "findings" | "plan" | "limits", string>>;
   chartTitle: string; chartCaption: string;
   chart: { name: string; count: number }[];
   plan: { when: string; title: string; capital: boolean; items: { do: string; days?: number; effort?: string }[] }[];
@@ -104,7 +104,9 @@ export function fill(text: string, d: Derived, file: string): string {
 }
 
 export const SECTIONS = ["Summary", "Method", "Scorecard", "Findings", "Pattern", "Plan", "Limits"] as const;
-type SectionName = (typeof SECTIONS)[number];
+/** Sections a case study may include but doesn't have to. */
+export const OPTIONAL_SECTIONS = ["Walkthrough"] as const;
+type SectionName = (typeof SECTIONS)[number] | (typeof OPTIONAL_SECTIONS)[number];
 
 export interface ParsedBody {
   sections: Record<SectionName, string>;
@@ -130,7 +132,7 @@ export function parseBody(body: string, data: StudyData, file: string): ParsedBo
     const nl = chunk.indexOf("\n");
     const name = (nl === -1 ? chunk : chunk.slice(0, nl)).trim();
     const text = nl === -1 ? "" : chunk.slice(nl + 1).trim();
-    if ((SECTIONS as readonly string[]).includes(name)) {
+    if ((SECTIONS as readonly string[]).includes(name) || (OPTIONAL_SECTIONS as readonly string[]).includes(name)) {
       if (found[name as SectionName] !== undefined) problem(file, [`The heading "## ${name}" appears twice.`]);
       found[name as SectionName] = text;
     } else unknown.push(name);
@@ -140,7 +142,7 @@ export function parseBody(body: string, data: StudyData, file: string): ParsedBo
     problem(file, [
       ...(unknown.length ? [`These ## headings aren't sections this page knows: ${unknown.map((u) => `"${u}"`).join(", ")}`] : []),
       ...(missing.length ? [`These sections are missing: ${missing.map((m) => `"## ${m}"`).join(", ")}`] : []),
-      "", `The sections are exactly: ${SECTIONS.join(", ")}. Check the spelling of the heading.`,
+      "", `The sections are: ${SECTIONS.join(", ")}, plus optionally ${OPTIONAL_SECTIONS.join(", ")}. Check the spelling of the heading.`,
     ]);
   }
   const sections = found as Record<SectionName, string>;
@@ -268,4 +270,28 @@ export function checkDashboard(s: StudyData, file: string): void {
     ...badRooms.map((r) => `${r}, which isn't in the rooms list.`),
     ...(badRooms.length ? ["", `The room ids are: ${[...ids].join(", ")}`] : []),
   ]);
+}
+
+/**
+ * One walkthrough, scored exactly the way the real board scores it: pass 1,
+ * flag half, fail 0, each weighted by its area; N/A and unanswered are left
+ * out. A failed show-critical check, or a score under 70, is Down whatever
+ * the average. The demo's script uses the same rules on the same data.
+ */
+export type WalkState = "pass" | "flag" | "fail" | "na";
+export function scoreWalk(checks: { weight: number; critical?: boolean; state?: WalkState }[], target: number) {
+  let num = 0, den = 0, answered = 0, critFails = 0, fails = 0, flags = 0;
+  for (const c of checks) {
+    if (!c.state) continue;
+    answered++;
+    if (c.state === "na") continue;
+    num += c.weight * (c.state === "pass" ? 1 : c.state === "flag" ? 0.5 : 0);
+    den += c.weight;
+    if (c.state === "fail") { fails++; if (c.critical) critFails++; }
+    if (c.state === "flag") flags++;
+  }
+  const score = den ? Math.round((100 * num) / den) : null;
+  const status: RoomStatus | null =
+    score === null ? null : critFails || score < 70 ? "down" : fails || score < target ? "watch" : "ready";
+  return { score, status, answered, total: checks.length, critFails, fails, flags };
 }
