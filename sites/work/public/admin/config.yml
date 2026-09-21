@@ -49,6 +49,43 @@ collections:
               - { name: dek, label: Dek, widget: text }
               - { name: note, label: Demo note, widget: text }
               - { name: intro, label: Intro above the drawing, widget: text }
+              - { name: tally, label: Seats-worked sentence, widget: text, hint: 'Keep the {{total}} {{worked}} {{alongside}} words — they count themselves.' }
+              - { name: thesis, label: Empty-seat sentence, widget: text, hint: 'Keep the {{invisible}} {{total}} words — they count themselves.' }
+              - name: labels
+                label: Small labels
+                widget: object
+                collapsed: true
+                fields:
+                  - { name: groupSeats, label: Switch label, widget: string }
+                  - { name: byRoom, label: Room button, widget: string }
+                  - { name: byDepartment, label: Department button, widget: string }
+                  - { name: solidHollow, label: Solid/hollow key, widget: string }
+                  - { name: contestedKey, label: Contested key, widget: string }
+                  - { name: seatHeld, label: Seat held key, widget: string }
+                  - { name: workedAlongside, label: Worked alongside key, widget: string }
+                  - { name: zoneKey, label: Zone list heading, widget: string }
+                  - { name: inTheRoom, label: Panel — in the room, widget: string }
+                  - { name: where, label: Panel — where, widget: string }
+                  - { name: ifEmpty, label: Panel — if empty, widget: string }
+                  - { name: contested, label: Panel — contested, widget: string }
+                  - { name: noShowDaySeat, label: No show-day seat, widget: string }
+                  - { name: noSeat, label: Empty zone, widget: string }
+              - name: status
+                label: Status names
+                widget: object
+                collapsed: true
+                fields:
+                  - { name: led, label: Led, widget: string }
+                  - { name: held, label: Held, widget: string }
+                  - { name: adjacent, label: Worked alongside, widget: string }
+              - name: visibility
+                label: Visibility names
+                widget: object
+                collapsed: true
+                fields:
+                  - { name: immediate, label: Immediate, widget: string }
+                  - { name: delayed, label: Delayed, widget: string }
+                  - { name: invisible, label: Invisible, widget: string }
           - name: zones
             label: Zones — where a body is during a show
             widget: list

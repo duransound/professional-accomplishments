@@ -1,7 +1,8 @@
 # ---------------------------------------------------------------------------
 # PAGE — the words on /projects/crew-map/ and on its card under Projects.
 # title and summary appear on the card; title, dek and note on the page;
-# intro is the paragraph above the drawing.
+# intro is the paragraph above the drawing. Everything in this block can also
+# be changed on the page itself in edit mode.
 # ---------------------------------------------------------------------------
 page:
   title: All Crew Positions and the one's I've operated
@@ -9,6 +10,40 @@ page:
   dek: A live production crew drawn as a transit map. Each department is a line and every line ends at On Air. Solid stations are seats I've worked; the rest are seats I've worked alongside.
   note: A composite crew, not any one employer's org chart. Which seats I've held and worked alongside is real.
   intro: Production job titles don't travel. Outside this industry almost nobody knows what an A1 does, which makes eleven years of experience hard to read. So here is the room drawn as what it actually is — a signal chain, every seat feeding the same terminus. Throw the switch in the masthead and every station retitles itself.
+
+  # Sentences with counts in them. A word in {{double braces}} is counted from
+  # the seats below and spelled out, so it can never go stale: total, worked,
+  # alongside, invisible, delayed, immediate. In edit mode they show as grey
+  # locked chips — write around them.
+  tally: Of the {{total}} seats below, I have personally worked {{worked}}. The remaining {{alongside}} I have scoped, budgeted, and staffed without ever sitting in the chair.
+  thesis: If this crew were short one person, the empty seat nobody notices is the dangerous one. {{invisible}} of the {{total}} fail where no one in the room can see it — and those are the seats that get cut first.
+
+  # Small labels around the drawing and in the seat panel.
+  labels:
+    groupSeats: Group seats
+    byRoom: By room
+    byDepartment: By department
+    solidHollow: Solid = held · Hollow = worked alongside
+    contestedKey: Placement contested
+    seatHeld: Seat held
+    workedAlongside: Worked alongside
+    zoneKey: Every zone and who sits there
+    inTheRoom: In the room
+    where: Where
+    ifEmpty: If it's empty
+    contested: Contested
+    noShowDaySeat: no seat on show day
+    noSeat: No seat assigned
+
+  # What each status and each visibility is called wherever it appears.
+  status:
+    led: Led or owned
+    held: Held personally
+    adjacent: Worked alongside
+  visibility:
+    immediate: Immediate — the room notices
+    delayed: Delayed — noticed in the recording
+    invisible: Invisible — noticed in months
 
 # ---------------------------------------------------------------------------
 # ZONES — where a body actually is during a show.
@@ -36,7 +71,7 @@ zones:
     kind: physical
     plan: [0, 0, 10, 4]
     lift: 1.2
-    perceives: Talent and microphones up close. No view of the output.
+    perceives: Talent and gets microphones to presenters
     reads: The engineer embedded on the customer site.
   - id: camera
     name: Camera positions
@@ -270,7 +305,7 @@ departments:
         visibility: invisible
         consequence: The room is built wrong and nobody finds out for two years. By then it is a capital problem instead of a design decision, at twenty times the cost.
       - id: ld
-        title: Lighting Operatot
+        title: Lighting Operator
         short: Lighting Dir
         status: held
         what: Owns what the camera sees.

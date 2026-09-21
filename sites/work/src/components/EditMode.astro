@@ -97,7 +97,7 @@ const fallback = file ? `case-studies/${file}.md` : "";
   document.addEventListener("click", (e) => {
     if (!on) return;
     const el = (e.target as HTMLElement).closest("[data-edit]");
-    if (el && el.closest("a")) e.preventDefault();
+    if (el && el.closest("a, button")) { e.preventDefault(); e.stopPropagation(); }
   }, true);
 
   document.addEventListener("input", (e) => {
@@ -165,7 +165,18 @@ const fallback = file ? `case-studies/${file}.md` : "";
     });
     return out;
   }
-  const textOf = (el: HTMLElement) => (el.textContent ?? "").replace(/\s+/g, " ").trim();
+  // Plain-text fields: formatting is dropped, but counted words (chips) go
+  // back into the file as their {{token}}, not as the number they show.
+  function plain(node: Node): string {
+    let out = "";
+    node.childNodes.forEach((n) => {
+      if (n.nodeType === Node.TEXT_NODE) { out += n.nodeValue ?? ""; return; }
+      if (!(n instanceof HTMLElement)) return;
+      out += n.dataset.tok ? `{{${n.dataset.tok}}}` : plain(n);
+    });
+    return out;
+  }
+  const textOf = (el: HTMLElement) => plain(el).replace(/\s+/g, " ").trim();
   function serialize(el: HTMLElement): string {
     const fmt = el.dataset.fmt ?? (el.dataset.edit!.startsWith("y:") ? "text" : "md");
     if (fmt === "text") return textOf(el);

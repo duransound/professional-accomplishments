@@ -99,6 +99,36 @@ const page = z.object({
   dek: required("A dek under the page title"),
   note: required("The demo note"),
   intro: required("The paragraph above the drawing"),
+  tally: z.string().default(
+    "Of the {{total}} seats below, I have personally worked {{worked}}. The remaining {{alongside}} I have scoped, budgeted, and staffed without ever sitting in the chair."),
+  thesis: z.string().default(
+    "If this crew were short one person, the empty seat nobody notices is the dangerous one. {{invisible}} of the {{total}} fail where no one in the room can see it — and those are the seats that get cut first."),
+  labels: z.object({
+    groupSeats: z.string().default("Group seats"),
+    byRoom: z.string().default("By room"),
+    byDepartment: z.string().default("By department"),
+    solidHollow: z.string().default("Solid = held · Hollow = worked alongside"),
+    contestedKey: z.string().default("Placement contested"),
+    seatHeld: z.string().default("Seat held"),
+    workedAlongside: z.string().default("Worked alongside"),
+    zoneKey: z.string().default("Every zone and who sits there"),
+    inTheRoom: z.string().default("In the room"),
+    where: z.string().default("Where"),
+    ifEmpty: z.string().default("If it's empty"),
+    contested: z.string().default("Contested"),
+    noShowDaySeat: z.string().default("no seat on show day"),
+    noSeat: z.string().default("No seat assigned"),
+  }).default({}),
+  status: z.object({
+    led: z.string().default("Led or owned"),
+    held: z.string().default("Held personally"),
+    adjacent: z.string().default("Worked alongside"),
+  }).default({}),
+  visibility: z.object({
+    immediate: z.string().default("Immediate — the room notices"),
+    delayed: z.string().default("Delayed — noticed in the recording"),
+    invisible: z.string().default("Invisible — noticed in months"),
+  }).default({}),
 });
 
 const schema = z.object({
@@ -109,7 +139,7 @@ const schema = z.object({
     .min(1, { message: "needs at least one department" }),
 });
 
-const data = loadContent("crew.yaml", schema);
+const data = loadContent("crew.yaml", schema) as z.output<typeof schema>;
 
 export const crewPage = data.page;
 
@@ -119,18 +149,10 @@ export type Seat = z.infer<typeof seat>;
 export type Dept = z.infer<typeof dept>;
 export type Zone = z.infer<typeof zone>;
 
-export const statusLabel: Record<SeatStatus, string> = {
-  led: "Led or owned",
-  held: "Held personally",
-  adjacent: "Worked alongside",
-};
-
-/** Ordered worst-first: this is the order the "what goes dark" list uses. */
-export const visibilityLabel: Record<Visibility, string> = {
-  invisible: "Invisible — noticed in months",
-  delayed: "Delayed — noticed in the recording",
-  immediate: "Immediate — the room notices",
-};
+/** Words live in crew.yaml › page, so they can be edited on the page. */
+export const statusLabel: Record<SeatStatus, string> = data.page.status;
+export const visibilityLabel: Record<Visibility, string> = data.page.visibility;
+export const crewLabels = data.page.labels;
 export const visibilityRank: Record<Visibility, number> = {
   invisible: 0,
   delayed: 1,
@@ -225,3 +247,41 @@ export const visibilityCount = {
   delayed: allSeats.filter((s) => s.visibility === "delayed").length,
   invisible: allSeats.filter((s) => s.visibility === "invisible").length,
 };
+
+/* ---------------------------------------------------------------------------
+   Counted words for the page sentences. {{total}} in crew.yaml becomes
+   "seventeen" — worked out from the seats, never typed. In the dev server
+   each one is a locked chip so edit mode can rewrite around it.
+   ------------------------------------------------------------------------ */
+const WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
+  "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen", "twenty"];
+export const spell = (n: number) => WORDS[n] ?? String(n);
+
+export const crewTokens: Record<string, string> = {
+  total: spell(seatCount.total),
+  worked: spell(seatCount.worked),
+  alongside: spell(seatCount.adjacent),
+  invisible: spell(visibilityCount.invisible),
+  delayed: spell(visibilityCount.delayed),
+  immediate: spell(visibilityCount.immediate),
+};
+
+const escHtml = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+export function crewText(text: string, edit: boolean): string {
+  return text.split(/(\{\{\w+\}\})/g).map((part) => {
+    const m = part.match(/^\{\{(\w+)\}\}$/);
+    if (!m) return escHtml(part);
+    const v = crewTokens[m[1]!];
+    if (v === undefined) {
+      throw new Error(
+        `\nPROBLEM IN content/crew.yaml\n\n{{${m[1]}}} isn't a count the page knows.\n` +
+        `The ones that work are: ${Object.keys(crewTokens).map((k) => `{{${k}}}`).join(", ")}\n`
+      );
+    }
+    const inner = edit
+      ? `<span class="tok" data-tok="${m[1]}" contenteditable="false" title="Counted from the seats. Rewrite around it; it can't be typed over.">${v}</span>`
+      : v;
+    return `<strong>${inner}</strong>`;
+  }).join("");
+}

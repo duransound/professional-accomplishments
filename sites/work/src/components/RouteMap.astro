@@ -12,8 +12,18 @@
  * the argument this section exists to make, so it is carried by the drawing
  * rather than by a legend the reader has to consult.
  */
-import { depts, allSeats, statusLabel, defaultSeat, seatCount, crewPage } from "../data/crew";
+import {
+  depts, allSeats, statusLabel, defaultSeat, seatCount, crewPage,
+  visibilityLabel, visibilityCount, zoneById, showZones, seatsByZone, programSeats,
+  zones, crewLabels as L, crewText,
+} from "../data/crew";
+import ZonePlan from "./ZonePlan.astro";
 import { ed } from "../edit/attrs";
+
+const DEV = import.meta.env.DEV;
+const zp = (id: string, field: string) => ed("crew.yaml", `zones.${zones.findIndex((z) => z.id === id)}.${field}`);
+const lb = (key: string) => ed("crew.yaml", `page.labels.${key}`);
+const mark = { immediate: "●", delayed: "▲", invisible: "■" } as const;
 
 // Where each seat sits in crew.yaml, so its text can be edited in place.
 const seatPath = new Map(depts.flatMap((d, i) => d.seats.map((s, j) => [s.id, `departments.${i}.seats.${j}`] as const)));
@@ -41,9 +51,6 @@ const lines = depts.map((dept, i) => {
   };
 });
 
-const words = ["zero","one","two","three","four","five","six","seven","eight","nine","ten",
-  "eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen","twenty"];
-const spell = (n: number) => words[n] ?? String(n);
 ---
 <section class="section" id="crew">
   <div class="wrap section-grid">
@@ -51,13 +58,32 @@ const spell = (n: number) => words[n] ?? String(n);
     <div class="section-body">
       <p class="intro" {...ed("crew.yaml", "page.intro")}>{crewPage.intro}</p>
 
-      <p class="tallyline">
-        Of the {spell(seatCount.total)} seats below, I have personally worked
-        <strong>{spell(seatCount.worked)}</strong>. The remaining {spell(seatCount.adjacent)} I have
-        scoped, budgeted, and staffed without ever sitting in the chair.
-      </p>
+      <p class="tallyline" {...ed("crew.yaml", "page.tally")} set:html={crewText(crewPage.tally, DEV)} />
 
       <figure class="diagram">
+        {/* The switch is revealed by the script; without JavaScript the
+            room view simply shows on its own. */}
+        <div class="views" id="views" hidden>
+          <span class="label" id="views-label" {...lb("groupSeats")}>{L.groupSeats}</span>
+          <div class="views-row" role="group" aria-labelledby="views-label">
+            <button type="button" class="plate-btn" data-view-btn="room" aria-pressed="true"><span {...lb("byRoom")}>{L.byRoom}</span></button>
+            <button type="button" class="plate-btn" data-view-btn="dept" aria-pressed="false"><span {...lb("byDepartment")}>{L.byDepartment}</span></button>
+          </div>
+        </div>
+
+        <div data-view="room">
+          <ZonePlan />
+          <div class="legend">
+            {(["immediate", "delayed", "invisible"] as const).map((v) => (
+              <span><i class={`vk ${v}`} aria-hidden="true">{mark[v]}</i><span {...ed("crew.yaml", `page.visibility.${v}`)}>{visibilityLabel[v]}</span> · {visibilityCount[v]}</span>
+            ))}
+            <span class="lg-sep" aria-hidden="true"></span>
+            <span {...lb("solidHollow")}>{L.solidHollow}</span>
+            <span>* <span {...lb("contestedKey")}>{L.contestedKey}</span></span>
+          </div>
+        </div>
+
+        <div data-view="dept" hidden>
         <div class="scroller">
           <svg
             viewBox={`0 0 ${VB.w} ${VB.h}`}
@@ -122,33 +148,68 @@ const spell = (n: number) => words[n] ?? String(n);
         </div>
 
         <figcaption class="legend">
-          {depts.map((d) => (
-            <span><span class="lg-bar" style={`background:${d.color}`}></span>{d.short}</span>
+          {depts.map((d, i) => (
+            <span><span class="lg-bar" style={`background:${d.color}`}></span><span {...ed("crew.yaml", `departments.${i}.short`)}>{d.short}</span></span>
           ))}
           <span class="lg-sep" aria-hidden="true"></span>
           <span>
             <svg width="16" height="16" aria-hidden="true" class="lg-ico">
               <circle cx="8" cy="8" r="6" class="st-held" /><circle cx="8" cy="8" r="2.4" class="st-core" />
-            </svg>Seat held
+            </svg><span {...lb("seatHeld")}>{L.seatHeld}</span>
           </span>
           <span>
             <svg width="16" height="16" aria-hidden="true" class="lg-ico">
               <circle cx="8" cy="8" r="6" class="st-adj" />
-            </svg>Worked alongside
+            </svg><span {...lb("workedAlongside")}>{L.workedAlongside}</span>
           </span>
         </figcaption>
+        </div>
       </figure>
+
+      <p class="thesis" {...ed("crew.yaml", "page.thesis")} set:html={crewText(crewPage.thesis, DEV)} />
+
+      <details class="key">
+        <summary class="label"><span {...lb("zoneKey")}>{L.zoneKey}</span></summary>
+        <dl>
+          {zones.filter((z) => z.kind !== "program" || (seatsByZone.get(z.id) ?? []).length).map((z) => ({ z, seats: seatsByZone.get(z.id) ?? [] })).map(({ z, seats }) => (
+            <div>
+              <dt {...zp(z.id, "name")}>{z.name}</dt>
+              <dd>
+                <span class="key-what" {...zp(z.id, "perceives")}>{z.perceives}</span>
+                {seats.length ? (
+                  <span class="key-seats">
+                    {seats.map((st) => (
+                      <span><b>{st.id.toUpperCase()}</b> <span class="v-prod" {...sp(st.id, "title")}>{st.title}</span><span class="v-tech" {...sp(st.id, "reads-title")}>{st["reads-title"]}</span></span>
+                    ))}
+                  </span>
+                ) : <span class="key-empty" {...lb("noSeat")}>{L.noSeat}</span>}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </details>
 
       <div class="detail" aria-live="polite">
         {allSeats.map((s) => (
           <div data-seat-panel={s.id} hidden={s.id !== defaultSeat} class="panel">
             <div class="detail-head">
               <h3><span class="v-prod" {...sp(s.id, "title")}>{s.title}</span><span class="v-tech" {...sp(s.id, "reads-title")}>{s["reads-title"]}</span></h3>
-              <span class="state" data-s={s.status}>{statusLabel[s.status]}</span>
+              <span class="state" data-s={s.status} {...ed("crew.yaml", `page.status.${s.status}`)}>{statusLabel[s.status]}</span>
             </div>
             <p class="detail-what" {...sp(s.id, "what")}>{s.what}</p>
             <dl class="xlate">
-              <dt>In the room</dt><dd {...sp(s.id, "room")}>{s.room}</dd>
+              <dt {...lb("inTheRoom")}>{L.inTheRoom}</dt><dd {...sp(s.id, "room")}>{s.room}</dd>
+              <dt {...lb("where")}>{L.where}</dt>
+              <dd>
+                <span {...zp(s.zone, "name")}>{zoneById.get(s.zone)?.name}</span>
+                {zoneById.get(s.zone)?.kind === "program" && <> — <span {...lb("noShowDaySeat")}>{L.noShowDaySeat}</span></>}
+              </dd>
+              <dt {...lb("ifEmpty")}>{L.ifEmpty}</dt>
+              <dd>
+                <span class={`vis ${s.visibility}`}><i aria-hidden="true">{mark[s.visibility]}</i><span {...ed("crew.yaml", `page.visibility.${s.visibility}`)}>{visibilityLabel[s.visibility]}</span></span>
+                <span class="conseq" {...sp(s.id, "consequence")}>{s.consequence}</span>
+              </dd>
+              {s.contested && <><dt {...lb("contested")}>{L.contested}</dt><dd {...sp(s.id, "contested")}>{s.contested}</dd></>}
             </dl>
           </div>
         ))}
@@ -158,6 +219,17 @@ const spell = (n: number) => words[n] ?? String(n);
 </section>
 
 <script>
+  // Room / department switch. Both drawings are already on the page; this
+  // only flips which one shows. Selection is shared across the two.
+  const viewBar = document.getElementById("views");
+  const viewBtns = document.querySelectorAll<HTMLButtonElement>("[data-view-btn]");
+  const views = document.querySelectorAll<HTMLElement>("[data-view]");
+  if (viewBar) viewBar.hidden = false;
+  viewBtns.forEach((b) => b.addEventListener("click", () => {
+    views.forEach((v) => { v.hidden = v.dataset.view !== b.dataset.viewBtn; });
+    viewBtns.forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+  }));
+
   const stations = document.querySelectorAll<SVGGElement>(".station");
   const panels = document.querySelectorAll<HTMLElement>("[data-seat-panel]");
 
@@ -248,6 +320,55 @@ const spell = (n: number) => words[n] ?? String(n);
     fill: var(--draft-ink); letter-spacing: 0.04em; text-transform: uppercase;
   }
   .station[data-selected] .st-lbl { fill: var(--draft-accent); }
+
+  .views {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1rem;
+    padding: 0.75rem 1rem; border-bottom: var(--lw-key) solid var(--draft-ink);
+    background: var(--draft-panel);
+  }
+  .views[hidden] { display: none; }
+  .views .label { color: var(--ink-mid); }
+  .views-row { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+  .views .plate-btn[aria-pressed="true"] { background: var(--tally); color: var(--paper); }
+
+  .vk { font-style: normal; font-size: 0.75rem; line-height: 1; }
+  .vk.immediate { color: var(--held); }
+  .vk.delayed { color: var(--tally); }
+  .vk.invisible { color: var(--tally); }
+
+  .thesis {
+    font-size: 1.0625rem; line-height: 1.55; max-width: 60ch; color: var(--ink-mid);
+  }
+  .thesis strong { color: var(--ink); font-weight: 500; box-shadow: inset 0 -0.4em 0 var(--tally-wash); }
+
+  .key > summary { cursor: pointer; color: var(--ink-mid); }
+  .key[open] > summary { color: var(--ink); margin-bottom: 0.8rem; }
+  .key dl { margin: 0; display: flex; flex-direction: column; border-top: var(--lw-thin) solid var(--rule); }
+  .key dl > div {
+    display: grid; grid-template-columns: 9rem minmax(0, 1fr); gap: 0.3rem 1.25rem;
+    padding: 0.75rem 0; border-bottom: var(--lw-thin) solid var(--rule);
+  }
+  .key dt {
+    font-family: var(--f-mono); font-weight: 500; font-size: 0.6875rem;
+    letter-spacing: 0.13em; text-transform: uppercase; padding-top: 0.15rem;
+  }
+  .key dd { margin: 0; display: flex; flex-direction: column; gap: 0.35rem; }
+  .key-what { color: var(--ink-mid); font-size: 0.9375rem; }
+  .key-seats { display: flex; flex-wrap: wrap; gap: 0.3rem 1rem; font-size: 0.9375rem; }
+  .key-seats b { font-family: var(--f-mono); font-weight: 500; font-size: 0.75rem; }
+  .key-empty { font-family: var(--f-mono); font-weight: 500; font-size: 0.6875rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--tally); }
+  @media (max-width: 34rem) { .key dl > div { grid-template-columns: 1fr; } }
+
+  .vis {
+    display: inline-flex; align-items: center; gap: 0.4rem; margin-right: 0.5rem;
+    font-family: var(--f-mono); font-weight: 500; font-size: 0.625rem;
+    letter-spacing: 0.1em; text-transform: uppercase; padding: 0.12rem 0.5rem 0.08rem;
+  }
+  .vis i { font-style: normal; }
+  .vis.immediate { background: var(--held); color: var(--paper); }
+  .vis.delayed { background: var(--tally-wash); color: var(--ink); box-shadow: inset 0 0 0 var(--lw-thin) var(--tally); }
+  .vis.invisible { background: var(--tally); color: var(--paper); }
+  .conseq { display: block; margin-top: 0.4rem; }
 
   .legend {
     display: flex; flex-wrap: wrap; gap: 0.5rem 1.35rem; align-items: center;

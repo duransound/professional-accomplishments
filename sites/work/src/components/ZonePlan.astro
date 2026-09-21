@@ -1,0 +1,197 @@
+---
+/**
+ * The crew map by room: an isometric floor plan of a composite event studio
+ * with every show-day seat standing where the body actually is.
+ *
+ * Everything is computed from crew.yaml. Each zone's `plan` places its floor,
+ * `lift` raises it, and its seats are packed into it in the order they are
+ * listed — so adding a seat or moving one to another zone redraws correctly
+ * and nothing is ever placed by hand. A zone nobody sits in says so.
+ *
+ * The layer is failure visibility: how long an empty seat takes to be
+ * noticed. The mark matches the readiness dashboard — ● immediate, ▲ delayed,
+ * ■ invisible — so shape carries it as well as colour. Solid = held or led,
+ * hollow = worked alongside.
+ *
+ * Seats with no show-day position (the program-time roles) are drawn in a
+ * band under the floor: they exist, they just aren't in the room.
+ *
+ * Server-rendered in full. Stations share class="station" and data-seat with
+ * the transit map, so the one script in RouteMap selects on both.
+ */
+import {
+  showZones, seatsByZone, programSeats, zoneById, defaultSeat, crewLabels,
+  type Seat, type Visibility,
+} from "../data/crew";
+
+const S = 26;               // one floor-grid unit
+const K = 0.8660254;        // cos 30°
+const STEM = 18;            // how far a seat's mark stands above its floor
+const raw = (x: number, y: number, z = 0): [number, number] => [(x - y) * K * S, ((x + y) * 0.5 - z) * S];
+
+// Bounds of every zone corner, so the drawing frames itself.
+const corners = showZones.flatMap((z) => {
+  const [x, y, w, d] = z.plan;
+  return [raw(x, y, z.lift), raw(x + w, y, z.lift), raw(x + w, y + d, z.lift), raw(x, y + d, z.lift), raw(x, y + d, 0), raw(x + w, y + d, 0)];
+});
+const minX = Math.min(...corners.map((p) => p[0]));
+const maxX = Math.max(...corners.map((p) => p[0]));
+const minY = Math.min(...corners.map((p) => p[1]));
+const maxY = Math.max(...corners.map((p) => p[1]));
+const PAD = { l: 40, r: 30, t: 40, b: 24 };
+const OX = PAD.l - minX;
+const OY = PAD.t - minY;
+const iso = (x: number, y: number, z = 0): [number, number] => {
+  const [a, b] = raw(x, y, z);
+  return [a + OX, b + OY];
+};
+const pt = (p: [number, number]) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`;
+
+const W = Math.round(maxX - minX + PAD.l + PAD.r);
+const planBottom = maxY + OY + PAD.b;
+const BAND_H = programSeats.length ? 92 : 0;
+const H = Math.round(planBottom + BAND_H + (BAND_H ? 16 : 0));
+
+interface Placed { seat: Seat; x: number; y: number }
+
+// Painter's order: back zones first.
+const floors = [...showZones]
+  .sort((a, b) => a.plan[0] + a.plan[1] - (b.plan[0] + b.plan[1]))
+  .map((z) => {
+    const [x, y, w, d] = z.plan;
+    const A = iso(x, y, z.lift), B = iso(x + w, y, z.lift), C = iso(x + w, y + d, z.lift), D = iso(x, y + d, z.lift);
+    const seats = seatsByZone.get(z.id) ?? [];
+    const cols = Math.max(1, Math.ceil(Math.sqrt((seats.length * w) / d)));
+    const rows = Math.max(1, Math.ceil(seats.length / cols));
+    const placed: Placed[] = seats.map((seat, i) => {
+      const [bx, by] = iso(x + (w * ((i % cols) + 0.5)) / cols, y + (d * (Math.floor(i / cols) + 0.5)) / rows, z.lift);
+      return { seat, x: bx, y: by };
+    });
+    const sides = z.lift > 0 && z.kind === "physical"
+      ? [pt(D) + " " + pt(C) + " " + pt(iso(x + w, y + d)) + " " + pt(iso(x, y + d)),
+         pt(B) + " " + pt(C) + " " + pt(iso(x + w, y + d)) + " " + pt(iso(x + w, y))]
+      : [];
+    const drops = z.kind === "detached"
+      ? [[x, y], [x + w, y], [x + w, y + d], [x, y + d]].map(([cx, cy]) => [iso(cx!, cy!, z.lift), iso(cx!, cy!, 0)] as const)
+      : [];
+    const mid = iso(x + w / 2, y + d / 2, z.lift);
+    // Names run along the front-left edge, like a marking painted on the floor.
+    return { z, top: [A, B, C, D].map(pt).join(" "), sides, drops, label: D, mid, placed, empty: seats.length === 0 };
+  });
+
+const onFloor = floors.flatMap((f) => f.placed);
+
+// Program-time seats: a band under the plan, evenly spaced.
+const bandY = planBottom + 16;
+const bandX0 = PAD.l - 20, bandX1 = W - 20;
+const band: Placed[] = programSeats.map((seat, i) => ({
+  seat,
+  x: bandX0 + ((bandX1 - bandX0) * (i + 0.5)) / programSeats.length,
+  y: bandY + 70,
+}));
+
+const code = (s: Seat) => s.id.toUpperCase() + (s.contested ? "*" : "");
+const markClass = (s: Seat) => `mk ${s.visibility}${s.status === "adjacent" ? " adj" : ""}`;
+const tri = (x: number, y: number) => `${x},${y - 8.5} ${x + 8.5},${y + 6} ${x - 8.5},${y + 6}`;
+const vis = (v: Visibility) => ({ immediate: "noticed immediately", delayed: "noticed later", invisible: "not noticed on the day" })[v];
+const zoneName = (s: Seat) => zoneById.get(s.zone)?.name ?? s.zone;
+---
+<div class="scroller">
+  <svg
+    class="plan"
+    viewBox={`0 0 ${W} ${H}`}
+    role="group"
+    aria-label="Isometric floor plan of a composite event studio. Each production seat stands in the zone where that person actually is during a show, marked by how quickly an empty seat gets noticed."
+  >
+    {floors.map((f) => (
+      <g class={`zone ${f.z.kind}`}>
+        {f.drops.map(([a, b]) => (
+          <line class="drop" x1={a[0].toFixed(1)} y1={a[1].toFixed(1)} x2={b[0].toFixed(1)} y2={b[1].toFixed(1)} />
+        ))}
+        {f.sides.map((p) => <polygon class="side" points={p} />)}
+        <polygon class="floor" points={f.top} />
+        <text class="z-name" transform={`translate(${f.label[0].toFixed(1)} ${f.label[1].toFixed(1)}) rotate(30)`} x="8" y="14">{f.z.name}</text>
+        {f.empty && (
+          <text class="z-empty" x={f.mid[0].toFixed(1)} y={(f.mid[1] + 4).toFixed(1)} text-anchor="middle">{crewLabels.noSeat}</text>
+        )}
+      </g>
+    ))}
+
+    {BAND_H > 0 && (
+      <g class="band">
+        <rect x={bandX0} y={bandY} width={bandX1 - bandX0} height={BAND_H} />
+        <text class="z-name" x={bandX0 + 12} y={bandY + 18}>{zoneById.get(programSeats[0]?.zone ?? "")?.name ?? "Between shows"} · {crewLabels.noShowDaySeat}</text>
+      </g>
+    )}
+
+    {[...onFloor.map((p) => ({ ...p, stem: true })), ...band.map((p) => ({ ...p, stem: false }))].map(({ seat, x, y, stem }) => {
+      const top = stem ? y - STEM : y;
+      return (
+        <g
+          class="station"
+          data-seat={seat.id}
+          data-selected={seat.id === defaultSeat ? "" : null}
+          role="button"
+          tabindex="0"
+          aria-label={`${seat.title}, ${zoneName(seat)}. If this seat is empty it is ${vis(seat.visibility)}.`}
+        >
+          {stem && <ellipse class="shadow" cx={x.toFixed(1)} cy={y.toFixed(1)} rx="6" ry="3" />}
+          {stem && <line class="stem" x1={x.toFixed(1)} y1={y.toFixed(1)} x2={x.toFixed(1)} y2={(top + 8).toFixed(1)} />}
+          <circle class="halo" cx={x.toFixed(1)} cy={top.toFixed(1)} r="15" />
+          {seat.visibility === "immediate" && <circle class={markClass(seat)} cx={x.toFixed(1)} cy={top.toFixed(1)} r="7.5" />}
+          {seat.visibility === "delayed" && <polygon class={markClass(seat)} points={tri(+x.toFixed(1), +top.toFixed(1))} />}
+          {seat.visibility === "invisible" && <rect class={markClass(seat)} x={(x - 7).toFixed(1)} y={(top - 7).toFixed(1)} width="14" height="14" />}
+          <text class="code" x={x.toFixed(1)} y={(top - 14).toFixed(1)} text-anchor="middle">{code(seat)}</text>
+          <circle class="hit" cx={x.toFixed(1)} cy={(top - 4).toFixed(1)} r="19" />
+        </g>
+      );
+    })}
+  </svg>
+</div>
+
+<style>
+  .plan { display: block; width: 100%; min-width: 720px; height: auto; }
+
+  .floor { fill: var(--draft); stroke: var(--draft-mid); stroke-width: var(--lw-thin); }
+  .side  { fill: var(--draft-panel); stroke: var(--draft-rule); stroke-width: var(--lw-thin); }
+  .detached .floor { fill: none; stroke: var(--draft-mid); stroke-width: var(--lw-med); stroke-dasharray: 6 5; }
+  .drop { stroke: var(--draft-mid); stroke-width: var(--lw-thin); stroke-dasharray: 2 6; opacity: 0.6; }
+
+  .z-name {
+    font-family: var(--f-display); font-weight: 700; font-size: 10px;
+    letter-spacing: 0.14em; text-transform: uppercase; fill: var(--draft-mid);
+  }
+  .z-empty {
+    font-family: var(--f-mono); font-weight: 500; font-size: 9px;
+    letter-spacing: 0.12em; text-transform: uppercase; fill: var(--draft-accent);
+  }
+
+  .band rect { fill: var(--draft-panel); stroke: var(--draft-ink); stroke-width: var(--lw-med); stroke-dasharray: 8 5; }
+
+  .station { cursor: pointer; }
+  .hit { fill: transparent; }
+  .shadow { fill: var(--draft-ink); opacity: 0.18; }
+  .stem { stroke: var(--draft-mid); stroke-width: var(--lw-thin); }
+  .halo { fill: transparent; }
+  .station:hover .halo { fill: var(--draft-wash); }
+  .station[data-selected] .halo { fill: var(--draft-wash); stroke: var(--draft-accent); stroke-width: 2; }
+  .station:focus-visible { outline: none; }
+  .station:focus-visible .halo { fill: var(--draft-wash); stroke: var(--focus); stroke-width: 2.5; }
+
+  /* Same marks as the readiness dashboard: ● ready-green, ▲ watch, ■ down-red. */
+  .mk { stroke-width: 2; }
+  .mk.immediate { fill: var(--held); stroke: var(--draft-ink); }
+  .mk.delayed   { fill: var(--tally-wash); stroke: var(--tally); }
+  .mk.invisible { fill: var(--tally); stroke: var(--draft-ink); }
+  /* Worked alongside, never held: hollow, dashed. */
+  .mk.adj { fill: var(--surface); stroke-dasharray: 3 2.4; }
+  .mk.adj.immediate { stroke: var(--held); }
+  .mk.adj.invisible { stroke: var(--tally); }
+
+  .code {
+    font-family: var(--f-mono); font-weight: 500; font-size: 10px;
+    letter-spacing: 0.06em; fill: var(--draft-ink);
+    paint-order: stroke; stroke: var(--draft); stroke-width: 3px; stroke-linejoin: round;
+  }
+  .station[data-selected] .code { fill: var(--draft-accent); }
+</style>

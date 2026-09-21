@@ -112,6 +112,12 @@ lines you changed move.
   edit its version. The same goes for the masthead switch: flip it to edit the
   technology-vocabulary titles.
 - On the crew map, click a station to open its panel, then edit its text.
+  The two counted sentences, the legend, the view buttons, the zone list
+  (open "Every zone and who sits there") and the panel labels are editable
+  too. Words like "seventeen" in those sentences are grey chips — they are
+  counted from the seats, so write around them. Labels drawn inside the map
+  itself (seat codes, zone names on the floor) follow the text you edit in
+  the zone list and the seat panels.
 - Links, emails, ids, colours, dates and statuses can't be changed on the page
   — those stay in the files.
 
