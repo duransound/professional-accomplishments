@@ -185,3 +185,12 @@ a 1200×630 image from `sites/work/public/og/` — one for the homepage and one
 per project. They are pictures, so they don't update themselves: if a
 project's title or headline numbers change, ask Claude to regenerate the
 card. A new project needs its own card, or it falls back to the homepage one.
+
+## Resume
+
+`/resume/` is the one-page resume, built from the same files as the homepage
+(the default lens in `lenses.yaml`, `experience.yaml`, `kit.yaml`). The PDF
+linked in the masthead, `sites/work/public/ian-duran-resume.pdf`, is that page
+printed. The page updates itself; the PDF doesn't — after changing your
+experience or summary, ask Claude to reprint it, or open `/resume/` in the
+dev server and use Print → Save as PDF.

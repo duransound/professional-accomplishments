@@ -1,0 +1,112 @@
+---
+/**
+ * /resume/ — the one-page resume, built from the same content as the site
+ * (lenses.yaml default lens, experience.yaml, kit.yaml, site.yaml), so it
+ * can't drift from the homepage.
+ *
+ * It is a print page: Letter, half-inch margins, black on white. The PDF at
+ * /ian-duran-resume.pdf is this page printed. The PDF is a file, so it does
+ * not update itself — when the resume content changes, ask Claude to
+ * reprint it (or open /resume/ and Print → Save as PDF).
+ */
+import Base from "../layouts/Base.astro";
+import { site } from "../data/site";
+import { lenses, defaultLens } from "../data/lenses";
+import { roles, education } from "../data/experience";
+import { kit } from "../data/kit";
+import { runbookStats } from "../data/runbook";
+import { seatCount } from "../data/crew";
+
+const lens = lenses.find((l) => l.id === defaultLens)!;
+const host = (u: string) => u.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "");
+const work = [
+  { name: "Room readiness dashboard", url: "duran.show/projects/room-readiness-dashboard", line: "Weekly room-status dashboard with an 8-week trend, open issues, and the technician walkthrough that feeds it." },
+  { name: "Crew map", url: "duran.show/projects/crew-map", line: `${seatCount.total} production seats placed by room and by department, marking the ${seatCount.worked} I've worked.` },
+  { name: "Show-day runbook", url: "duran.show/projects/show-day-runbook", line: `An all-hands from load-in to strike: ${runbookStats.cues} cues as called, who holds the call, and the failure plays.` },
+];
+---
+<Base title={`Resume — ${site.name}`} description={`Resume of ${site.name}. ${site.roleProduction}.`}>
+  <article class="cv">
+    <header>
+      <div>
+        <h1>{site.name}</h1>
+        <p class="role">{site.roleProduction}</p>
+      </div>
+      <p class="contact">
+        {site.location}<br />
+        <a href={`mailto:${site.email}`}>{site.email}</a><br />
+        <a href={site.linkedin}>{host(site.linkedin)}</a><br />
+        <a href="https://duran.show">duran.show</a>
+      </p>
+    </header>
+
+    <p class="summary" set:html={lens.summary} />
+
+    <h2>Experience</h2>
+    {roles.map((r) => (
+      <section class="job">
+        <div class="job-head">
+          <h3>{r.title}{r.org && <span class="org"> · {r.org}</span>}</h3>
+          <span class="years">{r.years}</span>
+        </div>
+        {r.lensKey ? (
+          <ul>{lens[r.lensKey].map((b) => <li>{b.trim()}</li>)}</ul>
+        ) : r.note ? <p class="note">{r.note}</p> : null}
+      </section>
+    ))}
+
+    <h2>Selected work <span class="h2-note">demo projects, live at duran.show</span></h2>
+    <ul class="work">
+      {work.map((w) => (
+        <li><b>{w.name}</b> <a href={`https://${w.url}/`}>{w.url}</a><br />{w.line}</li>
+      ))}
+    </ul>
+
+    <h2>Hands on</h2>
+    <dl class="skills">
+      {kit.map((g) => (<><dt>{g.label}</dt><dd>{g.items.join(" · ")}</dd></>))}
+    </dl>
+
+    <h2>Education</h2>
+    <p class="edu"><b>{education.degree}</b> · {education.school}{education.note && <><br /><span class="note">{education.note}</span></>}</p>
+  </article>
+</Base>
+
+<style is:global>
+  @page { size: Letter; margin: 0.5in 0.55in; }
+  body:has(.cv) { background: #fff; color: #15181E; }
+  @media screen {
+    body:has(.cv) { background: var(--page); padding: 2rem 1rem; }
+    .cv { background: #fff; max-width: 8.5in; margin: 0 auto; padding: 0.5in 0.55in; border: 2px solid var(--ink); }
+  }
+</style>
+<style>
+  .cv { font-family: var(--f-body); font-size: 10pt; line-height: 1.38; color: #15181E; }
+  header { display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem; border-bottom: 2.5pt solid #15181E; padding-bottom: 8pt; }
+  h1 { font-family: var(--f-display); font-weight: 700; font-size: 24pt; line-height: 1; letter-spacing: -0.02em; }
+  .role { margin: 4pt 0 0; font-family: var(--f-mono); font-weight: 500; font-size: 8pt; letter-spacing: 0.1em; text-transform: uppercase; color: #C2372A; }
+  .contact { margin: 0; text-align: right; font-family: var(--f-mono); font-weight: 500; font-size: 7.5pt; line-height: 1.55; color: #4A515C; }
+  a { color: inherit; text-decoration: none; }
+  .summary { margin: 9pt 0 0; font-size: 10.5pt; line-height: 1.45; }
+  .summary :global(em) { font-style: normal; font-weight: 500; box-shadow: inset 0 -0.35em 0 #F3D9D5; }
+  h2 {
+    margin: 12pt 0 5pt; padding-bottom: 2pt; border-bottom: 0.75pt solid #C9C7C0;
+    font-family: var(--f-mono); font-weight: 500; font-size: 7.5pt; letter-spacing: 0.14em; text-transform: uppercase; color: #15181E;
+  }
+  .h2-note { color: #6E747E; letter-spacing: 0.06em; text-transform: none; margin-left: 4pt; }
+  .job { margin-bottom: 6pt; break-inside: avoid; }
+  .job-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+  h3 { font-family: var(--f-display); font-weight: 700; font-size: 10.5pt; letter-spacing: -0.005em; }
+  .org { color: #C2372A; }
+  .years { font-family: var(--f-mono); font-weight: 500; font-size: 7.5pt; color: #4A515C; white-space: nowrap; }
+  ul { margin: 2pt 0 0; padding-left: 12pt; }
+  li { margin: 1pt 0; }
+  .note { margin: 2pt 0 0; color: #4A515C; }
+  .work { list-style: none; padding: 0; }
+  .work li { margin-bottom: 3pt; }
+  .work a { font-family: var(--f-mono); font-weight: 500; font-size: 7.5pt; color: #4A515C; margin-left: 4pt; }
+  .skills { display: grid; grid-template-columns: 5.5em 1fr; gap: 2pt 10pt; margin: 0; }
+  .skills dt { font-family: var(--f-mono); font-weight: 500; font-size: 7.5pt; letter-spacing: 0.08em; text-transform: uppercase; padding-top: 1.5pt; }
+  .skills dd { margin: 0; }
+  .edu { margin: 0; }
+</style>

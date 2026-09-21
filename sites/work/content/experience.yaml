@@ -1,16 +1,16 @@
 roles:
-  - years: May 2024 — 2026
+  - years: May 2024 — Current
     title: Freelance
     org: ''
     lensKey: ''
     note: Freelance gig work for Audio, Video and Music Production. Focus on passion projects
-    current: false
+    current: true
   - years: 2022 — 2024
     title: Event Studio Manager, Americas & LatAm
     org: Google
     lensKey: studio
     note: ''
-    current: true
+    current: false
   - years: 2013 — 2022
     title: Event Technician → Crew Lead, Executive & Event Production
     org: Google
