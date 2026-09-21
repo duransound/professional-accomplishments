@@ -158,7 +158,6 @@ const lines = depts.map((dept, i) => {
         </div>
       </figure>
 
-      <p class="thesis" {...ed("crew.yaml", "page.thesis")} set:html={crewText(crewPage.thesis, DEV)} />
 
       <details class="key">
         <summary class="label"><span {...lb("zoneKey")}>{L.zoneKey}</span></summary>
@@ -195,11 +194,6 @@ const lines = depts.map((dept, i) => {
               <dd>
                 <span {...zp(s.zone, "name")}>{zoneById.get(s.zone)?.name}</span>
                 {zoneById.get(s.zone)?.kind === "program" && <> — <span {...lb("noShowDaySeat")}>{L.noShowDaySeat}</span></>}
-              </dd>
-              <dt {...lb("ifEmpty")}>{L.ifEmpty}</dt>
-              <dd>
-                <span class={`vis ${s.visibility}`}><i aria-hidden="true">{mark[s.visibility]}</i><span {...ed("crew.yaml", `page.visibility.${s.visibility}`)}>{visibilityLabel[s.visibility]}</span></span>
-                <span class="conseq" {...sp(s.id, "consequence")}>{s.consequence}</span>
               </dd>
               {s.contested && <><dt {...lb("contested")}>{L.contested}</dt><dd {...sp(s.id, "contested")}>{s.contested}</dd></>}
             </dl>
