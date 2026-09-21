@@ -313,10 +313,48 @@ collections:
           - { name: email, label: Email, widget: string }
           - { name: linkedin, label: LinkedIn URL, widget: string }
           - { name: linkedinLabel, label: LinkedIn label, widget: string, hint: 'Short form shown on the page, e.g. in/duranian' }
+          - name: roleProduction
+            label: Role line — production vocabulary
+            widget: string
+            pattern: ['^.{1,52}$', 'Keep it to one line — under about 52 characters']
+            hint: Shown in the lower third when the switch reads Production.
+          - name: roleTechnology
+            label: Role line — technology vocabulary
+            widget: string
+            pattern: ['^.{1,52}$', 'Keep it to one line — under about 52 characters']
+            hint: Shown in the lower third when the switch reads Technology.
           - name: tagline
             label: Search description
             widget: text
             hint: Shown by search engines and when the link is shared. Two sentences.
+          - name: now
+            label: Status lamp — what you are working on
+            widget: object
+            required: false
+            collapsed: false
+            hint: >-
+              The lit line beside the vocabulary switch. Delete the whole block
+              and the lamp disappears — better than leaving a line that has
+              stopped being true.
+            fields:
+              - { name: label, label: Label, widget: string, pattern: ['^.{1,16}$', 'One or two words'], default: Now }
+              - name: text
+                label: What you are working on
+                widget: text
+                pattern: ['^[\\s\\S]{1,110}$', 'Keep it to one sentence — under about 110 characters']
+                hint: One sentence. It sits in the masthead, so it has to stay short.
+              - name: href
+                label: Link to
+                widget: string
+                required: false
+                hint: Optional. A path like /work/studio-readiness-audit/ makes the whole block clickable.
+              - name: updated
+                label: Last updated
+                widget: date
+                format: 'yyyy-MM-dd'
+                hint: >-
+                  Shown beside the label. A status line with no date quietly
+                  becomes a lie, so the date is required and visible.
 
   # ---------------------------------------------------------------------------
   - name: notes

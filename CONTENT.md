@@ -100,6 +100,26 @@ the order they appear under `departments`. Nothing on the plate is positioned
 by hand, so adding a seat moves the drawing correctly. A zone nobody sits in
 renders as NO SEAT ASSIGNED — that hole is counted, not typed.
 
+**Edit a case study** — the easy way is on the page itself. Run `npm run dev`,
+open the case study (from the Work sheet on the homepage), and click **Edit
+text** in the bottom-right corner. Click any sentence and type; press **Save**
+or ⌘S. The page reloads showing the change and stays in edit mode.
+
+- Numbers that are worked out from the data appear as grey locked chips while
+  editing. Rewrite the sentence around them — they can't be typed over, which
+  is what keeps the prose and the scorecard in agreement.
+- Return makes a new paragraph in body text. In titles, headings and list
+  items it does nothing; those stay one line.
+- ⌘B and ⌘I work. Pasting always comes in as plain text.
+- If the file was changed somewhere else after the page loaded, the save is
+  refused and asks you to reload, so an old tab can't overwrite newer text.
+- The edit button and the save endpoint exist only under `npm run dev`. Neither
+  is in the published site.
+
+What edit mode can't change: numbers, room scores, adding or removing a
+finding. Those live in the header of
+`content/case-studies/<name>.md`, above the closing `---`.
+
 **Write a note** — add a file to `content/notes/`:
 
 ```markdown

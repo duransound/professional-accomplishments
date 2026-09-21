@@ -1,0 +1,169 @@
+---
+/**
+ * Every room as a tile, filterable by status, with a detail panel.
+ *
+ * Per the repo rule, every panel is rendered on the server and the inactive
+ * ones are hidden; the script only flips visibility. With JavaScript off the
+ * tiles still show every room and the worst room's panel is open.
+ */
+type Status = "down" | "watch" | "ready";
+interface Issue { ref: string; titleHtml: string; severity: "critical" | "high" | "medium" }
+interface R {
+  id: string; use: string; score: number; critical: number; weakest: string;
+  daysSince: number; status: Status; issues: Issue[];
+}
+interface Props { rooms: R[]; target: number }
+const { rooms, target } = Astro.props;
+const counts = {
+  all: rooms.length,
+  down: rooms.filter((r) => r.status === "down").length,
+  watch: rooms.filter((r) => r.status === "watch").length,
+  ready: rooms.filter((r) => r.status === "ready").length,
+};
+const first = rooms[0]!.id;
+const mark = { down: "■", watch: "▲", ready: "●" } as const;
+const word = { down: "Down", watch: "Watch", ready: "Ready" } as const;
+const sev = { critical: "Critical", high: "High", medium: "Medium" } as const;
+const ago = (d: number) => (d === 0 ? "today" : d === 1 ? "1 day ago" : `${d} days ago`);
+---
+<div class="rg" data-rg>
+  <div class="filter" role="group" aria-label="Show rooms by status">
+    {(["all", "down", "watch", "ready"] as const).map((k) => (
+      <button type="button" class="plate-btn" data-f={k} aria-pressed={k === "all" ? "true" : "false"}>
+        {k === "all" ? "All" : word[k]} <span class="n">{counts[k]}</span>
+      </button>
+    ))}
+  </div>
+
+  <div class="body">
+    <ul class="grid">
+      {rooms.map((r) => (
+        <li data-status={r.status}>
+          <button type="button" class={`tile ${r.status}`} data-room={r.id} aria-pressed={r.id === first ? "true" : "false"}>
+            <span class="t-top">
+              <span class="t-id">{r.id}</span>
+              <span class="t-score">{r.score}</span>
+            </span>
+            <span class={`rs ${r.status}`}><i>{mark[r.status]}</i>{word[r.status]}</span>
+            <span class="t-foot">
+              {r.daysSince > 10 ? <b class="od">Overdue</b> : r.daysSince > 7 ? <b class="miss">Missed</b> : null}
+              <span>{r.issues.length ? `${r.issues.length} issue${r.issues.length === 1 ? "" : "s"}` : "No issues"}</span>
+            </span>
+          </button>
+        </li>
+      ))}
+    </ul>
+
+    <div class="panels">
+      {rooms.map((r) => (
+        <section class="panel" data-panel={r.id} hidden={r.id !== first} aria-live="polite">
+          <p class="p-head">
+            <span class="p-id">{r.id}</span>
+            <span class={`rs ${r.status}`}><i>{mark[r.status]}</i>{word[r.status]}</span>
+          </p>
+          <p class="p-use">{r.use}</p>
+          <dl class="p-facts">
+            <div><dt class="label">Score</dt><dd class="mono">{r.score}<i> / {target}</i></dd></div>
+            <div><dt class="label">Show-critical</dt><dd class="mono">{r.critical}</dd></div>
+            <div><dt class="label">Last walked</dt><dd class="mono">{ago(r.daysSince)}</dd></div>
+            <div><dt class="label">Weakest</dt><dd>{r.weakest}</dd></div>
+          </dl>
+          {r.daysSince > 10 && <p class="warn">Not walked in over ten days — this score is out of date.</p>}
+          {r.issues.length > 0 ? (
+            <ul class="p-issues">
+              {r.issues.map((i) => (
+                <li>
+                  <a href={`#issue-${i.ref}`}>
+                    <span class={`sev ${i.severity}`}>{sev[i.severity]}</span>
+                    <span class="ref">{i.ref}</span>
+                    <span set:html={i.titleHtml} />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p class="clear">Nothing open. This room is ready.</p>
+          )}
+        </section>
+      ))}
+    </div>
+  </div>
+</div>
+
+<script>
+  for (const rg of document.querySelectorAll<HTMLElement>("[data-rg]")) {
+    const filters = rg.querySelectorAll<HTMLButtonElement>("[data-f]");
+    const items = rg.querySelectorAll<HTMLElement>("li[data-status]");
+    const tiles = rg.querySelectorAll<HTMLButtonElement>("[data-room]");
+    const panels = rg.querySelectorAll<HTMLElement>("[data-panel]");
+
+    filters.forEach((b) => b.addEventListener("click", () => {
+      const f = b.dataset.f;
+      filters.forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+      items.forEach((li) => { li.hidden = f !== "all" && li.dataset.status !== f; });
+    }));
+    tiles.forEach((t) => t.addEventListener("click", () => {
+      const id = t.dataset.room;
+      tiles.forEach((x) => x.setAttribute("aria-pressed", String(x === t)));
+      panels.forEach((p) => { p.hidden = p.dataset.panel !== id; });
+    }));
+  }
+</script>
+
+<style>
+  .rg { display: flex; flex-direction: column; gap: var(--plate-gap); }
+  .filter { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+  .filter .n { font-variant-numeric: tabular-nums; opacity: 0.8; margin-left: 0.2rem; }
+
+  .body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(15rem, 19rem); gap: var(--plate-gap); align-items: start; }
+  @media (max-width: 52rem) { .body { grid-template-columns: minmax(0, 1fr); } }
+
+  .grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; grid-template-columns: repeat(auto-fill, minmax(8.25rem, 1fr)); }
+  .grid li[hidden] { display: none; }
+  .tile {
+    width: 100%; text-align: left; cursor: pointer; font: inherit; color: var(--ink);
+    display: flex; flex-direction: column; gap: 0.4rem; padding: 0.6rem 0.65rem 0.55rem;
+    background: var(--surface); border: var(--lw-thin) solid var(--ink); border-top-width: var(--lw-edge);
+  }
+  .tile.down { border-top-color: var(--tally); }
+  .tile.watch { border-top-color: var(--tally); border-top-style: dashed; }
+  .tile.ready { border-top-color: var(--held); }
+  .tile:hover { background: var(--paper); }
+  .tile[aria-pressed="true"] { box-shadow: var(--lift); transform: translate(-2px, -2px); }
+  .t-top { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; }
+  .t-id { font-family: var(--f-mono); font-weight: 500; font-size: 0.8125rem; }
+  .t-score { font-family: var(--f-mono); font-weight: 500; font-size: 1.35rem; line-height: 1; font-variant-numeric: tabular-nums; }
+  .t-foot { display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap;
+    font-family: var(--f-mono); font-weight: 500; font-size: 0.5625rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mid); }
+  .od, .miss { font-weight: 500; padding: 0.08rem 0.3rem; }
+  .od { background: var(--ink); color: var(--paper); }
+  .miss { box-shadow: inset 0 0 0 1px var(--ink-mid); }
+
+  .rs { display: inline-flex; align-items: center; gap: 0.35rem; align-self: flex-start; white-space: nowrap;
+    padding: 0.1rem 0.45rem 0.06rem; font-family: var(--f-mono); font-weight: 500; font-size: 0.5625rem; letter-spacing: 0.12em; text-transform: uppercase; }
+  .rs i { font-style: normal; font-size: 0.625rem; line-height: 1; }
+  .rs.down { background: var(--tally); color: var(--paper); }
+  .rs.watch { background: var(--tally-wash); color: var(--ink); box-shadow: inset 0 0 0 var(--lw-thin) var(--tally); }
+  .rs.ready { background: var(--held); color: var(--paper); }
+
+  .panel { background: var(--surface); border: var(--lw-key) solid var(--ink); padding: 0.9rem 1rem; display: flex; flex-direction: column; gap: 0.6rem; }
+  .p-head { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; margin: 0; }
+  .p-id { font-family: var(--f-display); font-weight: 700; font-size: 1.35rem; letter-spacing: -0.02em; }
+  .p-use { margin: 0; color: var(--ink-mid); font-size: 0.9375rem; }
+  .p-facts { margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem 0.8rem; border-top: var(--lw-hair) solid var(--rule); padding-top: 0.6rem; }
+  .p-facts dt { color: var(--ink-mid); margin-bottom: 0.1rem; }
+  .p-facts dd { margin: 0; font-size: 0.875rem; }
+  .p-facts i { font-style: normal; color: var(--ink-mid); font-size: 0.75rem; }
+  .mono { font-family: var(--f-mono); font-weight: 500; font-variant-numeric: tabular-nums; }
+  .warn { margin: 0; font-size: 0.875rem; color: var(--ink); border-left: var(--lw-rule) solid var(--tally); padding-left: 0.6rem; }
+  .p-issues { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; border-top: var(--lw-hair) solid var(--rule); }
+  .p-issues a { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.3rem 0.5rem; padding: 0.5rem 0;
+    border-bottom: var(--lw-hair) solid var(--rule); text-decoration: none; color: var(--ink); font-size: 0.875rem; line-height: 1.3; }
+  .p-issues a:hover { color: var(--tally); }
+  .ref { font-family: var(--f-mono); font-weight: 500; font-size: 0.6875rem; color: var(--ink-mid); }
+  .sev { padding: 0.08rem 0.4rem 0.04rem; font-family: var(--f-mono); font-weight: 500; font-size: 0.5rem; letter-spacing: 0.12em; text-transform: uppercase; }
+  .sev.critical { background: var(--tally); color: var(--paper); }
+  .sev.high { background: var(--tally-wash); color: var(--ink); box-shadow: inset 0 0 0 var(--lw-thin) var(--tally); }
+  .sev.medium { color: var(--ink-mid); box-shadow: inset 0 0 0 var(--lw-thin) var(--rule); }
+  .clear { margin: 0; color: var(--held); font-size: 0.875rem; }
+</style>

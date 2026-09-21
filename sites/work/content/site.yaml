@@ -6,3 +6,13 @@ linkedinLabel: LinkedIn
 tagline: Eleven years running technical execution for executive programs. Now looking for work where rooms, vendors, and programs all operate efficiently.
 roleProduction: Event Studio Manager · Americas & LatAm
 roleTechnology: Technical program & workplace technology
+
+# The status lamp in the masthead. Optional — delete the whole block and the
+# lamp disappears rather than showing an empty line. The month is shown beside
+# it on purpose: a "now" line with no date quietly becomes a lie, and a visible
+# stale date is better than an invisible one.
+now:
+  label: Now
+  text: Publishing a room-readiness dashboard specimen and a second edition of the crew map.
+  href: /work/room-readiness-dashboard/
+  updated: 2026-09-21

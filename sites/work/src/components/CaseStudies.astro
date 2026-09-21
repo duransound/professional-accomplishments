@@ -1,0 +1,103 @@
+---
+/**
+ * Sheet 02 — the work, immediately under the summary.
+ *
+ * This sits second because it is the only sheet that shows the work instead of
+ * describing it, and a deliverable buried below the fold is a deliverable
+ * nobody opens. Each study is a plate you press, not a row in a list.
+ *
+ * A specimen says so on the card. Nobody should have to open a document to
+ * find out it describes no real client.
+ */
+import { getCollection } from "astro:content";
+import { derive } from "../data/case-studies";
+
+const items = (await getCollection("caseStudies"))
+  .sort((a, b) => b.data.issued.valueOf() - a.data.issued.valueOf())
+  .map((e) => ({ id: e.id, s: e.data, d: derive(e.data) }));
+---
+{items.length > 0 && (
+  <section class="section" id="work">
+    <div class="wrap section-grid">
+      <div class="label">Work</div>
+      <div class="section-body">
+        <p class="lede">
+          Sample deliverables, published whole rather than as extracts. The
+          method and the report structure are the real ones.
+        </p>
+
+        <div class="grid">
+          {items.map(({ id, s, d }) => (
+            <a class="card" href={`/work/${id}/`}>
+              <span class="kicker">
+                {s.kind}
+                {s.specimen && <i class="spec">Specimen</i>}
+              </span>
+              <h3>{s.title}</h3>
+              <p>{s.summaryLine}</p>
+              <dl class="figs">
+                <div><dt>Rooms</dt><dd>{d.total}</dd></div>
+                <div><dt>Issues</dt><dd>{s.findings.length}</dd></div>
+                <div><dt>Readiness</dt><dd>{d.score}</dd></div>
+                <div class="alert"><dt>Down</dt><dd>{d.down}</dd></div>
+              </dl>
+              <span class="plate-btn" aria-hidden="true">Open the dashboard →</span>
+            </a>
+          ))}
+        </div>
+      </div>
+    </div>
+  </section>
+)}
+
+<style>
+  .lede { color: var(--ink-mid); max-width: 58ch; margin: 0; }
+  .grid { display: grid; gap: var(--plate-gap); grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr)); }
+
+  .card {
+    display: flex; flex-direction: column; align-items: flex-start; gap: 0.7rem;
+    background: var(--surface); color: var(--ink);
+    border: var(--lw-key) solid var(--ink);
+    padding: clamp(1rem, 2.6vw, 1.4rem);
+    text-decoration: none;
+  }
+  .card:hover { color: var(--ink); }
+  .card:hover h3 { color: var(--tally); }
+  /* The button is decoration on a link, so the whole plate presses as one. */
+  .card:hover .plate-btn { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--ink); }
+  .card:active .plate-btn { transform: translate(4px, 4px); box-shadow: 0 0 0 var(--ink); }
+
+  .kicker {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    font-family: var(--f-mono); font-weight: 500; font-size: 0.6875rem;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-mid);
+  }
+  .spec {
+    font-style: normal; background: var(--tally); color: var(--paper);
+    padding: 0.16rem 0.42rem 0.12rem; letter-spacing: 0.14em;
+  }
+  .card h3 {
+    font-size: clamp(1.15rem, 2.6vw, 1.45rem); line-height: 1.12;
+    letter-spacing: -0.02em; max-width: 22ch;
+  }
+  .card > p { margin: 0; color: var(--ink-mid); font-size: 0.9375rem; max-width: 46ch; }
+
+  .figs {
+    display: flex; flex-wrap: wrap; margin: 0.15rem 0 0;
+    border: var(--lw-thin) solid var(--rule); width: 100%;
+  }
+  .figs > div { flex: 1 1 4.5rem; padding: 0.5rem 0.65rem; border-right: var(--lw-hair) solid var(--rule); }
+  .figs > div:last-child { border-right: 0; }
+  .figs dt {
+    font-family: var(--f-mono); font-weight: 500; font-size: 0.5625rem;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-mid);
+    margin-bottom: 0.2rem;
+  }
+  .figs dd {
+    margin: 0; font-family: var(--f-mono); font-weight: 500; font-size: 1.25rem;
+    line-height: 1; font-variant-numeric: tabular-nums;
+  }
+  .figs .alert dd { color: var(--tally); }
+
+  .plate-btn { margin-top: 0.15rem; }
+</style>

@@ -1,0 +1,433 @@
+---
+import { getCollection, type CollectionEntry } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import Masthead from "../../components/Masthead.astro";
+import Rail from "../../components/Rail.astro";
+import Footer from "../../components/Footer.astro";
+import FailureBars from "../../components/FailureBars.astro";
+import TrendCharts from "../../components/TrendCharts.astro";
+import RoomGrid from "../../components/RoomGrid.astro";
+import Blocks from "../../components/Blocks.astro";
+import EditMode from "../../components/EditMode.astro";
+import { site } from "../../data/site";
+import { parseDoc } from "../../data/md-blocks";
+import {
+  derive, fill, parseBody, inlineHtml, viewBlocks, statusOf, statusLabel, statusMark,
+  trend, roomsFor, checkDashboard,
+} from "../../data/case-studies";
+
+export async function getStaticPaths() {
+  const entries = await getCollection("caseStudies");
+  return entries.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+
+const { entry } = Astro.props as { entry: CollectionEntry<"caseStudies"> };
+const study = entry.data;
+const file = entry.id;
+const raw = entry.body ?? "";
+
+// Edit mode exists only in the dev server. In a build this is false and
+// everything behind it is dropped.
+const EDIT = import.meta.env.DEV;
+
+const d = derive(study);
+checkDashboard(study, file);
+const f = (t: string) => fill(t, d, file);
+const t = (text: string) => inlineHtml(text, d, file, EDIT);
+const plain = (text: string) => inlineHtml(text, d, file, false);
+const E = (addr: string) => (EDIT ? addr : undefined);
+const M = EDIT ? "inline" : undefined;
+
+parseBody(f(raw), study, file); // structure check: sections present, issues matched
+const doc = parseDoc(raw);
+const vb = (blocks: typeof doc.Summary.blocks) => viewBlocks(blocks, d, file, EDIT);
+
+const mb = doc.Method!.blocks;
+const cut = mb.findIndex((b) => b.kind === "marker");
+const blocks = {
+  summary: await vb(doc.Summary!.blocks),
+  methodBefore: await vb(cut < 0 ? mb : mb.slice(0, cut)),
+  methodAfter: await vb(cut < 0 ? [] : mb.slice(cut + 1)),
+  scorecard: await vb(doc.Scorecard!.blocks),
+  pattern: await vb(doc.Pattern!.blocks),
+  plan: await vb(doc.Plan!.blocks),
+  limits: await vb(doc.Limits!.blocks),
+};
+
+const issues = await Promise.all(
+  study.findings.map(async (fi, i) => {
+    const fb = doc.Findings!.findings.find((x) => x.ref === fi.ref)!;
+    const list = roomsFor(fi, study);
+    return {
+      ...fi, i, title: fb.title, titleAddr: fb.titleAddr, titleHtml: t(fb.title),
+      blocks: await vb(fb.blocks), list,
+      roomsLabel: fi.rooms === "all" ? "Every room" : list.length <= 4 ? list.join(", ") : `${list.length} rooms`,
+    };
+  })
+);
+
+const rooms = study.rooms.map((r) => ({
+  ...r,
+  status: statusOf(r, study.target),
+  issues: issues
+    .filter((x) => x.list.includes(r.id))
+    .map((x) => ({ ref: x.ref, severity: x.severity, titleHtml: plain(x.title) })),
+}));
+const weeks = trend(study, d);
+const critRooms = study.rooms.filter((r) => r.critical > 0).length;
+
+const H = {
+  summary: "This week",
+  trend: "{{weeks}} weeks of walkthroughs",
+  method: "How scoring works",
+  scorecard: "Every room, worst first",
+  findings: "{{findings}} open issues",
+  plan: "Next steps",
+  limits: "What this doesn't cover",
+  ...study.headings,
+};
+
+// A save is refused if the file changed after this page loaded.
+let base = "";
+if (EDIT && entry.filePath) {
+  const { readFileSync } = await import("node:fs");
+  const { createHash } = await import("node:crypto");
+  const path = await import("node:path");
+  base = createHash("sha1").update(readFileSync(path.resolve(process.cwd(), entry.filePath), "utf8")).digest("hex");
+}
+
+const issued = study.issued.toLocaleDateString("en-GB", { year: "numeric", month: "short", day: "2-digit" });
+const sevLabel = { critical: "Critical", high: "High", medium: "Medium" } as const;
+const signed = (n: number) => (n > 0 ? `+${n}` : String(n));
+---
+<Base title={`${f(study.title)} — ${site.name}`} description={f(study.dek)}>
+  <Rail />
+  <Masthead />
+  <main>
+
+    <section class="section">
+      <div class="wrap section-grid">
+        <div class="label">{study.kind}</div>
+        <div class="section-body">
+          <h1 data-edit={E("fm:title")} data-mode={M} set:html={t(study.title)} />
+          <p class="dek" data-edit={E("fm:dek")} data-mode={M} set:html={t(study.dek)} />
+          <div class="titleblock">
+            {study.meta.map((m, i) => (
+              <div>
+                <span class="tb-k label">{m.k}</span>
+                <span class="tb-v" data-edit={E(`fm:meta.${i}.v`)} data-mode={M} set:html={t(m.v)} />
+              </div>
+            ))}
+          </div>
+          {study.specimen && (
+            <p class="specimen">
+              <i>Specimen</i>
+              <span>
+                The campus, rooms and numbers are invented to show what this dashboard
+                looks like. No real client or organisation is described. The scoring
+                method is real.
+              </span>
+            </p>
+          )}
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap section-grid">
+        <div class="label">Overview</div>
+        <div class="section-body">
+          <h2 data-edit={E("fm:headings.summary")} data-mode={M} set:html={t(H.summary)} />
+          <div class="kpis">
+            <div class="kpi">
+              <span class="k label">Readiness</span>
+              <span class="v">{d.score}<i>/ {d.target}</i></span>
+              <span class="s">{signed(d.scoreChange)} since week 1</span>
+            </div>
+            <div class="kpi alert">
+              <span class="k label">Rooms down</span>
+              <span class="v">{d.down}<i>of {d.total}</i></span>
+              <span class="s">was {d.startDown} in week 1</span>
+            </div>
+            <div class="kpi alert">
+              <span class="k label">Show-critical</span>
+              <span class="v">{d.critical}</span>
+              <span class="s">across {critRooms} room{critRooms === 1 ? "" : "s"}</span>
+            </div>
+            <div class="kpi">
+              <span class="k label">Coverage</span>
+              <span class="v">{d.walked}<i>of {d.total} walked</i></span>
+              <span class="s">{d.overdue ? `${d.overdue} overdue` : "All on schedule"}</span>
+            </div>
+          </div>
+          <div class="md"><Blocks blocks={blocks.summary} edit={EDIT} /></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap section-grid">
+        <div class="label">Trend</div>
+        <div class="section-body">
+          <h2 data-edit={E("fm:headings.trend")} data-mode={M} set:html={t(H.trend)} />
+          <TrendCharts weeks={weeks} target={d.target} total={d.total} caption={t(study.trendCaption)} editAddr={E("fm:trendCaption")} />
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap section-grid">
+        <div class="label">Rooms</div>
+        <div class="section-body">
+          <h2 data-edit={E("fm:headings.scorecard")} data-mode={M} set:html={t(H.scorecard)} />
+          <RoomGrid rooms={rooms} target={d.target} />
+          <div class="md"><Blocks blocks={blocks.scorecard} edit={EDIT} /></div>
+          <details class="more">
+            <summary class="label">Every room as a table</summary>
+            <div class="tw">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Room</th><th>Use</th><th class="r">Score</th><th>Status</th>
+                    <th class="r">Show-crit.</th><th>Weakest area</th><th class="r">Walked</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {study.rooms.map((r, i) => {
+                    const st = statusOf(r, study.target);
+                    return (
+                      <tr>
+                        <td class="mono">{r.id}</td>
+                        <td data-edit={E(`fm:rooms.${i}.use`)} data-mode={M} set:html={t(r.use)} />
+                        <td class="r num">{r.score}</td>
+                        <td><span class={`rs ${st}`}><i>{statusMark[st]}</i>{statusLabel[st]}</span></td>
+                        <td class="r num">{r.critical}</td>
+                        <td data-edit={E(`fm:rooms.${i}.weakest`)} data-mode={M} set:html={t(r.weakest)} />
+                        <td class="r num">{r.daysSince}d</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            <p class="stat-line">Mean {d.mean} · median {d.median}</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap section-grid">
+        <div class="label">Issues</div>
+        <div class="section-body">
+          <h2 data-edit={E("fm:headings.findings")} data-mode={M} set:html={t(H.findings)} />
+          <div class="issues">
+            {issues.map((x) => (
+              <article class="issue" id={`issue-${x.ref}`}>
+                <div class="ih">
+                  <span class="ref">{x.ref}</span>
+                  <h3 data-edit={E(x.titleAddr)} data-mode={M} set:html={x.titleHtml} />
+                  <span class={`sev ${x.severity}`}>{sevLabel[x.severity]}</span>
+                </div>
+                <p class="irooms">
+                  <span class="label">Rooms</span>
+                  <span class="mono" title={x.list.join(", ")}>{x.roomsLabel}</span>
+                  {x.effort && <><span class="label">Effort</span><span class="mono">{x.effort}</span></>}
+                </p>
+                <dl class="pf">
+                  <dt class="label">Problem</dt>
+                  <dd data-edit={E(`fm:findings.${x.i}.problem`)} data-mode={M} set:html={t(x.problem)} />
+                  <dt class="label">Fix</dt>
+                  <dd data-edit={E(`fm:findings.${x.i}.fix`)} data-mode={M} set:html={t(x.fix)} />
+                </dl>
+                <details class="more">
+                  <summary class="label">Why this matters</summary>
+                  <div class="md"><Blocks blocks={x.blocks} edit={EDIT} /></div>
+                </details>
+              </article>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap section-grid">
+        <div class="label">Pattern</div>
+        <div class="section-body">
+          <h2 data-edit={E("fm:chartTitle")} data-mode={M} set:html={t(study.chartTitle)} />
+          <FailureBars
+            rows={study.chart} max={d.chartMax} total={d.chartTotal} topTwoPct={d.topTwoPct}
+            caption={t(study.chartCaption)} editAddr={E("fm:chartCaption")}
+          />
+          <div class="md"><Blocks blocks={blocks.pattern} edit={EDIT} /></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap section-grid">
+        <div class="label">Next</div>
+        <div class="section-body">
+          <h2 data-edit={E("fm:headings.plan")} data-mode={M} set:html={t(H.plan)} />
+          <div class="phases">
+            {study.plan.map((p, pi) => (
+              <div class={`phase${p.capital ? " capital" : ""}`}>
+                <span class="when label" data-edit={E(`fm:plan.${pi}.when`)} data-mode={M} set:html={t(p.when)} />
+                <h3 data-edit={E(`fm:plan.${pi}.title`)} data-mode={M} set:html={t(p.title)} />
+                <ul>
+                  {p.items.map((i, ii) => (
+                    <li>
+                      <span data-edit={E(`fm:plan.${pi}.items.${ii}.do`)} data-mode={M} set:html={t(i.do)} />
+                      {i.days !== undefined && <span class="eff"> {i.days} day{i.days === 1 ? "" : "s"}</span>}
+                      {i.effort && <span class="eff"> {i.effort}</span>}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+          <div class="md"><Blocks blocks={blocks.plan} edit={EDIT} /></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap section-grid">
+        <div class="label">Notes</div>
+        <div class="section-body">
+          <details class="more">
+            <summary class="label" set:html={plain(H.method)} />
+            <div class="md"><Blocks blocks={blocks.methodBefore} edit={EDIT} /></div>
+            <div class="tw">
+              <table class="rules">
+                <tbody>
+                  {study.statuses.map((s, i) => (
+                    <tr>
+                      <td><span class={`rs ${s.key}`}><i>{statusMark[s.key]}</i>{s.name}</span></td>
+                      <td data-edit={E(`fm:statuses.${i}.rule`)} data-mode={M} set:html={t(s.rule)} />
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div class="md"><Blocks blocks={blocks.methodAfter} edit={EDIT} /></div>
+            <p class="label note" data-edit={E("fm:instrumentNote")} data-mode={M} set:html={t(study.instrumentNote)} />
+          </details>
+          <details class="more">
+            <summary class="label" set:html={plain(H.limits)} />
+            <div class="md"><Blocks blocks={blocks.limits} edit={EDIT} /></div>
+          </details>
+          <p class="colophon label">
+            {study.specimen && <>Specimen · no real client described · </>}
+            Issued {issued}
+          </p>
+          <p><a class="plate-btn" href="/#work">← All work</a></p>
+        </div>
+      </div>
+    </section>
+
+    <Footer />
+  </main>
+  {EDIT && <EditMode file={file} base={base} />}
+</Base>
+
+<style>
+  h1 { font-size: clamp(1.85rem, 4.6vw, 2.9rem); line-height: 1.04; letter-spacing: -0.03em; }
+  h2 { font-size: clamp(1.2rem, 2.6vw, 1.5rem); letter-spacing: -0.02em; }
+  h3 { font-size: 1.0625rem; line-height: 1.25; letter-spacing: -0.01em; }
+  .dek { font-size: 1.1875rem; color: var(--ink-mid); max-width: 56ch; }
+  p { max-width: 64ch; margin: 0; }
+  .note { color: var(--ink-mid); }
+
+  .specimen { display: flex; gap: 0.85rem; align-items: flex-start; max-width: 72ch; }
+  .specimen i {
+    font-style: normal; flex: none; background: var(--tally); color: var(--paper);
+    font-family: var(--f-mono); font-weight: 500; font-size: 0.625rem;
+    letter-spacing: 0.14em; text-transform: uppercase; padding: 0.3rem 0.55rem 0.26rem;
+  }
+  .specimen span { color: var(--ink-mid); font-size: 0.9375rem; }
+
+  /* headline numbers */
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); border: var(--lw-key) solid var(--ink); background: var(--surface); }
+  .kpi { display: flex; flex-direction: column; gap: 0.3rem; padding: 0.85rem 0.95rem; border-right: var(--lw-hair) solid var(--rule); }
+  .kpi:last-child { border-right: 0; }
+  .kpi .k { color: var(--ink-mid); }
+  .kpi .v { font-family: var(--f-mono); font-weight: 500; font-size: 2.1rem; line-height: 1; font-variant-numeric: tabular-nums; }
+  .kpi .v i { font-style: normal; font-size: 0.6875rem; color: var(--ink-mid); margin-left: 0.3rem; }
+  .kpi .s { font-family: var(--f-mono); font-weight: 500; font-size: 0.6875rem; color: var(--ink-mid); }
+  .kpi.alert .v { color: var(--tally); }
+
+  /* tables */
+  .tw { overflow-x: auto; border: var(--lw-thin) solid var(--ink); background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; min-width: 36rem; font-size: 0.875rem; }
+  table.rules { min-width: 0; }
+  th {
+    font-family: var(--f-mono); font-weight: 500; font-size: 0.5625rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--ink-mid); text-align: left; padding: 0.55rem 0.75rem; white-space: nowrap; border-bottom: var(--lw-med) solid var(--ink);
+  }
+  td { padding: 0.5rem 0.75rem; border-bottom: var(--lw-hair) solid var(--rule); vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  .r { text-align: right; }
+  .num, .mono { font-family: var(--f-mono); font-weight: 500; font-size: 0.8125rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .stat-line { font-family: var(--f-mono); font-weight: 500; font-size: 0.75rem; letter-spacing: 0.06em; color: var(--ink-mid); margin-top: 0.5rem; }
+
+  .rs {
+    display: inline-flex; align-items: center; gap: 0.4rem; white-space: nowrap; padding: 0.1rem 0.5rem 0.06rem;
+    font-family: var(--f-mono); font-weight: 500; font-size: 0.5625rem; letter-spacing: 0.12em; text-transform: uppercase;
+  }
+  .rs i { font-style: normal; font-size: 0.625rem; line-height: 1; }
+  .rs.down { background: var(--tally); color: var(--paper); }
+  .rs.watch { background: var(--tally-wash); color: var(--ink); box-shadow: inset 0 0 0 var(--lw-thin) var(--tally); }
+  .rs.ready { background: var(--held); color: var(--paper); }
+
+  /* collapsible depth */
+  .more > summary { cursor: pointer; color: var(--ink-mid); padding: 0.2rem 0; list-style-position: inside; }
+  .more > summary:hover { color: var(--ink); }
+  .more[open] > summary { margin-bottom: 0.7rem; color: var(--ink); }
+  .more { display: flex; flex-direction: column; }
+  .more[open] { gap: 0.8rem; }
+
+  /* issues */
+  .issues { display: flex; flex-direction: column; gap: var(--plate-gap); }
+  .issue { border: var(--lw-thin) solid var(--ink); background: var(--surface); padding: 0.85rem 0.95rem; display: flex; flex-direction: column; gap: 0.6rem; scroll-margin-top: 4rem; }
+  .issue:target { box-shadow: var(--lift); }
+  .ih { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 0.7rem; align-items: baseline; }
+  .ref { font-family: var(--f-mono); font-weight: 500; font-size: 0.6875rem; letter-spacing: 0.1em; color: var(--ink-mid); }
+  .sev { white-space: nowrap; padding: 0.2rem 0.55rem 0.16rem; font-family: var(--f-mono); font-weight: 500; font-size: 0.5625rem; letter-spacing: 0.12em; text-transform: uppercase; }
+  .sev.critical { background: var(--tally); color: var(--paper); }
+  .sev.high { background: var(--tally-wash); color: var(--ink); box-shadow: inset 0 0 0 var(--lw-thin) var(--tally); }
+  .sev.medium { color: var(--ink-mid); box-shadow: inset 0 0 0 var(--lw-thin) var(--rule); }
+  .irooms { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.3rem 0.55rem; }
+  .irooms .label { color: var(--ink-mid); }
+  .irooms .label + .mono { margin-right: 0.9rem; }
+  .pf { margin: 0; display: grid; grid-template-columns: 4.5rem minmax(0, 1fr); gap: 0.35rem 0.8rem; }
+  .pf dt { color: var(--ink-mid); padding-top: 0.25rem; }
+  .pf dd { margin: 0; max-width: 62ch; }
+  @media (max-width: 34rem) {
+    .ih { grid-template-columns: minmax(0, 1fr) auto; }
+    .ih .ref { grid-column: 1 / -1; }
+    .pf { grid-template-columns: 1fr; gap: 0.1rem; }
+    .pf dt { padding-top: 0.45rem; }
+  }
+
+  /* plan */
+  .phases { display: grid; gap: var(--plate-gap); grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); }
+  .phase { border-left: var(--lw-edge) solid var(--ink); padding-left: 0.95rem; }
+  .phase.capital { border-left-color: var(--rule); }
+  .phase .when { display: block; color: var(--ink-mid); margin-bottom: 0.3rem; }
+  .phase h3 { font-size: 1rem; margin-bottom: 0.45rem; }
+  .phase ul { margin: 0; padding-left: 1.15rem; }
+  .phase li { margin-bottom: 0.4rem; }
+  .eff { font-family: var(--f-mono); font-weight: 500; font-size: 0.6875rem; color: var(--ink-mid); white-space: nowrap; }
+
+  .colophon { color: var(--ink-mid); }
+
+  /* Markdown from the body arrives unscoped, so it is styled through :global. */
+  .md { display: flex; flex-direction: column; gap: 1rem; }
+  .md :global(p) { margin: 0; max-width: 64ch; }
+  .md :global(strong) { font-weight: 500; font-family: var(--f-display); letter-spacing: -0.005em; }
+  .md :global(ul), .md :global(ol) { margin: 0; padding-left: 1.15rem; }
+  .md :global(li) { margin-bottom: 0.4rem; max-width: 62ch; }
+  .md :global(a) { color: inherit; text-decoration-color: var(--tally); text-underline-offset: 0.18em; }
+</style>

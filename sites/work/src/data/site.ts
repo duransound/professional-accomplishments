@@ -20,6 +20,28 @@ const schema = z.object({
     message: "is too long for the lower third — keep it on one line",
   }),
   tagline: required("A tagline"),
+  /**
+   * The status lamp in the masthead. Optional in full — the component renders
+   * nothing when it is absent, so an unmaintained "now" line can be removed
+   * rather than left to rot. `updated` is required when the block exists,
+   * because a status with no date stops being a status.
+   */
+  now: z
+    .object({
+      label: required("A label for the status lamp").max(16, {
+        message: "is too long for the masthead — one or two words",
+      }),
+      text: required("What you are working on").max(110, {
+        message: "is too long for the masthead — keep it to one sentence",
+      }),
+      href: z.string().optional(),
+      updated: z.coerce.date({
+        invalid_type_error: "must be a date like 2026-09-18",
+        required_error:
+          "is required whenever there is a now block. A status line with no date stops being a status.",
+      }),
+    })
+    .optional(),
 });
 
 export const site = loadContent("site.yaml", schema);

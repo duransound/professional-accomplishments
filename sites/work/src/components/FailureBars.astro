@@ -1,0 +1,92 @@
+---
+/**
+ * Failure concentration by subsystem.
+ *
+ * One series, so one hue and no legend — the title names what is being
+ * counted. Bars are drawn in --draft-* because this is a diagram, and the
+ * bracket marks the claim the section makes rather than decorating the top.
+ * Every bar carries its own value, so the drawing is also its own table.
+ */
+interface Props {
+  rows: { name: string; count: number }[];
+  max: number;
+  total: number;
+  topTwoPct: number;
+  caption: string;
+  /** Dev only: the frontmatter address, so edit mode can reach the caption. */
+  editAddr?: string;
+}
+const { rows, max, total, topTwoPct, caption, editAddr } = Astro.props;
+
+const LABEL = 208;
+const TRACK = 440;
+const ROW = 34;
+const BAR = 15;
+const TOP = 21;
+const H = TOP + rows.length * ROW + 46;
+const w = (n: number) => (max ? Math.round((n / max) * TRACK) : 0);
+const bracketBottom = TOP + ROW + BAR;
+---
+<figure class="diagram">
+  <svg
+    viewBox={`0 0 800 ${H}`}
+    role="img"
+    aria-label={`Failing or flagged checks by subsystem, ${total} in total. ${rows
+      .map((r) => `${r.name} ${r.count}`)
+      .join(", ")}. The two largest account for ${topTwoPct} per cent.`}
+  >
+    <line x1={LABEL} y1={TOP - 4} x2={LABEL} y2={TOP + rows.length * ROW - 12}
+          stroke="var(--draft-rule)" stroke-width="1" />
+
+    {rows.map((r, i) => {
+      const y = TOP + i * ROW;
+      return (
+        <g>
+          <text class="bl" x={LABEL - 10} y={y + 12} text-anchor="end">{r.name.toUpperCase()}</text>
+          <rect x={LABEL} y={y} width={w(r.count)} height={BAR} rx="4" ry="4" fill="var(--draft-ink)" />
+          <text class="bv" x={LABEL + w(r.count) + 10} y={y + 12}>{r.count}</text>
+        </g>
+      );
+    })}
+
+    <path
+      d={`M${LABEL + TRACK + 30},${TOP + 1} L${LABEL + TRACK + 43},${TOP + 1} L${LABEL + TRACK + 43},${bracketBottom} L${LABEL + TRACK + 30},${bracketBottom}`}
+      fill="none" stroke="var(--draft-accent)" stroke-width="1.6"
+    />
+    <text class="ba" x={LABEL + TRACK + 52} y={TOP + 20}>{topTwoPct}% OF ALL</text>
+    <text class="ba" x={LABEL + TRACK + 52} y={TOP + 34}>FAILURES</text>
+
+    <text class="bl dim" x={LABEL} y={H - 14}>
+      FAILING OR FLAGGED CHECKS · {total} TOTAL
+    </text>
+  </svg>
+  <figcaption data-edit={editAddr} data-mode={editAddr ? "inline" : undefined} set:html={caption} />
+</figure>
+
+<style>
+  .diagram {
+    margin: 0;
+    background: var(--draft);
+    border: var(--lw-thin) solid var(--draft-ink);
+    padding: clamp(0.9rem, 2.4vw, 1.25rem);
+  }
+  svg { display: block; width: 100%; height: auto; }
+  .bl {
+    font-family: var(--f-mono); font-weight: 500; font-size: 10.5px;
+    letter-spacing: 0.05em; fill: var(--draft-ink);
+  }
+  .bl.dim { fill: var(--draft-mid); }
+  .bv {
+    font-family: var(--f-mono); font-weight: 500; font-size: 11px;
+    fill: var(--draft-ink); font-variant-numeric: tabular-nums;
+  }
+  .ba {
+    font-family: var(--f-mono); font-weight: 500; font-size: 10px;
+    letter-spacing: 0.1em; fill: var(--draft-accent);
+  }
+  figcaption {
+    margin-top: 0.75rem; padding-top: 0.7rem;
+    border-top: var(--lw-hair) solid var(--draft-rule);
+    color: var(--ink-mid); font-size: 0.9375rem; max-width: 64ch;
+  }
+</style>

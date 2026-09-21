@@ -12,6 +12,10 @@
  * job is telling you who someone is.
  */
 import { site } from "../data/site";
+
+// A status that points somewhere is a link; one that does not is a plain
+// block. Same markup either way, so the styles never fork.
+const NowTag = site.now?.href ? "a" : "div";
 ---
 <header class="masthead">
   <div class="wrap masthead-inner">
@@ -28,6 +32,16 @@ import { site } from "../data/site";
     </a>
 
     <div class="masthead-side">
+      {site.now && (
+        <NowTag href={site.now.href}>
+          <span class="now-k">
+            <i class="now-lamp" aria-hidden="true"></i>{site.now.label}
+            <b>{site.now.updated.toLocaleDateString("en-GB", { month: "short", year: "numeric" })}</b>
+          </span>
+          <span class="now-t">{site.now.text}</span>
+        </NowTag>
+      )}
+
       <div class="vocab">
         <span class="label" id="vocab-label">Read the room as</span>
         <button
@@ -146,6 +160,37 @@ import { site } from "../data/site";
 
   /* ---- the throw switch ---- */
   .masthead-side { display: flex; flex-direction: column; align-items: flex-end; gap: 0.9rem; }
+
+  /* ---- the status lamp ----
+     A tally light does not glow up, so the lamp is a flat dot and the whole
+     block snaps on hover. The date sits next to the label rather than under
+     the text, so a stale status is obvious at a glance. */
+  .now {
+    display: flex; flex-direction: column; align-items: flex-end; gap: 0.2rem;
+    max-width: 30ch; text-align: right; text-decoration: none; color: var(--ink);
+    border-right: var(--lw-rule) solid var(--tally); padding-right: 0.7rem;
+  }
+  a.now:hover { color: var(--ink); }
+  a.now:hover .now-t { color: var(--tally); }
+  .now-k {
+    display: inline-flex; align-items: center; gap: 0.45rem;
+    font-family: var(--f-mono); font-weight: 500; font-size: 0.625rem;
+    letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-mid);
+  }
+  .now-k b { font-weight: 500; color: var(--ink-soft); }
+  .now-lamp {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--tally); flex: none;
+  }
+  .now-t { font-size: 0.875rem; line-height: 1.35; color: var(--ink); }
+
+  @media (max-width: 40rem) {
+    .now {
+      align-items: flex-start; text-align: left; max-width: none;
+      border-right: 0; border-left: var(--lw-rule) solid var(--tally);
+      padding-right: 0; padding-left: 0.7rem;
+    }
+  }
   .vocab { display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem; }
   .vocab > .label { color: var(--ink-mid); }
 

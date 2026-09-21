@@ -1,0 +1,21 @@
+---
+/**
+ * One case-study section, rendered a paragraph or list item at a time so that
+ * edit mode can tell exactly which piece of the file each one came from.
+ * The data-edit address only exists in the dev server.
+ */
+import type { ViewBlock } from "../data/case-studies";
+interface Props { blocks: ViewBlock[]; edit: boolean }
+const { blocks, edit } = Astro.props;
+---
+{blocks.map((b) =>
+  b.kind === "ul" ? (
+    <ul>
+      {b.items.map((i) => (
+        <li data-edit={edit ? i.addr : undefined} data-mode={edit ? "inline" : undefined} set:html={i.html} />
+      ))}
+    </ul>
+  ) : (
+    <div class="blk" data-edit={edit ? b.addr : undefined} data-mode={edit ? "block" : undefined} set:html={b.html} />
+  )
+)}

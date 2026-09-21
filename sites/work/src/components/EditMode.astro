@@ -1,0 +1,213 @@
+---
+/**
+ * Edit text on the page — dev server only.
+ *
+ * The page only renders this component when import.meta.env.DEV is true, and
+ * the endpoint it saves to only exists in the dev server, so none of this
+ * reaches the published site. Click "Edit text", click any sentence, type,
+ * save. Numbers worked out from the data show as locked chips: rewrite around
+ * them, they can't be typed over.
+ */
+interface Props { file: string; base: string }
+const { file, base } = Astro.props;
+---
+<div class="editbar" id="editbar" data-file={file} data-base={base}>
+  <span class="ed-status" id="ed-status" role="status" aria-live="polite"></span>
+  <button type="button" class="plate-btn" id="ed-discard" hidden>Discard</button>
+  <button type="button" class="plate-btn on" id="ed-save" hidden>Save</button>
+  <button type="button" class="plate-btn" id="ed-toggle" aria-pressed="false">Edit text</button>
+</div>
+
+<script>
+  const bar = document.getElementById("editbar")!;
+  const toggle = document.getElementById("ed-toggle")!;
+  const save = document.getElementById("ed-save")!;
+  const discard = document.getElementById("ed-discard")!;
+  const status = document.getElementById("ed-status")!;
+  const root = document.documentElement;
+  const fields = () => Array.from(document.querySelectorAll<HTMLElement>("[data-edit]"));
+  const originals = new Map<HTMLElement, string>();
+  const dirty = new Set<HTMLElement>();
+  let on = false;
+
+  const say = (msg: string, bad = false) => {
+    status.textContent = msg;
+    status.classList.toggle("bad", bad);
+  };
+  const refresh = () => {
+    const n = dirty.size;
+    save.hidden = discard.hidden = n === 0;
+    save.textContent = n ? `Save ${n} change${n === 1 ? "" : "s"}` : "Save";
+    if (on && !status.classList.contains("bad")) say(n ? "Unsaved changes" : "Click any text to change it");
+  };
+
+  function start() {
+    on = true;
+    root.dataset.editing = "";
+    toggle.setAttribute("aria-pressed", "true");
+    toggle.textContent = "Done";
+    document.execCommand("defaultParagraphSeparator", false, "p");
+    // Open every collapsed section while editing, so all the text is reachable.
+    document.querySelectorAll("details").forEach((d) => {
+      if (d.dataset.wasOpen === undefined) d.dataset.wasOpen = String(d.open);
+      d.open = true;
+    });
+    for (const el of fields()) {
+      if (!originals.has(el)) originals.set(el, el.innerHTML);
+      el.contentEditable = "true";
+      el.spellcheck = true;
+    }
+    refresh();
+  }
+  function stop() {
+    if (dirty.size) { say("Save or discard your changes first", true); return; }
+    on = false;
+    delete root.dataset.editing;
+    toggle.setAttribute("aria-pressed", "false");
+    toggle.textContent = "Edit text";
+    for (const el of fields()) el.contentEditable = "false";
+    document.querySelectorAll("details").forEach((d) => {
+      if (d.dataset.wasOpen !== undefined) { d.open = d.dataset.wasOpen === "true"; delete d.dataset.wasOpen; }
+    });
+    say("");
+  }
+  toggle.addEventListener("click", () => (on ? stop() : start()));
+
+  document.addEventListener("input", (e) => {
+    const el = (e.target as HTMLElement).closest<HTMLElement>("[data-edit]");
+    if (!el || !on) return;
+    status.classList.remove("bad");
+    if (el.innerHTML === originals.get(el)) { dirty.delete(el); el.classList.remove("dirty"); }
+    else { dirty.add(el); el.classList.add("dirty"); }
+    refresh();
+  });
+
+  // Titles, list items and short fields are one line; return does nothing there.
+  document.addEventListener("keydown", (e) => {
+    const el = (e.target as HTMLElement).closest<HTMLElement>("[data-edit]");
+    if (on && (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") { e.preventDefault(); if (dirty.size) doSave(); return; }
+    if (!el || !on) return;
+    if (e.key === "Enter" && el.dataset.mode === "inline") e.preventDefault();
+    if (e.key === "Escape") el.blur();
+  });
+
+  // Paste as plain text, so formatting from another app never sneaks in.
+  document.addEventListener("paste", (e) => {
+    const el = (e.target as HTMLElement).closest<HTMLElement>("[data-edit]");
+    if (!el || !on) return;
+    e.preventDefault();
+    const text = e.clipboardData?.getData("text/plain") ?? "";
+    document.execCommand("insertText", false, el.dataset.mode === "inline" ? text.replace(/\s+/g, " ") : text);
+  });
+
+  /* ---- turn edited HTML back into the file's plain Markdown ---- */
+  function inlineMd(node: Node): string {
+    let out = "";
+    node.childNodes.forEach((n) => {
+      // The renderer curls quotes for display; the file keeps them straight,
+      // so text you didn't touch reads back exactly as it was written.
+      if (n.nodeType === Node.TEXT_NODE) {
+        out += (n.nodeValue ?? "").replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"');
+        return;
+      }
+      if (!(n instanceof HTMLElement)) return;
+      if (n.dataset.tok) { out += `{{${n.dataset.tok}}}`; return; }
+      const inner = inlineMd(n);
+      const t = n.tagName;
+      if (t === "STRONG" || t === "B") out += inner.trim() ? `**${inner.trim()}**` + (/\s$/.test(inner) ? " " : "") : "";
+      else if (t === "EM" || t === "I") out += inner.trim() ? `*${inner.trim()}*` + (/\s$/.test(inner) ? " " : "") : "";
+      else if (t === "A") out += `[${inner}](${n.getAttribute("href") ?? ""})`;
+      else if (t === "BR") out += " ";
+      else out += inner;
+    });
+    return out;
+  }
+  function blockMd(el: HTMLElement): string {
+    const paras: string[] = [];
+    let loose = "";
+    el.childNodes.forEach((n) => {
+      if (n instanceof HTMLElement && (n.tagName === "P" || n.tagName === "DIV")) {
+        if (loose.trim()) { paras.push(loose); loose = ""; }
+        paras.push(inlineMd(n));
+      } else {
+        const wrap = document.createElement("span");
+        wrap.appendChild(n.cloneNode(true));
+        loose += inlineMd(wrap);
+      }
+    });
+    if (loose.trim()) paras.push(loose);
+    return paras.map((p) => p.replace(/\s+/g, " ").trim()).filter(Boolean).join("\n\n");
+  }
+
+  async function doSave() {
+    const edits = [...dirty].map((el) => ({
+      addr: el.dataset.edit!,
+      text: el.dataset.mode === "inline" ? inlineMd(el).replace(/\s+/g, " ").trim() : blockMd(el),
+    }));
+    save.setAttribute("disabled", "");
+    say("Saving…");
+    try {
+      const res = await fetch("/__edit/save", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ file: bar.dataset.file, base: bar.dataset.base, edits }),
+      });
+      const json = await res.json();
+      if (!res.ok) { say(json.error ?? "Couldn't save.", true); return; }
+      sessionStorage.setItem("ed-resume", String(window.scrollY));
+      dirty.clear();
+      location.reload();
+    } catch {
+      say("Couldn't reach the dev server. Is npm run dev still running?", true);
+    } finally {
+      save.removeAttribute("disabled");
+    }
+  }
+  save.addEventListener("click", doSave);
+
+  discard.addEventListener("click", () => {
+    for (const el of dirty) { el.innerHTML = originals.get(el) ?? el.innerHTML; el.classList.remove("dirty"); }
+    dirty.clear();
+    status.classList.remove("bad");
+    refresh();
+  });
+
+  window.addEventListener("beforeunload", (e) => { if (dirty.size) e.preventDefault(); });
+
+  // After a save the page reloads; land back where you were, still editing.
+  const resume = sessionStorage.getItem("ed-resume");
+  if (resume !== null) {
+    sessionStorage.removeItem("ed-resume");
+    window.scrollTo(0, Number(resume));
+    start();
+    say("Saved");
+  }
+</script>
+
+<style is:global>
+  .editbar {
+    position: fixed; right: 1rem; bottom: calc(1rem + env(safe-area-inset-bottom, 0px)); z-index: 60;
+    display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; justify-content: flex-end;
+    background: var(--ink); border: var(--lw-key) solid var(--ink); padding: 0.55rem 0.65rem;
+    max-width: calc(100vw - 2rem);
+  }
+  .editbar .plate-btn { box-shadow: 3px 3px 0 var(--tally); }
+  .editbar .plate-btn.on { background: var(--tally); color: var(--paper); }
+  .editbar .plate-btn[disabled] { opacity: 0.6; cursor: progress; }
+  .ed-status {
+    font-family: var(--f-mono); font-weight: 500; font-size: 0.6875rem; letter-spacing: 0.1em;
+    text-transform: uppercase; color: rgba(242, 241, 237, 0.75); padding: 0 0.3rem; max-width: 34ch;
+  }
+  .ed-status.bad { color: #ff9b8f; text-transform: none; letter-spacing: 0; font-family: var(--f-body); font-size: 0.875rem; }
+
+  [data-editing] [data-edit] { outline: 1px dashed var(--draft-soft); outline-offset: 4px; cursor: text; }
+  [data-editing] [data-edit]:hover { outline-color: var(--ink-mid); }
+  [data-editing] [data-edit]:focus { outline: 2px solid var(--focus); outline-offset: 4px; }
+  [data-editing] [data-edit].dirty { outline: 2px solid var(--tally); }
+
+  .tok { font-variant-numeric: tabular-nums; }
+  [data-editing] .tok {
+    background: var(--sunk); box-shadow: inset 0 0 0 1px var(--ink-mid);
+    padding: 0 0.28em; cursor: not-allowed; user-select: none;
+  }
+</style>
