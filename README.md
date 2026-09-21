@@ -56,7 +56,7 @@ so it can't drift when a seat is added.
 
 ## Before launch
 
-- [ ] Choose the domain, then set `site:` in both `astro.config.mjs` files
+- [x] Choose the domain, then set `site:` in both `astro.config.mjs` files (work: duran.show)
 - [ ] Music site: replace the dead ToneDen sample-pack link (ToneDen shut down in 2024)
 - [ ] Music site: pull hero/profile images off the current Wix site
 - [ ] Unlock `milkshakeoneil.com` in Wix — it carries `clientUpdateProhibited`,

@@ -16,8 +16,17 @@ maintenance cost near zero and the design language identical.
 
 ## Stack
 
-Astro, static output, Markdown and YAML content, no CMS. At a few posts a year
-a CMS is overhead that never pays for itself. Cloudflare Pages for hosting.
+Astro, static output, Markdown and YAML content. Cloudflare Pages for hosting.
+
+*Updated 2026-09-21.* Two ways to change words without opening a file now
+exist, and both write straight back into the same YAML and Markdown:
+
+- **Edit on the page** (the one actually used). Under `npm run dev` every page
+  has an "Edit text" button; saving rewrites only the edited lines. It lives in
+  `src/edit/` and exists only in the dev server — nothing of it ships.
+- **/admin** (Sveltia CMS, `public/admin/config.yml`). Kept, but secondary: it
+  rewrites whole files and drops any field its config doesn't list, so every
+  new YAML field must be added to that config too.
 
 ## Content is separated from markup
 
