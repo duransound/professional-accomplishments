@@ -13,6 +13,7 @@ import { getCollection } from "astro:content";
 import { derive, inlineHtml } from "../data/case-studies";
 import { seatCount, depts, crewPage } from "../data/crew";
 import { site } from "../data/site";
+import { runbook, runbookStats } from "../data/runbook";
 import { ed } from "../edit/attrs";
 
 const DEV = import.meta.env.DEV;
@@ -61,6 +62,18 @@ const items = (await getCollection("caseStudies"))
               <div><dt>Depts</dt><dd>{depts.length}</dd></div>
             </dl>
             <span class="plate-btn" aria-hidden="true">Open the map →</span>
+          </a>
+          <a class="card" href="/projects/show-day-runbook/">
+            <span class="kicker">Show-day runbook <i class="spec">Demo</i></span>
+            <h3 {...ed("runbook.yaml", "page.title")}>{runbook.page.title}</h3>
+            <p {...ed("runbook.yaml", "page.summary")}>{runbook.page.summary}</p>
+            <dl class="figs">
+              <div><dt>Cues</dt><dd>{runbookStats.cues}</dd></div>
+              <div><dt>Seats</dt><dd>{runbookStats.seats}</dd></div>
+              <div><dt>Doors</dt><dd>{runbookStats.doors}</dd></div>
+              <div><dt>On air</dt><dd>{runbookStats.showMinutes}m</dd></div>
+            </dl>
+            <span class="plate-btn" aria-hidden="true">Open the runbook →</span>
           </a>
         </div>
       </div>

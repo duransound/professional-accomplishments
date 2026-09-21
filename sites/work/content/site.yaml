@@ -55,6 +55,6 @@ hire:
 # stale date is better than an invisible one.
 now:
   label: Now
-  text: Two demo projects are live — a room-readiness dashboard and a crew map.
+  text: Three demo projects are live — a readiness dashboard, a crew map, and a show-day runbook.
   href: /#projects
   updated: 2026-09-21

@@ -5,7 +5,7 @@
 # be changed on the page itself in edit mode.
 # ---------------------------------------------------------------------------
 page:
-  title: All Crew Positions and the one's I've operated
+  title: All Crew Positions and the ones I've operated
   summary: A live production crew drawn as a transit map, with the seats I've worked marked solid.
   dek: A live production crew. Each department is a line and every line ends at On Air. Solid stations are seats I've worked; the rest are seats I've worked alongside.
   note: A composite crew, not any one employer's org chart. Which seats I've held and worked alongside is real.

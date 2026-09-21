@@ -1,0 +1,403 @@
+---
+/**
+ * /projects/show-day-runbook/ — one show day, from load-in to strike.
+ *
+ * Four views of the same data in content/runbook.yaml:
+ *   the day   — phases on a time scale, and who holds the call either side of doors
+ *   the call  — step through the show standby-by-go, the way the caller says it
+ *   the sheet — every cue in one table, filterable to one seat's cues
+ *   the plays — what happens when something breaks
+ *
+ * Everything renders on the server; the scripts only flip [hidden] and one
+ * data attribute. With JavaScript off the caller shows its first standby and
+ * the full cue sheet below still carries every call.
+ */
+import Base from "../../layouts/Base.astro";
+import Masthead from "../../components/Masthead.astro";
+import Rail from "../../components/Rail.astro";
+import Footer from "../../components/Footer.astro";
+import EditMode from "../../components/EditMode.astro";
+import { site } from "../../data/site";
+import { ed } from "../../edit/attrs";
+import { runbook as R, runbookStats as S, seat, seatColor, cueSeats, pct, hourMarks, mins } from "../../data/runbook";
+
+const EDIT = import.meta.env.DEV;
+const P = R.page;
+const E = (path: string) => ed("runbook.yaml", path);
+const code = (id: string) => id.toUpperCase();
+const fmtNum = (n: number) => n.toLocaleString("en-US");
+
+// The caller: two steps per cue — standby, then go.
+const steps = R.cues.flatMap((c, i) => [
+  { cue: c, i, kind: "standby" as const },
+  { cue: c, i, kind: "go" as const },
+]);
+const doorsPct = pct(R.doors);
+// Phases from doors to the last cue are the live part of the day.
+const lastCue = mins(R.cues[R.cues.length - 1]!.at);
+---
+<Base title={`Show-day runbook — ${site.name}`} description={P.dek}>
+  <Rail />
+  <Masthead />
+  <main>
+
+    <section class="section">
+      <div class="wrap section-grid">
+        <div class="label">Runbook</div>
+        <div class="section-body">
+          <h1 {...E("page.title")}>{P.title}</h1>
+          <p class="dek" {...E("page.dek")}>{P.dek}</p>
+          <dl class="figs">
+            <div><dt>Cues</dt><dd>{S.cues}</dd></div>
+            <div><dt>Seats on cue</dt><dd>{S.seats}</dd></div>
+            <div><dt>Doors</dt><dd>{S.doors}</dd></div>
+            <div><dt>On air</dt><dd>{S.showMinutes}<i>min</i></dd></div>
+          </dl>
+          <p class="event">
+            <span {...E("event.name")}>{R.event.name}</span> · <span {...E("event.room")}>{R.event.room}</span> ·
+            {fmtNum(R.event.inRoom)} in the room · {fmtNum(R.event.online)} on the stream
+          </p>
+          <p class="demo">
+            <i>Demo</i>
+            <span {...E("page.note")}>{P.note}</span>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap section-grid">
+        <div class="label">The day</div>
+        <div class="section-body">
+          <p class="intro" {...E("page.dayIntro")}>{P.dayIntro}</p>
+          <div class="gantt" style={`--doors-n:${(doorsPct / 100).toFixed(4)}`}>
+            <div class="g-row g-scale" aria-hidden="true">
+              <span></span>
+              <div class="track">
+                {hourMarks.map((h) => <span class="tick" style={`left:${pct(h).toFixed(2)}%`}>{h}</span>)}
+              </div>
+            </div>
+            {R.phases.map((p, i) => (
+              <div class={`g-row${mins(p.start) >= mins(R.doors) && mins(p.start) <= lastCue ? " live" : ""}`}>
+                <div class="g-name">
+                  <span class="g-time">{p.start}–{p.end}</span>
+                  <b {...E(`phases.${i}.name`)}>{p.name}</b>
+                  <span class="g-what" {...E(`phases.${i}.what`)}>{p.what}</span>
+                </div>
+                <div class="track">
+                  <span class="bar" style={`left:${pct(p.start).toFixed(2)}%;width:${(pct(p.end) - pct(p.start)).toFixed(2)}%`}>
+                    <span class="bar-code" title={seat(p.owner).title}>{code(p.owner)}</span>
+                  </span>
+                </div>
+              </div>
+            ))}
+            <div class="g-row g-auth">
+              <div class="g-name"><b>Who holds the call</b></div>
+              <div class="track">
+                <span class="auth before" style={`width:${doorsPct.toFixed(2)}%`}>
+                  <b>{code(R.authority.before)}</b> <span {...E("page.beforeDoors")}>{P.beforeDoors}</span>
+                </span>
+                <span class="auth after" style={`left:${doorsPct.toFixed(2)}%;width:${(100 - doorsPct).toFixed(2)}%`}>
+                  <b>{code(R.authority.after)}</b> <span {...E("page.afterDoors")}>{P.afterDoors}</span>
+                </span>
+              </div>
+            </div>
+            <div class="doors-line" aria-hidden="true"><span>Doors {R.doors}</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap section-grid">
+        <div class="label">Call the show</div>
+        <div class="section-body">
+          <p class="intro" {...E("page.callIntro")}>{P.callIntro}</p>
+          <div class="caller" id="caller">
+            {steps.map((st, n) => (
+              <div class={`step ${st.kind}`} data-step={n} hidden={n !== 0}>
+                <div class="step-head">
+                  <span class="cue-id">{st.cue.id}</span>
+                  <span class="cue-at">{st.cue.at}</span>
+                  <span class="cue-seg" {...E(`cues.${st.i}.segment`)}>{st.cue.segment}</span>
+                  <span class="step-k">{st.kind === "standby" ? "Standby" : "Go"}</span>
+                </div>
+                <p class="call" {...E(`cues.${st.i}.${st.kind}`)}>{st.kind === "standby" ? st.cue.standby : st.cue.go}</p>
+                <div class="chips">
+                  {st.cue.seats.map((s) => (
+                    <span class="chip" style={`--c:${seatColor.get(s)}`}><b>{code(s)}</b> {seat(s).short}</span>
+                  ))}
+                </div>
+              </div>
+            ))}
+            <div class="caller-bar" id="caller-bar" hidden>
+              <button type="button" class="plate-btn" id="call-back">← Back</button>
+              <span class="pos" id="call-pos" aria-live="polite">Cue 1 of {R.cues.length} · Standby</span>
+              <button type="button" class="plate-btn on" id="call-next">Next →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap section-grid">
+        <div class="label">Cue sheet</div>
+        <div class="section-body">
+          <p class="intro" {...E("page.sheetIntro")}>{P.sheetIntro}</p>
+          <div class="filter" id="filter" hidden role="group" aria-label="Show one seat's cues">
+            <button type="button" class="fchip" data-f="" aria-pressed="true">All seats</button>
+            {cueSeats.map((s) => (
+              <button type="button" class="fchip" data-f={s.id} aria-pressed="false" style={`--c:${seatColor.get(s.id)}`}>
+                <b>{code(s.id)}</b> {S.cuesBySeat.get(s.id)}
+              </button>
+            ))}
+          </div>
+          <div class="tw">
+            <table class="sheet" id="sheet">
+              <thead><tr><th>Cue</th><th>Time</th><th>Segment</th><th>The call</th><th>Seats</th></tr></thead>
+              <tbody>
+                {R.cues.map((c, i) => (
+                  <tr data-seats={c.seats.join(" ")}>
+                    <td class="mono strong">{c.id}</td>
+                    <td class="mono">{c.at}</td>
+                    <td {...E(`cues.${i}.segment`)}>{c.segment}</td>
+                    <td>
+                      <span class="sb"><i>Standby</i> <span {...E(`cues.${i}.standby`)}>{c.standby}</span></span>
+                      <span class="go"><i>Go</i> <span {...E(`cues.${i}.go`)}>{c.go}</span></span>
+                    </td>
+                    <td class="seats">{c.seats.map((s) => <span class="mini" data-s={s} style={`--c:${seatColor.get(s)}`} title={seat(s).title}>{code(s)}</span>)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p class="aside">Seats are the ones on the <a href="/projects/crew-map/">crew map</a>.</p>
+        </div>
+      </div>
+    </section>
+
+    {R.plays.length > 0 && (
+      <section class="section">
+        <div class="wrap section-grid">
+          <div class="label">If it breaks</div>
+          <div class="section-body">
+            <p class="intro" {...E("page.breakIntro")}>{P.breakIntro}</p>
+            <ul class="plays">
+              {R.plays.map((p, i) => (
+                <li>
+                  <span class="chip" style={`--c:${seatColor.get(p.owner)}`}><b>{code(p.owner)}</b> {seat(p.owner).short}</span>
+                  <h3 {...E(`plays.${i}.when`)}>{p.when}</h3>
+                  <p {...E(`plays.${i}.then`)}>{p.then}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
+    )}
+
+    <section class="section">
+      <div class="wrap section-grid">
+        <div class="label">Notes</div>
+        <div class="section-body">
+          {P.notes.length > 0 && (
+            <ul class="notes">
+              {P.notes.map((n, i) => <li {...E(`page.notes.${i}`)}>{n}</li>)}
+            </ul>
+          )}
+          <p class="colophon label">Demo · composite show, no real company described</p>
+          <p><a class="plate-btn" href="/#projects">← All projects</a></p>
+        </div>
+      </div>
+    </section>
+
+    <Footer />
+  </main>
+  {EDIT && <EditMode />}
+</Base>
+
+<script>
+  // Caller: step through standby → go for every cue. Only flips [hidden].
+  const steps = Array.from(document.querySelectorAll<HTMLElement>("#caller .step"));
+  const bar = document.getElementById("caller-bar");
+  const pos = document.getElementById("call-pos");
+  const back = document.getElementById("call-back") as HTMLButtonElement | null;
+  const next = document.getElementById("call-next") as HTMLButtonElement | null;
+  let at = 0;
+  function show(n: number) {
+    at = Math.max(0, Math.min(steps.length - 1, n));
+    steps.forEach((s, i) => { s.hidden = i !== at; });
+    const cue = Math.floor(at / 2) + 1;
+    if (pos) pos.textContent = `Cue ${cue} of ${steps.length / 2} · ${at % 2 ? "Go" : "Standby"}`;
+    if (back) back.disabled = at === 0;
+    if (next) next.textContent = at === steps.length - 1 ? "Start over" : "Next →";
+  }
+  if (bar && steps.length) {
+    bar.hidden = false;
+    back?.addEventListener("click", () => show(at - 1));
+    next?.addEventListener("click", () => show(at === steps.length - 1 ? 0 : at + 1));
+    show(0);
+  }
+
+  // Cue sheet: pick a seat, dim the cues it doesn't work.
+  const filter = document.getElementById("filter");
+  const sheet = document.getElementById("sheet");
+  if (filter && sheet) {
+    filter.hidden = false;
+    const chips = Array.from(filter.querySelectorAll<HTMLButtonElement>(".fchip"));
+    chips.forEach((b) => b.addEventListener("click", () => {
+      const f = b.dataset.f ?? "";
+      if (f) sheet.dataset.filter = f; else delete sheet.dataset.filter;
+      sheet.querySelectorAll<HTMLTableRowElement>("tbody tr").forEach((tr) => {
+        const on = !f || (tr.dataset.seats ?? "").split(" ").includes(f);
+        tr.toggleAttribute("data-dim", !on);
+        tr.querySelectorAll<HTMLElement>(".mini").forEach((m) => m.toggleAttribute("data-hit", !!f && m.dataset.s === f));
+      });
+      chips.forEach((c) => c.setAttribute("aria-pressed", String(c === b)));
+    }));
+  }
+</script>
+
+<style>
+  h1 { font-size: clamp(1.85rem, 4.6vw, 2.9rem); line-height: 1.04; letter-spacing: -0.03em; max-width: 22ch; }
+  .dek { font-size: 1.1875rem; color: var(--ink-mid); max-width: 56ch; margin: 0; }
+  .intro { color: var(--ink-mid); max-width: 60ch; margin: 0; }
+  .event {
+    margin: 0; font-family: var(--f-mono); font-weight: 500; font-size: 0.6875rem;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-mid);
+  }
+  .demo { display: flex; gap: 0.85rem; align-items: flex-start; max-width: 72ch; margin: 0; }
+  .demo i {
+    font-style: normal; flex: none; background: var(--tally); color: var(--paper);
+    font-family: var(--f-mono); font-weight: 500; font-size: 0.625rem;
+    letter-spacing: 0.14em; text-transform: uppercase; padding: 0.3rem 0.55rem 0.26rem;
+  }
+  .demo span { color: var(--ink-mid); font-size: 0.9375rem; }
+
+  .figs { display: flex; flex-wrap: wrap; margin: 0; border: var(--lw-key) solid var(--ink); background: var(--surface); max-width: 40rem; }
+  .figs > div { flex: 1 1 6rem; padding: 0.7rem 0.85rem; border-right: var(--lw-hair) solid var(--rule); }
+  .figs > div:last-child { border-right: 0; }
+  .figs dt { font-family: var(--f-mono); font-weight: 500; font-size: 0.5625rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-mid); margin-bottom: 0.25rem; }
+  .figs dd { margin: 0; font-family: var(--f-mono); font-weight: 500; font-size: 1.75rem; line-height: 1; font-variant-numeric: tabular-nums; }
+  .figs dd i { font-style: normal; font-size: 0.6875rem; color: var(--ink-mid); margin-left: 0.3rem; }
+
+  /* ---- the day ---- */
+  .gantt { position: relative; border: var(--lw-key) solid var(--ink); background: var(--surface); --name: 15rem; }
+  .g-row { display: grid; grid-template-columns: var(--name) minmax(0, 1fr); border-bottom: var(--lw-hair) solid var(--rule); }
+  .g-row:last-of-type { border-bottom: 0; }
+  .g-name { padding: 0.6rem 0.85rem; display: flex; flex-direction: column; gap: 0.15rem; border-right: var(--lw-thin) solid var(--rule); }
+  .g-name b { font-family: var(--f-display); font-size: 0.9375rem; }
+  .g-time { font-family: var(--f-mono); font-weight: 500; font-size: 0.625rem; letter-spacing: 0.08em; color: var(--ink-mid); }
+  .g-what { font-size: 0.8125rem; color: var(--ink-mid); line-height: 1.4; }
+  .track { position: relative; min-height: 2.6rem; }
+  .bar {
+    position: absolute; top: 50%; height: 1.5rem; transform: translateY(-50%);
+    background: var(--ink); display: flex; align-items: center; min-width: max-content;
+  }
+  .g-row.live .bar { background: var(--tally); }
+  .bar-code { font-family: var(--f-mono); font-weight: 500; font-size: 0.625rem; letter-spacing: 0.08em; color: var(--paper); padding: 0 0.4rem; }
+  .g-scale .track { min-height: 1.6rem; }
+  .g-scale { background: var(--sunk); }
+  .tick { position: absolute; top: 0.35rem; transform: translateX(-50%); font-family: var(--f-mono); font-weight: 500; font-size: 0.5625rem; color: var(--ink-mid); }
+  .g-auth .track { min-height: 3rem; }
+  .auth {
+    position: absolute; top: 0.5rem; bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;
+    padding: 0 0.55rem; font-size: 0.8125rem; overflow: hidden; white-space: nowrap;
+  }
+  .auth b { font-family: var(--f-mono); font-weight: 500; font-size: 0.6875rem; }
+  .auth.before { left: 0; background: var(--sunk); box-shadow: inset 0 0 0 var(--lw-thin) var(--ink); }
+  .auth.after { background: var(--tally-wash); box-shadow: inset 0 0 0 var(--lw-thin) var(--tally); }
+  .doors-line {
+    position: absolute; top: 0; bottom: 0; pointer-events: none;
+    left: calc(var(--name) + (100% - var(--name)) * var(--doors-n, 0));
+    border-left: var(--lw-med) dashed var(--tally);
+  }
+  .doors-line span {
+    position: absolute; top: -1.35rem; left: -0.1rem; white-space: nowrap;
+    font-family: var(--f-mono); font-weight: 500; font-size: 0.5625rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--tally);
+  }
+
+  /* ---- the caller ---- */
+  .caller { border: var(--lw-edge) solid var(--ink); background: var(--ink); color: var(--paper); }
+  .step { padding: 1.2rem 1.35rem 1.1rem; display: flex; flex-direction: column; gap: 0.85rem; min-height: 12.5rem; }
+  .step-head { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.9rem; }
+  .cue-id { font-family: var(--f-mono); font-weight: 500; font-size: 1.25rem; }
+  .cue-at, .cue-seg { font-family: var(--f-mono); font-weight: 500; font-size: 0.6875rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(242, 241, 237, 0.7); }
+  .step-k {
+    margin-left: auto; font-family: var(--f-mono); font-weight: 500; font-size: 0.6875rem; letter-spacing: 0.16em; text-transform: uppercase;
+    padding: 0.3rem 0.6rem 0.26rem; box-shadow: inset 0 0 0 var(--lw-med) var(--paper);
+  }
+  .step.go .step-k { background: var(--held); box-shadow: none; }
+  .step.standby .step-k { color: #F2C94C; box-shadow: inset 0 0 0 var(--lw-med) #F2C94C; }
+  .call { margin: 0 0 0.35rem; font-family: var(--f-display); font-size: clamp(1.25rem, 3vw, 1.75rem); line-height: 1.25; max-width: 34ch; }
+  .step.standby .call { color: rgba(242, 241, 237, 0.82); }
+  .chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.2rem 0.5rem 0.16rem 0.4rem;
+    font-family: var(--f-mono); font-weight: 500; font-size: 0.625rem; letter-spacing: 0.06em; text-transform: uppercase;
+    border-left: 4px solid var(--c, var(--ink-mid)); background: rgba(242, 241, 237, 0.1);
+  }
+  .plays .chip { background: var(--sunk); color: var(--ink); }
+  .caller-bar {
+    display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap;
+    padding: 0.8rem 1.35rem; border-top: var(--lw-thin) solid rgba(242, 241, 237, 0.25); background: #1E222A;
+  }
+  .caller-bar[hidden] { display: none; }
+  .caller-bar .pos { margin: 0 auto; font-family: var(--f-mono); font-weight: 500; font-size: 0.6875rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(242, 241, 237, 0.75); }
+  .caller-bar .plate-btn { box-shadow: 3px 3px 0 var(--tally); }
+  .caller-bar .plate-btn.on { background: var(--tally); color: var(--paper); }
+  .caller-bar .plate-btn[disabled] { opacity: 0.45; cursor: default; }
+
+  /* ---- the sheet ---- */
+  .filter { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .filter[hidden] { display: none; }
+  .fchip {
+    cursor: pointer; display: inline-flex; gap: 0.35rem; align-items: center;
+    font-family: var(--f-mono); font-weight: 500; font-size: 0.6875rem; letter-spacing: 0.06em;
+    background: var(--surface); color: var(--ink); border: var(--lw-thin) solid var(--ink);
+    border-left: 4px solid var(--c, var(--ink)); padding: 0.3rem 0.55rem 0.26rem 0.45rem;
+  }
+  .fchip[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+  .tw { overflow-x: auto; border: var(--lw-thin) solid var(--ink); background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; min-width: 40rem; font-size: 0.875rem; }
+  th {
+    font-family: var(--f-mono); font-weight: 500; font-size: 0.5625rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--ink-mid); text-align: left; padding: 0.55rem 0.75rem; border-bottom: var(--lw-med) solid var(--ink); white-space: nowrap;
+  }
+  td { padding: 0.6rem 0.75rem; border-bottom: var(--lw-hair) solid var(--rule); vertical-align: top; }
+  tr:last-child td { border-bottom: 0; }
+  tr[data-dim] { opacity: 0.28; }
+  .mono { font-family: var(--f-mono); font-weight: 500; font-size: 0.8125rem; white-space: nowrap; }
+  .strong { color: var(--tally); }
+  .sb, .go { display: block; line-height: 1.45; }
+  .sb { color: var(--ink-mid); }
+  .go { margin-top: 0.2rem; }
+  .sb i, .go i { font-style: normal; font-family: var(--f-mono); font-weight: 500; font-size: 0.5625rem; letter-spacing: 0.12em; text-transform: uppercase; margin-right: 0.25rem; }
+  .go i { color: var(--held); }
+  .seats { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+  td.seats { display: table-cell; }
+  .mini {
+    display: inline-block; margin: 0 0.2rem 0.2rem 0; font-family: var(--f-mono); font-weight: 500; font-size: 0.625rem;
+    padding: 0.08rem 0.35rem; border-left: 3px solid var(--c, var(--ink-mid)); background: var(--sunk);
+  }
+  .mini[data-hit] { background: var(--ink); color: var(--paper); }
+  .aside { color: var(--ink-mid); font-size: 0.875rem; margin: 0; }
+
+  /* ---- plays ---- */
+  .plays { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--plate-gap); grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
+  .plays li { background: var(--surface); border: var(--lw-key) solid var(--ink); padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-start; }
+  .plays h3 { font-size: 1.0625rem; letter-spacing: -0.01em; }
+  .plays p { margin: 0; color: var(--ink-mid); font-size: 0.9375rem; line-height: 1.5; }
+
+  .notes { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 0.5rem; max-width: 62ch; color: var(--ink-mid); }
+  .colophon { color: var(--ink-mid); }
+
+  @media (max-width: 40rem) {
+    .gantt { --name: 0rem; }
+    .g-row { grid-template-columns: 1fr; }
+    .g-name { border-right: 0; padding-bottom: 0; }
+    .g-scale .g-name, .g-scale > span { display: none; }
+    .doors-line { display: none; }
+  }
+</style>

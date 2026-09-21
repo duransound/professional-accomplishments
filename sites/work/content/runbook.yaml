@@ -1,0 +1,163 @@
+# ---------------------------------------------------------------------------
+# SHOW-DAY RUNBOOK — the demo at /projects/show-day-runbook/
+#
+# A composite all-hands, not any real company's show. Every seat named below
+# (owner, seats) is an id from crew.yaml — the build stops and says so if one
+# doesn't exist, so this page and the crew map can never disagree.
+#
+# Times are 24-hour "HH:MM". The cue count, the show length, the day's span
+# and who is on which cue are all counted from this file, never typed.
+#
+# All the words can also be changed on the page itself in edit mode.
+# ---------------------------------------------------------------------------
+page:
+  title: Cue to Cue
+  summary: One show day from load-in to strike and every cue as it's called.
+  dek: The runbook for a hybrid all-hands, from the first road case at seven to the last cable at half past three. Step through the show the way the caller calls it.
+  note: A composite show, not any one company's all-hands. The structure, the calls and the failure plays are the way I run a real one.
+  dayIntro: A show day is mostly not the show. Seven hours of setup for one hour on air.
+  callIntro: This is what the room hears on comms. Every cue gets a standby first, then a go — nobody moves on a go they weren't warned about.
+  sheetIntro: The whole show on one sheet. Pick a seat to see only the cues that seat works.
+  breakIntro: Every show has a plan for the five things most likely to go wrong. Written down before doors, so nobody improvises on air.
+  beforeDoors: Technical Producer holds the call
+  afterDoors: Show Caller holds the call
+  notes:
+    - The runbook is built backwards from the show — the run of show first, then every check needed to make it safe, then the load-in that makes the checks possible.
+    - Cue names are short on purpose. On comms, "Q5, go" is faster and harder to mishear than a sentence.
+    - Seats match the crew map. A runbook that names a seat nobody is sitting in is a runbook with a hole in it.
+
+event:
+  name: Q3 All-Hands
+  room: Studio A · hybrid
+  inRoom: 450
+  online: 3800
+
+# Who holds the call before and after doors (crew.yaml seat ids).
+authority:
+  before: tp
+  after: sm
+
+doors: "12:30"
+
+phases:
+  - name: Load-in & power
+    start: "07:00"
+    end: "09:00"
+    owner: tp
+    what: Trucks, rigging, power distribution, and the first signal through every path.
+  - name: Line check & systems test
+    start: "09:00"
+    end: "10:30"
+    owner: a1
+    what: Every microphone, every video source, every output — including the stream encoder and its backup.
+  - name: Rehearsal
+    start: "10:30"
+    end: "12:00"
+    owner: sm
+    what: Talent walks the show once with the real cues, including the demo handoff and Q&A. Go over backup plans with the Stage Manager.
+  - name: Stream pre-roll & final checks
+    start: "12:00"
+    end: "12:30"
+    owner: bcast
+    what: Holding slide live to the platform, backup encoder warm, comms check with every seat.
+  - name: Walk-in
+    start: "12:30"
+    end: "13:00"
+    owner: pb
+    what: Doors open. Walk-in music and the holding slide in the room and on the stream.
+  - name: Show
+    start: "13:00"
+    end: "14:05"
+    owner: sm
+    what: Sixty-odd minutes on air, called cue by cue.
+  - name: Strike
+    start: "14:05"
+    end: "15:30"
+    owner: tp
+    what: Record media handed off, stream archived, gear out, room reset for tomorrow.
+
+cues:
+  - id: Q1
+    at: "12:58"
+    segment: Walk-in
+    standby: Standby voice of God. Two minutes to top of show.
+    go: Voice of God, go.
+    seats: [a1]
+  - id: Q2
+    at: "13:00"
+    segment: Open
+    standby: Standby house to half, lights 1, roll the intro sizzle video, stream going live.
+    go: House to half. Lights 1, go. Sizzle video, roll. Stream, we are live.
+    seats: [ld, pb, bcast, td]
+  - id: Q3
+    at: "13:02"
+    segment: Open
+    standby: Standby deck to screen.
+    go: Deck to screen, go.
+    seats: [td, gfx, a1, cam]
+  - id: Q4
+    at: "13:03"
+    segment: CEO keynote
+    standby: Standby lights 2.
+    go: Lights 2, go.
+    seats: [ld, td, cam]
+  - id: Q5
+    at: "13:18"
+    segment: Product demo
+    standby: Standby demo laptop to screen.
+    go: Demo, go.
+    seats: [v1, a1, td, cam]
+  - id: Q6
+    at: "13:26"
+    segment: Customer video
+    standby: Standby customer video.
+    go: Customer video, roll.
+    seats: [pb, a1, td]
+  - id: Q7
+    at: "13:30"
+    segment: Fireside chat
+    standby: Standby lights 3.
+    go: Lights 3, go.
+    seats: [ld, a1, a2, td, gfx]
+  - id: Q8
+    at: "13:45"
+    segment: Q&A
+    standby: Standby audience mic A, and the stream question on screen.
+    go: Mic A, open. Stream question, go.
+    seats: [a2, a1, gfx, bcast]
+  - id: Q9
+    at: "13:58"
+    segment: Close
+    standby: Standby outro video and lights 1.
+    go: Outro, roll. Lights 1, go.
+    seats: [pb, ld, td]
+  - id: Q10
+    at: "14:01"
+    segment: Out
+    standby: Standby end card on the stream, house to full.
+    go: End card, go. Stream, out. House to full.
+    seats: [bcast, ld, a1]
+  - id: Q11
+    at: "14:02"
+    segment: Clear
+    standby: Standby to clear.
+    go: That's the show. Thank you, everyone. Clear to strike at five past.
+    seats: [sm]
+
+# Failure plays — decided before doors, owned by one seat each.
+plays:
+  - when: The keynote mic dies.
+    then: A2 walks the spare handheld on. A1 mutes the dead channel. The caller holds graphics until the new mic is up.
+    owner: a2
+  - when: A video won't roll.
+    then: The caller calls a hold. The TD stays on the presenter, who covers with the line agreed at rehearsal.
+    owner: pb
+  - when: The stream drops.
+    then: The backup encoder takes over inside a minute. The room is not told. The stream shows a be-right-back card until the picture is back.
+    owner: bcast
+  - when: The demo laptop freezes.
+    then: V1 cuts to the pre-recorded demo on playback 2. The presenter keeps talking.
+    owner: v1
+  - when: The show runs long.
+    then: The caller trims Q&A to fit. The close and the outro are never cut.
+    owner: sm
