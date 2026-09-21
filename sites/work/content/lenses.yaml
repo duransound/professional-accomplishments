@@ -1,6 +1,6 @@
 # ============================================================================
-# The lens. Four framings of the same eleven years, one per kind of role you
-# are going for. The buttons at the top of the page switch between them.
+# The lens. Three framings of the same eleven years, one per kind of role you
+# are going for — the same three as the Looking for section. The buttons at the top of the page switch between them.
 #
 # Each lens rewrites:
 #   summary  - the paragraph under "Summary"
@@ -14,16 +14,16 @@
 # whichever kind of role you are most actively going for.
 # ============================================================================
 
-default: workplace
+default: events-av
 
 lenses:
-  - id: workplace
-    label: Workplace & AV technology
+  - id: events-av
+    label: AV & events technology
     summary: >
       Eleven years at Google, ending as Event Studio Manager for the Americas
       and Latin America — <em>operating budget and readiness standard for more
-      than ten studios</em> across two regions. Looking for workplace
-      technology leadership where a room portfolio is the unit of work.
+      than ten studios</em> across two regions. Looking to own the rooms,
+      executive events and all-hands behind a company's biggest moments.
     studio:
       - >
         Managed the operating budget for 10+ event studios across the Americas
@@ -47,13 +47,13 @@ lenses:
         Hands-on ownership of studio systems: video switching, audio consoles,
         multi-camera, streaming encoders
 
-  - id: tpm
-    label: Technical program management
+  - id: production
+    label: Production & technical programs
     summary: >
-      Eleven years owning technical execution for executive programs at Google,
-      including <em>budget and vendor accountability for 10+ studios across two
-      regions</em>. Now focused on program management roles where that scope
-      carries directly.
+      Eleven years running technical execution for executive programs at
+      Google — <em>from scope and budget to the call on the day</em>, with
+      vendor accountability for 10+ studios across two regions. Looking to run
+      shows and programs end to end.
     studio:
       - >
         Owned intake through delivery for recurring high-visibility programs,
@@ -65,43 +65,26 @@ lenses:
       - >
         Aligned Event Production, Communications, and Workplace organizations
         on shared readiness standards across a distributed operation
+      - >
+        Negotiated staffing and lead-time expectations between internal
+        programs and vendor crews
     crew:
       - >
         Drove a production model change — hybrid delivery — across a
         multi-region team under a hard external deadline
       - >
+        Directed contractor crews through rehearsal and live execution
+      - >
         Served as escalation point during live execution, communicating status
         and risk to non-technical executive stakeholders in real time
 
-  - id: vendor
-    label: Vendor & operations
+  - id: creative
+    label: Creative production & account management
     summary: >
-      Vendor manager for distributed partner teams across two regions, with
-      <em>budget accountability across a 10+ facility footprint</em> and
-      delivery quality on me. Eleven years at Google, operator through regional
-      manager.
-    studio:
-      - >
-        Vendor manager for distributed partner teams across two regions,
-        accountable for delivery quality
-      - >
-        Budget ownership across a 10+ facility footprint
-      - >
-        Negotiated and aligned staffing and lead-time expectations between
-        internal programs and vendor crews
-    crew:
-      - >
-        Directed contractor crews through rehearsal and live execution
-      - >
-        Set the technical standard those crews were held to, having done every
-        seat myself
-
-  - id: solutions
-    label: Solutions & implementation
-    summary: >
-      Eleven years translating what executives described into <em>technical
-      plans a crew could actually execute</em> — then standing in the room
-      while it ran. Google, operator through regional manager.
+      Eleven years at Google <em>turning what executives described into
+      shows a crew could deliver</em> — and keeping the partners and vendors
+      behind them on side. Looking for the client side of the same work:
+      shaping what gets made and owning the relationship.
     studio:
       - >
         Translated executive and non-technical stakeholder vision into
@@ -109,13 +92,14 @@ lenses:
       - >
         Defined what was and wasn't achievable within a given budget and lead
         time, and said so early
+      - >
+        Vendor manager for distributed partner teams across two regions,
+        accountable for delivery quality
     crew:
       - >
-        Front-line diagnosis and escalation of complex live AV failures, with
-        clear stakeholder communication while the event continued
+        Technical point of contact for executive-level productions, from first
+        brief through the live show
       - >
-        Deep hands-on fluency: video switchers, audio consoles, multi-camera
-        workflows, streaming encoders, Google Meet at enterprise scale
+        Clear stakeholder communication while a live event was still running
       - >
-        Trained and supported others through tutoring and crew leadership —
-        the direct analogue to customer enablement
+        Trained and supported others through tutoring and crew leadership
