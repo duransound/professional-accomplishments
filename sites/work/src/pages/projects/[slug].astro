@@ -103,7 +103,7 @@ const issued = study.issued.toLocaleDateString("en-GB", { year: "numeric", month
 const sevLabel = { critical: "Critical", high: "High", medium: "Medium" } as const;
 const signed = (n: number) => (n > 0 ? `+${n}` : String(n));
 ---
-<Base title={`${f(study.title)} — ${site.name}`} description={f(study.dek)}>
+<Base title={`${f(study.title)} — ${site.name}`} description={f(study.dek)} image={`/og/${file}.png`} type="article">
   <Rail />
   <Masthead />
   <main>

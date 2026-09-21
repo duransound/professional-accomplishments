@@ -177,3 +177,11 @@ fourteen" counts itself from `crew.yaml`. There is no number to update.
 They decide whether a station is drawn solid or dashed, and they feed the
 count. This is the one field where being wrong is costly: an overclaim here is
 the kind a single interview question exposes.
+
+## Link previews
+
+When a page is shared on LinkedIn, in an email or a text, the preview card is
+a 1200×630 image from `sites/work/public/og/` — one for the homepage and one
+per project. They are pictures, so they don't update themselves: if a
+project's title or headline numbers change, ask Claude to regenerate the
+card. A new project needs its own card, or it falls back to the homepage one.

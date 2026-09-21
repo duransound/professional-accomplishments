@@ -2,9 +2,15 @@
 import "@duran/theme/reset.css";
 import "../styles/brand.css";
 
-interface Props { title: string; description: string; }
-const { title, description } = Astro.props;
+/**
+ * image: the link-preview card shown when a page is shared (LinkedIn, email,
+ * texts). 1200×630 PNGs live in public/og/. Pages without their own use the
+ * homepage card.
+ */
+interface Props { title: string; description: string; image?: string; type?: "profile" | "article"; }
+const { title, description, image = "/og/home.png", type = "profile" } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site);
+const ogImage = new URL(image, Astro.site);
 ---
 <!doctype html>
 <html lang="en">
@@ -16,7 +22,17 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <link rel="canonical" href={canonical} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:type" content="profile" />
+    <meta property="og:type" content={type} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:site_name" content="duran.show" />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={title} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImage} />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
