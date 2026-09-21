@@ -19,7 +19,7 @@ const mail = (subject: string) => `mailto:${site.email}?subject=${encodeURICompo
 {h && h.layout === "both" && (
   <section class="section" id="looking-for">
     <div class="wrap section-grid">
-      <div class="label" {...ed("site.yaml", "hire.label")}>{h.label}</div>
+      <h2 class="label" {...ed("site.yaml", "hire.label")}>{h.label}</h2>
       <div class="section-body">
         <h2 {...ed("site.yaml", "hire.heading")}>{h.heading}</h2>
         <div class="doors">
@@ -60,7 +60,7 @@ const mail = (subject: string) => `mailto:${site.email}?subject=${encodeURICompo
 {h && h.layout !== "both" && (
   <section class="section" id="looking-for">
     <div class="wrap section-grid">
-      <div class="label" {...ed("site.yaml", "hire.label")}>{h.label}</div>
+      <h2 class="label" {...ed("site.yaml", "hire.label")}>{h.label}</h2>
       <div class="section-body">
         <h2 {...ed("site.yaml", "hire.heading")}>{h.heading}</h2>
 

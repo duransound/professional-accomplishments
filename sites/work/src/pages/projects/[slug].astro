@@ -187,7 +187,7 @@ const signed = (n: number) => (n > 0 ? `+${n}` : String(n));
           <div class="md"><Blocks blocks={blocks.scorecard} edit={EDIT} /></div>
           <details class="more">
             <summary class="label">Every room as a table</summary>
-            <div class="tw">
+            <div class="tw" tabindex="0" role="region" aria-label="Table — scroll sideways on small screens">
               <table>
                 <thead>
                   <tr>
@@ -332,7 +332,7 @@ const signed = (n: number) => (n > 0 ? `+${n}` : String(n));
           <details class="more">
             <summary class="label" set:html={plain(H.method)} />
             <div class="md"><Blocks blocks={blocks.methodBefore} edit={EDIT} /></div>
-            <div class="tw">
+            <div class="tw" tabindex="0" role="region" aria-label="Table — scroll sideways on small screens">
               <table class="rules">
                 <tbody>
                   {study.statuses.map((s, i) => (

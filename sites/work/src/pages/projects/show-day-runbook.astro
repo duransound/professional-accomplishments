@@ -153,7 +153,7 @@ const lastCue = mins(R.cues[R.cues.length - 1]!.at);
               </button>
             ))}
           </div>
-          <div class="tw">
+          <div class="tw" tabindex="0" role="region" aria-label="Table — scroll sideways on small screens">
             <table class="sheet" id="sheet">
               <thead><tr><th>Cue</th><th>Time</th><th>Segment</th><th>The call</th><th>Seats</th></tr></thead>
               <tbody>
@@ -187,7 +187,7 @@ const lastCue = mins(R.cues[R.cues.length - 1]!.at);
               {R.plays.map((p, i) => (
                 <li>
                   <span class="chip" style={`--c:${seatColor.get(p.owner)}`}><b>{code(p.owner)}</b> {seat(p.owner).short}</span>
-                  <h3 {...E(`plays.${i}.when`)}>{p.when}</h3>
+                  <h2 {...E(`plays.${i}.when`)}>{p.when}</h2>
                   <p {...E(`plays.${i}.then`)}>{p.then}</p>
                 </li>
               ))}
@@ -387,7 +387,7 @@ const lastCue = mins(R.cues[R.cues.length - 1]!.at);
   /* ---- plays ---- */
   .plays { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--plate-gap); grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
   .plays li { background: var(--surface); border: var(--lw-key) solid var(--ink); padding: 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-start; }
-  .plays h3 { font-size: 1.0625rem; letter-spacing: -0.01em; }
+  .plays h2 { font-size: 1.0625rem; letter-spacing: -0.01em; }
   .plays p { margin: 0; color: var(--ink-mid); font-size: 0.9375rem; line-height: 1.5; }
 
   .notes { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 0.5rem; max-width: 62ch; color: var(--ink-mid); }
@@ -399,5 +399,10 @@ const lastCue = mins(R.cues[R.cues.length - 1]!.at);
     .g-name { border-right: 0; padding-bottom: 0; }
     .g-scale .g-name, .g-scale > span { display: none; }
     .doors-line { display: none; }
+    .tick:nth-child(even) { display: none; }
+    .tick:first-child { transform: none; }
+    .g-auth .track { min-height: 4.2rem; }
+    .auth { white-space: normal; font-size: 0.6875rem; line-height: 1.25; align-items: center; top: 0.4rem; bottom: 0.4rem; }
   }
+  .tw:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 </style>

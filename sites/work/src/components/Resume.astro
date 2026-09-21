@@ -29,7 +29,7 @@ import { ed } from "../edit/attrs";
 
 <section class="section" style="border-top: 0;">
   <div class="wrap section-grid">
-    <div class="label">Summary</div>
+    <h2 class="label">Summary</h2>
     <div class="section-body">
       {lenses.map((l, i) => (
         <p class="summary" data-lens-panel={l.id} hidden={l.id !== defaultLens} set:html={l.summary} {...ed("lenses.yaml", `lenses.${i}.summary`, { html: true })} />
@@ -40,7 +40,7 @@ import { ed } from "../edit/attrs";
 
 <section class="section" id="experience">
   <div class="wrap section-grid">
-    <div class="label">Experience</div>
+    <h2 class="label">Experience</h2>
     <div class="section-body">
       <ul class="jobs">
         {roles.map((role, r) => (

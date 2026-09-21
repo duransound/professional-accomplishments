@@ -73,10 +73,11 @@ const lines = depts.map((dept, i) => {
 
         <div data-view="room">
           <ZonePlan />
+          <p class="swipe" aria-hidden="true">Swipe sideways to see the whole floor →</p>
         </div>
 
         <div data-view="dept" hidden>
-        <div class="scroller">
+        <div class="scroller" tabindex="0" role="region" aria-label="Crew map by department — scroll sideways on small screens">
           <svg
             viewBox={`0 0 ${VB.w} ${VB.h}`}
             role="img"
@@ -184,7 +185,7 @@ const lines = depts.map((dept, i) => {
         {allSeats.map((s) => (
           <div data-seat-panel={s.id} hidden={s.id !== defaultSeat} class="panel">
             <div class="detail-head">
-              <h3><span class="v-prod" {...sp(s.id, "title")}>{s.title}</span><span class="v-tech" {...sp(s.id, "reads-title")}>{s["reads-title"]}</span></h3>
+              <h2 class="seat-h"><span class="v-prod" {...sp(s.id, "title")}>{s.title}</span><span class="v-tech" {...sp(s.id, "reads-title")}>{s["reads-title"]}</span></h2>
               <span class="state" data-s={s.status} {...ed("crew.yaml", `page.status.${s.status}`)}>{statusLabel[s.status]}</span>
             </div>
             <p class="detail-what" {...sp(s.id, "what")}>{s.what}</p>
@@ -307,6 +308,13 @@ const lines = depts.map((dept, i) => {
   }
   .station[data-selected] .st-lbl { fill: var(--draft-accent); }
 
+  .swipe {
+    display: none; margin: 0; padding: 0.5rem 1rem; border-top: var(--lw-thin) solid var(--draft-rule);
+    font-family: var(--f-mono); font-weight: 500; font-size: 0.625rem; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--ink-mid); background: var(--draft-panel);
+  }
+  @media (max-width: 48rem) { .swipe { display: block; } }
+
   .views {
     display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1rem;
     padding: 0.75rem 1rem; border-bottom: var(--lw-key) solid var(--draft-ink);
@@ -379,7 +387,7 @@ const lines = depts.map((dept, i) => {
   .panel { display: flex; flex-direction: column; gap: 0.9rem; }
 
   .detail-head { display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; align-items: baseline; }
-  .detail-head h3 { font-size: 1.25rem; margin-right: auto; }
+  .detail-head h2 { font-size: 1.25rem; margin-right: auto; }
 
   .detail-what { font-size: 1.0625rem; line-height: 1.5; max-width: 60ch; }
 

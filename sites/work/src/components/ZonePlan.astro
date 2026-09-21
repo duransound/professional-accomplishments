@@ -96,7 +96,7 @@ const tri = (x: number, y: number) => `${x},${y - 8.5} ${x + 8.5},${y + 6} ${x -
 const vis = (v: Visibility) => ({ immediate: "noticed immediately", delayed: "noticed later", invisible: "not noticed on the day" })[v];
 const zoneName = (s: Seat) => zoneById.get(s.zone)?.name ?? s.zone;
 ---
-<div class="scroller">
+<div class="scroller" tabindex="0" role="region" aria-label="Floor plan — scroll sideways on small screens">
   <svg
     class="plan"
     viewBox={`0 0 ${W} ${H}`}
@@ -150,6 +150,8 @@ const zoneName = (s: Seat) => zoneById.get(s.zone)?.name ?? s.zone;
 </div>
 
 <style>
+  .scroller { overflow-x: auto; }
+  .scroller:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
   .plan { display: block; width: 100%; min-width: 720px; height: auto; }
 
   .floor { fill: var(--draft); stroke: var(--draft-mid); stroke-width: var(--lw-thin); }

@@ -26,6 +26,7 @@ const work = [
 ];
 ---
 <Base title={`Resume — ${site.name}`} description={`Resume of ${site.name}. ${site.roleProduction}.`}>
+  <main>
   <article class="cv">
     <header>
       <div>
@@ -70,6 +71,7 @@ const work = [
     <h2>Education</h2>
     <p class="edu"><b>{education.degree}</b> · {education.school}{education.note && <><br /><span class="note">{education.note}</span></>}</p>
   </article>
+  </main>
 </Base>
 
 <style is:global>
