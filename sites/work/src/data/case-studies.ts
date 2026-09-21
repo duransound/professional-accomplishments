@@ -20,7 +20,7 @@ export type RoomStatus = "down" | "watch" | "ready";
 export interface Room { id: string; use: string; score: number; critical: number; weakest: string; daysSince: number }
 export interface Week { readiness: number; down: number; watch: number; ready: number; walked: number }
 export interface StudyData {
-  kind: string; specimen: boolean; issued: Date; title: string; dek: string;
+  kind: string; demo: boolean; issued: Date; title: string; dek: string;
   summaryLine: string; target: number;
   history: Week[]; trendCaption: string;
   meta: { k: string; v: string }[];

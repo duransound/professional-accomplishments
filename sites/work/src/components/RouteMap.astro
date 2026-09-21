@@ -12,7 +12,12 @@
  * the argument this section exists to make, so it is carried by the drawing
  * rather than by a legend the reader has to consult.
  */
-import { depts, allSeats, statusLabel, defaultSeat, seatCount } from "../data/crew";
+import { depts, allSeats, statusLabel, defaultSeat, seatCount, crewPage } from "../data/crew";
+import { ed } from "../edit/attrs";
+
+// Where each seat sits in crew.yaml, so its text can be edited in place.
+const seatPath = new Map(depts.flatMap((d, i) => d.seats.map((s, j) => [s.id, `departments.${i}.seats.${j}`] as const)));
+const sp = (id: string, field: string) => ed("crew.yaml", `${seatPath.get(id)}.${field}`);
 
 const VB = { w: 1040, h: 505 };
 const TERM = { x: 950, y: 300, r: 26 };
@@ -44,12 +49,7 @@ const spell = (n: number) => words[n] ?? String(n);
   <div class="wrap section-grid">
     <div class="label">Crew map</div>
     <div class="section-body">
-      <p class="intro">
-        Production job titles don't travel. Outside this industry almost nobody knows what an A1
-        does, which makes eleven years of experience hard to read. So here is the room drawn as
-        what it actually is — a signal chain, every seat feeding the same terminus.
-        Throw the switch in the masthead and every station retitles itself.
-      </p>
+      <p class="intro" {...ed("crew.yaml", "page.intro")}>{crewPage.intro}</p>
 
       <p class="tallyline">
         Of the {spell(seatCount.total)} seats below, I have personally worked
@@ -143,12 +143,12 @@ const spell = (n: number) => words[n] ?? String(n);
         {allSeats.map((s) => (
           <div data-seat-panel={s.id} hidden={s.id !== defaultSeat} class="panel">
             <div class="detail-head">
-              <h3><span class="v-prod">{s.title}</span><span class="v-tech">{s["reads-title"]}</span></h3>
+              <h3><span class="v-prod" {...sp(s.id, "title")}>{s.title}</span><span class="v-tech" {...sp(s.id, "reads-title")}>{s["reads-title"]}</span></h3>
               <span class="state" data-s={s.status}>{statusLabel[s.status]}</span>
             </div>
-            <p class="detail-what">{s.what}</p>
+            <p class="detail-what" {...sp(s.id, "what")}>{s.what}</p>
             <dl class="xlate">
-              <dt>In the room</dt><dd>{s.room}</dd>
+              <dt>In the room</dt><dd {...sp(s.id, "room")}>{s.room}</dd>
             </dl>
           </div>
         ))}

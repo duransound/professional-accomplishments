@@ -7,11 +7,30 @@
  * reaches the published site. Click "Edit text", click any sentence, type,
  * save. Numbers worked out from the data show as locked chips: rewrite around
  * them, they can't be typed over.
+ *
+ * Works on any page. Each editable element names its file with data-file
+ * (e.g. "site.yaml", "case-studies/room-readiness-dashboard.md"); `file` here
+ * is only the fallback for elements that don't. A fingerprint of every
+ * content file is taken when the page renders, so a save is refused if the
+ * file changed since.
  */
-interface Props { file: string; base: string }
-const { file, base } = Astro.props;
+import { readFileSync, readdirSync } from "node:fs";
+import { createHash } from "node:crypto";
+import path from "node:path";
+
+interface Props { file?: string; base?: string }
+const { file } = Astro.props;
+
+const dir = path.resolve(process.cwd(), "content");
+const targets = [
+  ...readdirSync(dir).filter((f) => f.endsWith(".yaml")),
+  ...readdirSync(path.join(dir, "case-studies")).filter((f) => f.endsWith(".md")).map((f) => `case-studies/${f}`),
+];
+const bases: Record<string, string> = {};
+for (const t of targets) bases[t] = createHash("sha1").update(readFileSync(path.join(dir, t), "utf8")).digest("hex");
+const fallback = file ? `case-studies/${file}.md` : "";
 ---
-<div class="editbar" id="editbar" data-file={file} data-base={base}>
+<div class="editbar" id="editbar" data-file={fallback} data-bases={JSON.stringify(bases)}>
   <span class="ed-status" id="ed-status" role="status" aria-live="polite"></span>
   <button type="button" class="plate-btn" id="ed-discard" hidden>Discard</button>
   <button type="button" class="plate-btn on" id="ed-save" hidden>Save</button>
@@ -73,6 +92,14 @@ const { file, base } = Astro.props;
   }
   toggle.addEventListener("click", () => (on ? stop() : start()));
 
+  // Some text sits inside a link (the project cards, the masthead). While
+  // editing, a click there places the cursor instead of leaving the page.
+  document.addEventListener("click", (e) => {
+    if (!on) return;
+    const el = (e.target as HTMLElement).closest("[data-edit]");
+    if (el && el.closest("a")) e.preventDefault();
+  }, true);
+
   document.addEventListener("input", (e) => {
     const el = (e.target as HTMLElement).closest<HTMLElement>("[data-edit]");
     if (!el || !on) return;
@@ -122,6 +149,30 @@ const { file, base } = Astro.props;
     });
     return out;
   }
+  // Fields stored as HTML (the lens summaries) keep only emphasis.
+  const escHtml = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  function inlineHtml(node: Node): string {
+    let out = "";
+    node.childNodes.forEach((n) => {
+      if (n.nodeType === Node.TEXT_NODE) { out += escHtml(n.nodeValue ?? ""); return; }
+      if (!(n instanceof HTMLElement)) return;
+      const inner = inlineHtml(n);
+      const t = n.tagName;
+      if (t === "EM" || t === "I") out += inner.trim() ? `<em>${inner}</em>` : "";
+      else if (t === "STRONG" || t === "B") out += inner.trim() ? `<strong>${inner}</strong>` : "";
+      else if (t === "BR") out += " ";
+      else out += inner;
+    });
+    return out;
+  }
+  const textOf = (el: HTMLElement) => (el.textContent ?? "").replace(/\s+/g, " ").trim();
+  function serialize(el: HTMLElement): string {
+    const fmt = el.dataset.fmt ?? (el.dataset.edit!.startsWith("y:") ? "text" : "md");
+    if (fmt === "text") return textOf(el);
+    if (fmt === "html") return inlineHtml(el).replace(/\s+/g, " ").trim();
+    return el.dataset.mode === "inline" ? inlineMd(el).replace(/\s+/g, " ").trim() : blockMd(el);
+  }
+
   function blockMd(el: HTMLElement): string {
     const paras: string[] = [];
     let loose = "";
@@ -140,17 +191,21 @@ const { file, base } = Astro.props;
   }
 
   async function doSave() {
-    const edits = [...dirty].map((el) => ({
-      addr: el.dataset.edit!,
-      text: el.dataset.mode === "inline" ? inlineMd(el).replace(/\s+/g, " ").trim() : blockMd(el),
-    }));
+    const bases = JSON.parse(bar.dataset.bases ?? "{}") as Record<string, string>;
+    const byFile = new Map<string, { addr: string; text: string }[]>();
+    for (const el of dirty) {
+      const file = el.dataset.file || bar.dataset.file || "";
+      if (!byFile.has(file)) byFile.set(file, []);
+      byFile.get(file)!.push({ addr: el.dataset.edit!, text: serialize(el) });
+    }
+    const files = [...byFile].map(([file, edits]) => ({ file, base: bases[file], edits }));
     save.setAttribute("disabled", "");
     say("Saving…");
     try {
       const res = await fetch("/__edit/save", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ file: bar.dataset.file, base: bar.dataset.base, edits }),
+        body: JSON.stringify({ files }),
       });
       const json = await res.json();
       if (!res.ok) { say(json.error ?? "Couldn't save.", true); return; }

@@ -12,6 +12,7 @@
  * job is telling you who someone is.
  */
 import { site } from "../data/site";
+import { ed } from "../edit/attrs";
 
 // A status that points somewhere is a link; one that does not is a plain
 // block. Same markup either way, so the styles never fork.
@@ -23,11 +24,11 @@ const NowTag = site.now?.href ? "a" : "div";
     <a class="l3" href="/" aria-label={`${site.name} — home`}>
       <span class="l3-bar">
         <span class="l3-flag" aria-hidden="true"></span>
-        <span class="l3-name">{site.name}</span>
+        <span class="l3-name" {...ed("site.yaml", "name")}>{site.name}</span>
       </span>
       <span class="l3-role">
-        <span class="v-prod">{site.roleProduction}</span>
-        <span class="v-tech">{site.roleTechnology}</span>
+        <span class="v-prod" {...ed("site.yaml", "roleProduction")}>{site.roleProduction}</span>
+        <span class="v-tech" {...ed("site.yaml", "roleTechnology")}>{site.roleTechnology}</span>
       </span>
     </a>
 
@@ -35,10 +36,10 @@ const NowTag = site.now?.href ? "a" : "div";
       {site.now && (
         <NowTag href={site.now.href}>
           <span class="now-k">
-            <i class="now-lamp" aria-hidden="true"></i>{site.now.label}
+            <i class="now-lamp" aria-hidden="true"></i><span {...ed("site.yaml", "now.label")}>{site.now.label}</span>
             <b>{site.now.updated.toLocaleDateString("en-GB", { month: "short", year: "numeric" })}</b>
           </span>
-          <span class="now-t">{site.now.text}</span>
+          <span class="now-t" {...ed("site.yaml", "now.text")}>{site.now.text}</span>
         </NowTag>
       )}
 
@@ -58,7 +59,7 @@ const NowTag = site.now?.href ? "a" : "div";
         </button>
       </div>
       <div class="masthead-meta">
-        <span class="label">{site.location}</span>
+        <span class="label" {...ed("site.yaml", "location")}>{site.location}</span>
         <a class="label" href={`mailto:${site.email}`}>{site.email}</a>
         <a class="label" href={site.linkedin}>{site.linkedinLabel}</a>
       </div>

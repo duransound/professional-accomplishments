@@ -39,6 +39,16 @@ collections:
           counts itself from this file, so there is no number to update by
           hand, and a zone nobody sits in reports itself empty.
         fields:
+          - name: page
+            label: Page text
+            widget: object
+            collapsed: true
+            fields:
+              - { name: title, label: Title, widget: string }
+              - { name: summary, label: Card summary, widget: text }
+              - { name: dek, label: Dek, widget: text }
+              - { name: note, label: Demo note, widget: text }
+              - { name: intro, label: Intro above the drawing, widget: text }
           - name: zones
             label: Zones — where a body is during a show
             widget: list
@@ -327,6 +337,8 @@ collections:
             label: Search description
             widget: text
             hint: Shown by search engines and when the link is shared. Two sentences.
+          - { name: projectsIntro, label: Line above the project cards, widget: text, required: false }
+          - { name: pitch, label: Contact sentence, widget: text, required: false }
           - name: now
             label: Status lamp — what you are working on
             widget: object
@@ -347,7 +359,7 @@ collections:
                 label: Link to
                 widget: string
                 required: false
-                hint: Optional. A path like /work/studio-readiness-audit/ makes the whole block clickable.
+                hint: Optional. A path like /projects/room-readiness-dashboard/ makes the whole block clickable.
               - name: updated
                 label: Last updated
                 widget: date

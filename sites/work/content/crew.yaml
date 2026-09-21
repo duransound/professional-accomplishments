@@ -1,4 +1,16 @@
 # ---------------------------------------------------------------------------
+# PAGE — the words on /projects/crew-map/ and on its card under Projects.
+# title and summary appear on the card; title, dek and note on the page;
+# intro is the paragraph above the drawing.
+# ---------------------------------------------------------------------------
+page:
+  title: All Crew Positions and the one's I've operated
+  summary: A live production crew drawn as a transit map, with the seats I've worked marked solid.
+  dek: A live production crew drawn as a transit map. Each department is a line and every line ends at On Air. Solid stations are seats I've worked; the rest are seats I've worked alongside.
+  note: A composite crew, not any one employer's org chart. Which seats I've held and worked alongside is real.
+  intro: Production job titles don't travel. Outside this industry almost nobody knows what an A1 does, which makes eleven years of experience hard to read. So here is the room drawn as what it actually is — a signal chain, every seat feeding the same terminus. Throw the switch in the masthead and every station retitles itself.
+
+# ---------------------------------------------------------------------------
 # ZONES — where a body actually is during a show.
 #
 # Zones are physical locations, not departments. That distinction is the whole
@@ -86,7 +98,7 @@ departments:
         short: Regional Studio Mgr
         status: led
         what: Owns a portfolio of rooms across a region — the budget, the standard, and the partners who keep them working.
-        room: Decides what every studio in the region must be capable of, funds it, and holds vendor teams to it. Answerable for a room in São Paulo behaving exactly like a room in the Bay Area, so a traveling executive program never has to care which one it landed in.
+        room: Decides what every studio in the region must be capable of, funds it, and holds vendor teams to it. Answerable for a room in São Paulo behaving exactly like a room in the Bay Area, so a traveling executive program never has to care which one they present in.
         reads-title: Workplace tech manager
         zone: program
         visibility: invisible

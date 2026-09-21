@@ -7,12 +7,17 @@ tagline: Eleven years running technical execution for executive programs. Now lo
 roleProduction: Event Studio Manager · Americas & LatAm
 roleTechnology: Technical program & workplace technology
 
+# The line above the project cards, and the sentence above your email in the
+# Contact sheet at the bottom of every page.
+projectsIntro: Demo projects, published whole rather than as extracts. The data is sample data; the methods are the ones I use.
+pitch: If you're building something where rooms, vendors, and executive programs all have to work at once — I'd like to hear about it.
+
 # The status lamp in the masthead. Optional — delete the whole block and the
 # lamp disappears rather than showing an empty line. The month is shown beside
 # it on purpose: a "now" line with no date quietly becomes a lie, and a visible
 # stale date is better than an invisible one.
 now:
   label: Now
-  text: Publishing a room-readiness dashboard specimen and a second edition of the crew map.
-  href: /work/room-readiness-dashboard/
+  text: Publishing a room-readiness dashboard demo and a second edition of the crew map.
+  href: /projects/room-readiness-dashboard/
   updated: 2026-09-21

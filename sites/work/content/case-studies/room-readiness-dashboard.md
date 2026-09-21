@@ -8,9 +8,9 @@
 # {{findings}} {{walked}} {{unwalked}} {{coverage}} {{overdue}} {{weeks}}
 # {{startScore}} {{startDown}} {{scoreChange}} {{topTwoPct}} {{urgentDays}}
 #
-# specimen: true means no real client is described, and the page says so.
+# demo: true means no real client is described, and the page says so.
 kind: "Readiness dashboard"
-specimen: true
+demo: true
 issued: 2026-09-21
 title: "{{down}} of {{total}} rooms aren't show-ready, down from {{startDown}}"
 dek: "A weekly view of fourteen shared rooms across two buildings: which ones can host a meeting today, what's broken, and whether it's getting better."

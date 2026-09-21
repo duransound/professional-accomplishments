@@ -122,9 +122,9 @@ const signed = (n: number) => (n > 0 ? `+${n}` : String(n));
               </div>
             ))}
           </div>
-          {study.specimen && (
-            <p class="specimen">
-              <i>Specimen</i>
+          {study.demo && (
+            <p class="demo">
+              <i>Demo</i>
               <span>
                 The campus, rooms and numbers are invented to show what this dashboard
                 looks like. No real client or organisation is described. The scoring
@@ -352,10 +352,10 @@ const signed = (n: number) => (n > 0 ? `+${n}` : String(n));
             <div class="md"><Blocks blocks={blocks.limits} edit={EDIT} /></div>
           </details>
           <p class="colophon label">
-            {study.specimen && <>Specimen · no real client described · </>}
+            {study.demo && <>Demo · sample data, no real client · </>}
             Issued {issued}
           </p>
-          <p><a class="plate-btn" href="/#work">← All work</a></p>
+          <p><a class="plate-btn" href="/#projects">← All projects</a></p>
         </div>
       </div>
     </section>
@@ -373,13 +373,13 @@ const signed = (n: number) => (n > 0 ? `+${n}` : String(n));
   p { max-width: 64ch; margin: 0; }
   .note { color: var(--ink-mid); }
 
-  .specimen { display: flex; gap: 0.85rem; align-items: flex-start; max-width: 72ch; }
-  .specimen i {
+  .demo { display: flex; gap: 0.85rem; align-items: flex-start; max-width: 72ch; }
+  .demo i {
     font-style: normal; flex: none; background: var(--tally); color: var(--paper);
     font-family: var(--f-mono); font-weight: 500; font-size: 0.625rem;
     letter-spacing: 0.14em; text-transform: uppercase; padding: 0.3rem 0.55rem 0.26rem;
   }
-  .specimen span { color: var(--ink-mid); font-size: 0.9375rem; }
+  .demo span { color: var(--ink-mid); font-size: 0.9375rem; }
 
   /* headline numbers */
   .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); border: var(--lw-key) solid var(--ink); background: var(--surface); }

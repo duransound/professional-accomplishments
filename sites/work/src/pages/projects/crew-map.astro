@@ -1,0 +1,80 @@
+---
+/**
+ * /projects/crew-map/ — the crew map as its own demo project.
+ *
+ * It used to be a sheet on the homepage. It now sits beside the readiness
+ * dashboard under Projects, with a card on the homepage, so every demo lives
+ * in one place. The drawing itself is still RouteMap, computed from crew.yaml.
+ */
+import Base from "../../layouts/Base.astro";
+import Masthead from "../../components/Masthead.astro";
+import Rail from "../../components/Rail.astro";
+import Footer from "../../components/Footer.astro";
+import RouteMap from "../../components/RouteMap.astro";
+import { site } from "../../data/site";
+import EditMode from "../../components/EditMode.astro";
+import { seatCount, depts, crewPage } from "../../data/crew";
+import { ed } from "../../edit/attrs";
+
+const { title, dek, note } = crewPage;
+const EDIT = import.meta.env.DEV;
+---
+<Base title={`Crew map — ${site.name}`} description={dek}>
+  <Rail />
+  <Masthead />
+  <main>
+    <section class="section">
+      <div class="wrap section-grid">
+        <div class="label">Crew map</div>
+        <div class="section-body">
+          <h1 {...ed("crew.yaml", "page.title")}>{title}</h1>
+          <p class="dek" {...ed("crew.yaml", "page.dek")}>{dek}</p>
+          <dl class="figs">
+            <div><dt>Seats</dt><dd>{seatCount.total}</dd></div>
+            <div><dt>Worked</dt><dd>{seatCount.worked}</dd></div>
+            <div><dt>Alongside</dt><dd>{seatCount.adjacent}</dd></div>
+            <div><dt>Departments</dt><dd>{depts.length}</dd></div>
+          </dl>
+          <p class="demo">
+            <i>Demo</i>
+            <span {...ed("crew.yaml", "page.note")}>{note}</span>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <RouteMap />
+
+    <section class="section">
+      <div class="wrap section-grid">
+        <div class="label">More</div>
+        <div class="section-body">
+          <p><a class="plate-btn" href="/#projects">← All projects</a></p>
+        </div>
+      </div>
+    </section>
+
+    <Footer />
+  </main>
+  {EDIT && <EditMode />}
+</Base>
+
+<style>
+  h1 { font-size: clamp(1.85rem, 4.6vw, 2.9rem); line-height: 1.04; letter-spacing: -0.03em; max-width: 24ch; }
+  .dek { font-size: 1.1875rem; color: var(--ink-mid); max-width: 56ch; margin: 0; }
+  .demo { display: flex; gap: 0.85rem; align-items: flex-start; max-width: 72ch; margin: 0; }
+  .demo i {
+    font-style: normal; flex: none; background: var(--tally); color: var(--paper);
+    font-family: var(--f-mono); font-weight: 500; font-size: 0.625rem;
+    letter-spacing: 0.14em; text-transform: uppercase; padding: 0.3rem 0.55rem 0.26rem;
+  }
+  .demo span { color: var(--ink-mid); font-size: 0.9375rem; }
+  .figs { display: flex; flex-wrap: wrap; margin: 0; border: var(--lw-key) solid var(--ink); background: var(--surface); max-width: 40rem; }
+  .figs > div { flex: 1 1 6rem; padding: 0.7rem 0.85rem; border-right: var(--lw-hair) solid var(--rule); }
+  .figs > div:last-child { border-right: 0; }
+  .figs dt {
+    font-family: var(--f-mono); font-weight: 500; font-size: 0.5625rem;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-mid); margin-bottom: 0.25rem;
+  }
+  .figs dd { margin: 0; font-family: var(--f-mono); font-weight: 500; font-size: 1.75rem; line-height: 1; font-variant-numeric: tabular-nums; }
+</style>

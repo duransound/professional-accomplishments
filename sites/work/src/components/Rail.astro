@@ -11,10 +11,13 @@
  * never disagree with the sheets or their numbering. That costs the rail on a
  * no-JS load, which is acceptable — it is a shortcut, not a route. Every
  * section is still reachable by scrolling.
+ *
+ * The name at the left is the way home from any page.
  */
+import { site } from "../data/site";
 ---
 <nav class="rail" id="rail" aria-label="Sheet index" hidden>
-  <span class="rail-brand"><span class="tally-dot" aria-hidden="true"></span>Ian Duran</span>
+  <a class="rail-brand" href="/" aria-label={`${site.name} — home`}><span class="tally-dot" aria-hidden="true"></span>{site.name}</a>
   <div class="rail-lamps" id="rail-lamps"></div>
   <span class="rail-state"><i aria-hidden="true"></i><span id="rail-state">Sheet 00</span></span>
 </nav>

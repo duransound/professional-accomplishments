@@ -93,7 +93,16 @@ const zone = z.object({
   reads: required("A workplace-org analogue for this zone"),
 });
 
+const page = z.object({
+  title: required("A page title"),
+  summary: required("A one-line summary for the project card"),
+  dek: required("A dek under the page title"),
+  note: required("The demo note"),
+  intro: required("The paragraph above the drawing"),
+});
+
 const schema = z.object({
+  page,
   zones: z.array(zone).min(1, { message: "needs at least one zone" }),
   departments: z
     .array(dept)
@@ -101,6 +110,8 @@ const schema = z.object({
 });
 
 const data = loadContent("crew.yaml", schema);
+
+export const crewPage = data.page;
 
 export type SeatStatus = "led" | "held" | "adjacent";
 export type Visibility = "immediate" | "delayed" | "invisible";

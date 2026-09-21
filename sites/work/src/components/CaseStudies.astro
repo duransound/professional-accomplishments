@@ -1,40 +1,46 @@
 ---
 /**
- * Sheet 02 — the work, immediately under the summary.
+ * Sheet 02 — projects, immediately under the summary.
  *
  * This sits second because it is the only sheet that shows the work instead of
  * describing it, and a deliverable buried below the fold is a deliverable
  * nobody opens. Each study is a plate you press, not a row in a list.
  *
- * A specimen says so on the card. Nobody should have to open a document to
+ * A demo says so on the card. Nobody should have to open a document to
  * find out it describes no real client.
  */
 import { getCollection } from "astro:content";
-import { derive } from "../data/case-studies";
+import { derive, inlineHtml } from "../data/case-studies";
+import { seatCount, depts, crewPage } from "../data/crew";
+import { site } from "../data/site";
+import { ed } from "../edit/attrs";
+
+const DEV = import.meta.env.DEV;
+// Case-study text is edited in its own file; tokens show as locked chips.
+const fm = (id: string, field: string) =>
+  DEV ? { "data-edit": `fm:${field}`, "data-file": `case-studies/${id}.md`, "data-mode": "inline" } : {};
+const intro = site.projectsIntro ??
+  "Demo projects, published whole rather than as extracts. The data is sample data; the methods are the ones I use.";
 
 const items = (await getCollection("caseStudies"))
   .sort((a, b) => b.data.issued.valueOf() - a.data.issued.valueOf())
   .map((e) => ({ id: e.id, s: e.data, d: derive(e.data) }));
 ---
-{items.length > 0 && (
-  <section class="section" id="work">
+  <section class="section" id="projects">
     <div class="wrap section-grid">
-      <div class="label">Work</div>
+      <div class="label">Projects</div>
       <div class="section-body">
-        <p class="lede">
-          Sample deliverables, published whole rather than as extracts. The
-          method and the report structure are the real ones.
-        </p>
+        <p class="lede" {...(site.projectsIntro ? ed("site.yaml", "projectsIntro") : {})}>{intro}</p>
 
         <div class="grid">
           {items.map(({ id, s, d }) => (
-            <a class="card" href={`/work/${id}/`}>
+            <a class="card" href={`/projects/${id}/`}>
               <span class="kicker">
                 {s.kind}
-                {s.specimen && <i class="spec">Specimen</i>}
+                {s.demo && <i class="spec">Demo</i>}
               </span>
-              <h3>{s.title}</h3>
-              <p>{s.summaryLine}</p>
+              <h3 {...fm(id, "title")} set:html={inlineHtml(s.title, d, id, DEV)} />
+              <p {...fm(id, "summaryLine")} set:html={inlineHtml(s.summaryLine, d, id, DEV)} />
               <dl class="figs">
                 <div><dt>Rooms</dt><dd>{d.total}</dd></div>
                 <div><dt>Issues</dt><dd>{s.findings.length}</dd></div>
@@ -44,11 +50,22 @@ const items = (await getCollection("caseStudies"))
               <span class="plate-btn" aria-hidden="true">Open the dashboard →</span>
             </a>
           ))}
+          <a class="card" href="/projects/crew-map/">
+            <span class="kicker">Crew map <i class="spec">Demo</i></span>
+            <h3 {...ed("crew.yaml", "page.title")}>{crewPage.title}</h3>
+            <p {...ed("crew.yaml", "page.summary")}>{crewPage.summary}</p>
+            <dl class="figs">
+              <div><dt>Seats</dt><dd>{seatCount.total}</dd></div>
+              <div><dt>Worked</dt><dd>{seatCount.worked}</dd></div>
+              <div><dt>Alongside</dt><dd>{seatCount.adjacent}</dd></div>
+              <div><dt>Depts</dt><dd>{depts.length}</dd></div>
+            </dl>
+            <span class="plate-btn" aria-hidden="true">Open the map →</span>
+          </a>
         </div>
       </div>
     </div>
   </section>
-)}
 
 <style>
   .lede { color: var(--ink-mid); max-width: 58ch; margin: 0; }

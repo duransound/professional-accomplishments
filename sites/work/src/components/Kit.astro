@@ -1,15 +1,16 @@
 ---
 import { kit } from "../data/kit";
+import { ed } from "../edit/attrs";
 ---
 <section class="section" id="kit">
   <div class="wrap section-grid">
     <div class="label">Hands on</div>
     <div class="section-body">
       <div class="kit">
-        {kit.map((row) => (
+        {kit.map((row, g) => (
           <div class="kit-row">
-            <div class="label">{row.label}</div>
-            <div class="chips">{row.items.map((i) => <span>{i}</span>)}</div>
+            <div class="label" {...ed("kit.yaml", `groups.${g}.label`)}>{row.label}</div>
+            <div class="chips">{row.items.map((i, k) => <span {...ed("kit.yaml", `groups.${g}.items.${k}`)}>{i}</span>)}</div>
           </div>
         ))}
       </div>

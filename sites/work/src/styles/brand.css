@@ -351,7 +351,11 @@ main { counter-reset: sheet; }
   border-right: var(--lw-thin) solid var(--paper);
   font-family: var(--f-display); font-weight: 700;
   text-transform: uppercase; letter-spacing: 0.02em; font-size: 0.75rem;
+  color: var(--paper); text-decoration: none;
+  transition: background 90ms steps(1, end);
 }
+.rail-brand:hover { color: var(--paper); background: rgba(194, 55, 42, 0.22); }
+.rail-brand:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
 .rail-lamps { display: flex; align-items: stretch; }
 
 .lamp {

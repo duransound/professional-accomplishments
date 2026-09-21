@@ -1,0 +1,2 @@
+# Old /work/ links (shared before the rename) land on the same page.
+/work/*  /projects/:splat  301

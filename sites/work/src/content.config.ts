@@ -17,7 +17,7 @@ const notes = defineCollection({
 
 /**
  * Case studies are Markdown files in content/case-studies/, published at
- * /work/<filename>/. The frontmatter holds the data — rows, numbers, short
+ * /projects/<filename>/. The frontmatter holds the data — rows, numbers, short
  * labels. The writing lives in the body as ordinary Markdown under ## headings,
  * so it can be edited in any text editor with the dev server showing the page.
  *
@@ -32,7 +32,7 @@ const caseStudies = defineCollection({
   loader: glob({ pattern: "*.md", base: "./content/case-studies" }),
   schema: z.object({
     kind: z.string().min(1),
-    specimen: z.boolean({
+    demo: z.boolean({
       required_error:
         "is required. true means this describes no real client and the page will say so; " +
         "false is only for a study a client has agreed to be named in.",

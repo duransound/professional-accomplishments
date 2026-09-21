@@ -23,7 +23,7 @@ cd ~/Projects/duran-web
 npm run dev
 ```
 
-Go to **localhost:4321**. Now edit any file above, hit save, and the page
+Go to the address the terminal prints next to **Local**. Now edit any file above, hit save, and the page
 updates by itself. No refresh, no rebuild. `Ctrl-C` in that window stops it.
 
 ## Three rules that cover almost everything
@@ -100,17 +100,27 @@ the order they appear under `departments`. Nothing on the plate is positioned
 by hand, so adding a seat moves the drawing correctly. A zone nobody sits in
 renders as NO SEAT ASSIGNED — that hole is counted, not typed.
 
-**Edit a case study** — the easy way is on the page itself. Run `npm run dev`,
-open the case study (from the Work sheet on the homepage), and click **Edit
+**Edit on the page** — the easy way to change wording anywhere on the site.
+Run `npm run dev`, open any page (the homepage, a project), and click **Edit
 text** in the bottom-right corner. Click any sentence and type; press **Save**
-or ⌘S. The page reloads showing the change and stays in edit mode.
+or ⌘S. The page reloads showing the change and stays in edit mode. Each edit
+is written back into the file it came from — `site.yaml`, `lenses.yaml`,
+`experience.yaml`, `kit.yaml`, `crew.yaml`, or a case study — and only the
+lines you changed move.
+
+- The summary and job bullets change with the lens buttons. Press a lens to
+  edit its version. The same goes for the masthead switch: flip it to edit the
+  technology-vocabulary titles.
+- On the crew map, click a station to open its panel, then edit its text.
+- Links, emails, ids, colours, dates and statuses can't be changed on the page
+  — those stay in the files.
 
 - Numbers that are worked out from the data appear as grey locked chips while
   editing. Rewrite the sentence around them — they can't be typed over, which
   is what keeps the prose and the scorecard in agreement.
 - Return makes a new paragraph in body text. In titles, headings and list
   items it does nothing; those stay one line.
-- ⌘B and ⌘I work. Pasting always comes in as plain text.
+- ⌘B and ⌘I work in case studies and the lens summaries. Pasting always comes in as plain text.
 - If the file was changed somewhere else after the page loaded, the save is
   refused and asks you to reload, so an old tab can't overwrite newer text.
 - The edit button and the save endpoint exist only under `npm run dev`. Neither

@@ -1,14 +1,15 @@
 ---
 import { education } from "../data/experience";
+import { ed } from "../edit/attrs";
 ---
 <section class="section" id="education">
   <div class="wrap section-grid">
     <div class="label">Education</div>
     <div class="section-body">
       <div>
-        <h3>{education.degree}</h3>
-        <span class="org">{education.school}</span>
-        <p class="note-line">{education.note}</p>
+        <h3 {...ed("experience.yaml", "education.degree")}>{education.degree}</h3>
+        <span class="org" {...ed("experience.yaml", "education.school")}>{education.school}</span>
+        {education.note && <p class="note-line" {...ed("experience.yaml", "education.note")}>{education.note}</p>}
       </div>
     </div>
   </div>

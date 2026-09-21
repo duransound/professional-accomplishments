@@ -20,6 +20,8 @@ const schema = z.object({
     message: "is too long for the lower third — keep it on one line",
   }),
   tagline: required("A tagline"),
+  projectsIntro: z.string().optional(),
+  pitch: z.string().optional(),
   /**
    * The status lamp in the masthead. Optional in full — the component renders
    * nothing when it is absent, so an unmaintained "now" line can be removed

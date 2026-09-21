@@ -9,6 +9,7 @@
  */
 import { lenses, defaultLens } from "../data/lenses";
 import { roles } from "../data/experience";
+import { ed } from "../edit/attrs";
 ---
 <div class="lens">
   <div class="wrap lens-inner">
@@ -30,8 +31,8 @@ import { roles } from "../data/experience";
   <div class="wrap section-grid">
     <div class="label">Summary</div>
     <div class="section-body">
-      {lenses.map((l) => (
-        <p class="summary" data-lens-panel={l.id} hidden={l.id !== defaultLens} set:html={l.summary} />
+      {lenses.map((l, i) => (
+        <p class="summary" data-lens-panel={l.id} hidden={l.id !== defaultLens} set:html={l.summary} {...ed("lenses.yaml", `lenses.${i}.summary`, { html: true })} />
       ))}
     </div>
   </div>
@@ -42,15 +43,15 @@ import { roles } from "../data/experience";
     <div class="label">Experience</div>
     <div class="section-body">
       <ul class="jobs">
-        {roles.map((role) => (
+        {roles.map((role, r) => (
           <li data-current={role.current ? "" : null}>
-            <span class="years">{role.years}</span>
-            <h3>{role.title}</h3>
-            {role.org && <span class="org">{role.org}</span>}
-            {role.note && <p class="note-line">{role.note}</p>}
-            {role.lensKey && lenses.map((l) => (
+            <span class="years" {...ed("experience.yaml", `roles.${r}.years`)}>{role.years}</span>
+            <h3 {...ed("experience.yaml", `roles.${r}.title`)}>{role.title}</h3>
+            {role.org && <span class="org" {...ed("experience.yaml", `roles.${r}.org`)}>{role.org}</span>}
+            {role.note && <p class="note-line" {...ed("experience.yaml", `roles.${r}.note`)}>{role.note}</p>}
+            {role.lensKey && lenses.map((l, i) => (
               <ul class="bullets" data-lens-panel={l.id} hidden={l.id !== defaultLens}>
-                {l[role.lensKey!].map((b) => <li>{b}</li>)}
+                {l[role.lensKey!].map((b, j) => <li {...ed("lenses.yaml", `lenses.${i}.${role.lensKey}.${j}`)}>{b}</li>)}
               </ul>
             ))}
           </li>
