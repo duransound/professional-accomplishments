@@ -115,7 +115,7 @@ select.ctl{background:var(--ink);max-width:200px}
 #saver{position:fixed;inset:0;z-index:60;cursor:none;display:flex;align-items:center;justify-content:center;padding:8px;
   background:#000 var(--saverbg)}
 #saver[hidden]{display:none}
-.win{width:min(100%,1280px,calc((100vh - 84px)*4/3));background:var(--winbg);padding:3px;
+.win{width:85vw;height:85vh;display:flex;flex-direction:column;background:var(--winbg);padding:3px;
   box-shadow:inset 2px 2px 0 var(--winhi),inset -2px -2px 0 var(--winlo),0 0 0 1px var(--winlo),0 0 48px color-mix(in srgb,var(--mag) 22%,transparent)}
 .titlebar{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:4px 4px 4px 6px;
   background:var(--title);font-family:var(--px);font-size:12px;letter-spacing:.06em;color:var(--titlefg)}
@@ -124,8 +124,8 @@ select.ctl{background:var(--ink);max-width:200px}
 .wb{display:flex;gap:3px;flex:none}
 .wb i{font-style:normal;width:18px;height:16px;display:grid;place-items:center;font-size:11px;line-height:1;color:#06060a;background:#c9cde0;
   box-shadow:inset 1px 1px 0 #fff,inset -1px -1px 0 #555a78}
-.view{margin-top:3px;padding:2px;box-shadow:inset 2px 2px 0 var(--winlo),inset -2px -2px 0 var(--winhi)}
-#saver canvas{display:block;width:100%;height:auto;aspect-ratio:4/3;image-rendering:pixelated}
+.view{flex:1;min-height:0;margin-top:3px;padding:2px;box-shadow:inset 2px 2px 0 var(--winlo),inset -2px -2px 0 var(--winhi)}
+#saver canvas{display:block;width:100%;height:100%;image-rendering:pixelated}
 .status{display:flex;gap:3px;margin-top:3px;font-family:var(--px);font-size:11px;letter-spacing:.08em;color:var(--statusfg)}
 .status span{padding:3px 8px;box-shadow:inset 1px 1px 0 var(--winlo),inset -1px -1px 0 var(--winhi);white-space:nowrap}
 .status .grow{flex:1;text-align:right;color:var(--dim)}

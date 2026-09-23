@@ -227,8 +227,23 @@ function casFrame(f){
 }
 CAS=[casFrame(0),casFrame(1)];
 }
+
+/* ---------- screensaver sky: drifting pixel clouds (512x64, wraps around, sampled by view angle) ---------- */
+const SKYW=512,SKYH=64,CLOUD_DRIFT=.12;
+const SKY=(()=>{const d=new Uint8ClampedArray(SKYW*SKYH*4),r=rng(6*977);
+  const put=(x,y,c)=>{x=((x%SKYW)+SKYW)%SKYW;if(y<0||y>=SKYH)return;const i=(y*SKYW+x)*4;d[i]=c[0];d[i+1]=c[1];d[i+2]=c[2];d[i+3]=255};
+  const top=[132,160,118],hz=[216,212,182];
+  for(let y=0;y<SKYH;y++){const t=y/(SKYH-1),c=[top[0]+(hz[0]-top[0])*t,top[1]+(hz[1]-top[1])*t,top[2]+(hz[2]-top[2])*t];for(let x=0;x<SKYW;x++)put(x,y,c)}
+  for(let n=0;n<16;n++){const cx=r()*SKYW,cy=8+r()*30,parts=3+(r()*4|0),cells=[];
+    for(let p=0;p<parts;p++)cells.push([cx+(r()-.5)*34,cy+(r()-.5)*6,8+r()*14,3+r()*4]);
+    const inC=(x,y)=>cells.some(([a,b,w,h])=>((x-a)/w)**2+((y-b)/h)**2<=1);
+    for(let y=0;y<SKYH;y++)for(let x=cx-60;x<cx+60;x++)if(inC(x,y))put(x|0,y,inC(x,y+2)?[240,234,212]:[204,200,172]);}
+  return d})();
+const CLOUD_FOG=[214,210,180];
 function openMaze(){
-  const W=160,H=120;
+  /* canvas matches the window's shape (85% of the screen), 192 px wide */
+  const vw=sc.parentElement.clientWidth||800,vh=sc.parentElement.clientHeight||600;
+  const W=192,H=Math.max(80,Math.min(220,Math.round(W*vh/vw)));
   sc.width=W;sc.height=H;
   const img=sx.createImageData(W,H),D=img.data,DX=[1,0,-1,0],DY=[0,1,0,-1];
   let M,px,py,dirI,ang,act,exits=0,noise=0,tapes=0,tick=0,cas=[];const zbuf=new Float32Array(W);
@@ -259,7 +274,7 @@ function openMaze(){
   function render(){
     if(noise>0){for(let i=0;i<D.length;i+=4){const v=Math.random()*255|0,k=Math.random();
       const n=SK.noise;D[i]=k<.12?n[0]:v;D[i+1]=k<.12?n[1]:v;D[i+2]=k<.12?n[2]:v;D[i+3]=255}sx.putImageData(img,0,0);return}
-    const dx=Math.cos(ang),dy=Math.sin(ang),plx=-dy*.66,ply=dx*.66,G=M.G,K=W*.76,half=H/2;
+    const dx=Math.cos(ang),dy=Math.sin(ang),plx=-dy*.66,ply=dx*.66,G=M.G,K=W*.76,half=H/2,skyOff=tick*CLOUD_DRIFT;
     for(let x=0;x<W;x++){
       const cam=2*x/W-1,rx=dx+plx*cam,ry=dy+ply*cam;
       let mx=px|0,my=py|0,side=0;const ddx=Math.abs(1/rx),ddy=Math.abs(1/ry);
@@ -267,15 +282,16 @@ function openMaze(){
       if(rx<0){stx=-1;sxd=(px-mx)*ddx}else{stx=1;sxd=(mx+1-px)*ddx}
       if(ry<0){sty=-1;syd=(py-my)*ddy}else{sty=1;syd=(my+1-py)*ddy}
       for(let n=0;n<64;n++){if(sxd<syd){sxd+=ddx;mx+=stx;side=0}else{syd+=ddy;my+=sty;side=1}if(M.map[my*G+mx])break}
-      const perp=Math.max(.05,side===0?sxd-ddx:syd-ddy),lh=K/perp,top=half-lh/2;zbuf[x]=perp;
+      const perp=Math.max(.05,side===0?sxd-ddx:syd-ddy),full=K/perp,lh=full*.62,top=half+full/2-lh;zbuf[x]=perp; /* walls ~2/3 height so the sky shows over them */
       let wx=side===0?py+perp*ry:px+perp*rx;wx-=Math.floor(wx);
       const key=my*G+mx,pi=M.posters.get(key),TS=pi!==undefined?32:16;
       let tx=wx*TS|0;if(side===0&&rx>0)tx=TS-1-tx;if(side===1&&ry<0)tx=TS-1-tx;
       const tex=pi!==undefined?covers[pi].data:(key===(G-1)*G+G-2||key===(G-2)*G+G-1)?EXIT:BRICK;
-      const s1=side?.72:1,fo=Math.max(.18,Math.min(1,2.4/perp)),fg=SK.fog,C0=SK.ceil[0],C1=SK.ceil[1],F0=SK.floor[0],F1=SK.floor[1],FL=SK.floorLine;
+      const s1=side?.72:1,fo=Math.max(.18,Math.min(1,2.4/perp)),fg=CLOUD_FOG,F0=SK.floor[0],F1=SK.floor[1],FL=SK.floorLine;
+      const sux=(((((ang+Math.atan(cam*.66))/(2*Math.PI))*SKYW*2+skyOff)|0)%SKYW+SKYW)%SKYW;
       for(let y=0;y<H;y++){
         const i=(y*W+x)*4;
-        if(y<top){const f=y/half;D[i]=C0[0]+(C1[0]-C0[0])*f;D[i+1]=C0[1]+(C1[1]-C0[1])*f;D[i+2]=C0[2]+(C1[2]-C0[2])*f}
+        if(y<top){const sv=Math.min(SKYH-1,(y/half*SKYH)|0),j=(sv*SKYW+sux)*4;D[i]=SKY[j];D[i+1]=SKY[j+1];D[i+2]=SKY[j+2]}
         else if(y>=top+lh){const f=Math.min(1,(y-half)/half);
           if(((y-half)|0)%Math.max(2,(12*(1-f))|0)===0){D[i]=FL[0];D[i+1]=FL[1];D[i+2]=FL[2]}
           else{D[i]=F0[0]+(F1[0]-F0[0])*f;D[i+1]=F0[1]+(F1[1]-F0[1])*f;D[i+2]=F0[2]+(F1[2]-F0[2])*f}}
@@ -297,7 +313,7 @@ function openMaze(){
           let u=((x-left)/sw*16)|0;if(spin<0)u=15-u;u=Math.max(0,Math.min(15,u));
           for(let y=Math.max(0,top|0);y<Math.min(H,top+sh);y++){
             const v=Math.min(9,((y-top)/sh*10)|0),j=(v*16+u)*4;if(!fr[j+3])continue;
-            const i=(y*W+x)*4,sd=spin<0?.7:1,fc=SK.fog;D[i]=fr[j]*fog*sd+fc[0]*(1-fog);D[i+1]=fr[j+1]*fog*sd+fc[1]*(1-fog);D[i+2]=fr[j+2]*fog*sd+fc[2]*(1-fog)}}
+            const i=(y*W+x)*4,sd=spin<0?.7:1,fc=CLOUD_FOG;D[i]=fr[j]*fog*sd+fc[0]*(1-fog);D[i+1]=fr[j+1]*fog*sd+fc[1]*(1-fog);D[i+2]=fr[j+2]*fog*sd+fc[2]*(1-fog)}}
       });
     sx.putImageData(img,0,0);
   }
