@@ -1,52 +1,118 @@
 ---
 /**
- * Milkshake O'neil — stub. Shares the theme package so both sites read as
- * siblings, but the music side gets its own layout and content pass.
- *
- * TODO before this replaces the Wix site:
- *  - The old sample pack CTA pointed at ToneDen, which shut down in 2024.
- *    That link has been dead for ~2 years. Replace with Bandcamp, Gumroad,
- *    or an email-for-download flow.
- *  - Pull the hero and profile images off the current Wix site.
- *  - Releases list that grows, rather than a static bio.
+ * Milkshake O'neil. Forest Cream (the "Signal Loss" design, 2026-09).
+ * Ported from the design mockup: https://claude.ai/artifact/9qidUqQXYpoDVkhuGmLgiE
+ * Catalog + cover pixel data live in src/data/releases.js; behaviour in src/scripts/site.js.
  */
 import "@duran/theme/reset.css";
 import "../styles/brand.css";
+import { loadSite, loadReleases } from "../data/content";
 
-const links = [
-  { label: "Spotify", href: "https://open.spotify.com/artist/4jsDAwTiXLfwp77EBqqHup" },
-  { label: "Apple Music", href: "https://music.apple.com/us/artist/milkshake-oneil/1507854328" },
-  { label: "YouTube", href: "https://youtube.com/duransound" },
-  { label: "Instagram", href: "https://instagram.com/duransound/" },
-];
+// Everything a person edits lives in sites/music/content/*.json (the CMS at /admin writes those files).
+const site = loadSite();
+const releases = loadReleases();
+const latest = releases[0];
+const connect = site.connect.filter((l) => l.show);
+// Shape the client script expects (short keys, same as the mockup).
+const clientData = JSON.stringify(releases.map((r) => ({ t: r.title, y: r.year, k: r.type, sp: r.spotify, am: r.apple, az: r.amazon, dz: r.deezer, id: r.id })));
 ---
 <!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Milkshake O'neil</title>
-    <meta name="description" content="Making music since 2005. San Francisco." />
+    <meta name="description" content="Instrumentals from San Francisco, recorded like it's still 1996. Instrumental, hip hop, lo-fi." />
+    <meta property="og:title" content="Milkshake O'neil" />
+    <meta property="og:description" content="Instrumentals from San Francisco, recorded like it's still 1996." />
+    <meta name="theme-color" content="#ebe2c6" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@700&family=Newsreader:wght@400&family=DM+Mono:wght@400&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=VT323&family=Sixtyfour&display=swap" />
   </head>
   <body>
-    <main class="wrap stub">
-      <span class="label">Placeholder — music site not yet built</span>
-      <h1>Milkshake O'neil</h1>
-      <p>Instrumental, hip hop, indie, lo-fi. San Francisco. Making music since 2005.</p>
-      <div class="links">
-        {links.map((l) => <a href={l.href}>{l.label}</a>)}
+<div class="band" aria-hidden="true"></div>
+
+<div class="wrap">
+  <div class="osd" aria-hidden="false">
+    <span class="play"><i class="rec" aria-hidden="true">●</i> REC · <b>FIELD NOTES</b></span>
+    <nav aria-label="Sections"><a href="#tracks">TRACKS</a><a href="#connect">CONNECT</a></nav>
+    <span class="osd-r"><span class="counter" id="counter" aria-label="Time on page">00:00:00</span></span>
+  </div>
+
+  <header class="hero">
+    <canvas id="mark" role="img" aria-label="Milkshake O'neil"></canvas>
+    <h1 class="sr-only">Milkshake O'neil</h1>
+    <p class="tag"><span>{site.tagline}</span></p>
+    <p class="bio">{site.bio}</p>
+    <div class="latest">
+      <canvas id="latest-cover" width="32" height="32" aria-hidden="true"></canvas>
+      <div>
+        <span class="label">{site.latestLabel}</span>
+        <h2>{latest.title}</h2>
+        <p>{latest.year}</p>
+        <a class="btn" href={latest.spotify} target="_blank" rel="noopener">▸ LISTEN ON SPOTIFY</a>
       </div>
-    </main>
+    </div>
+  </header>
+
+  <section id="tracks" class="watch">
+    <div class="sec-head"><h2 class="px">Select your track</h2><span class="hint">hover or arrow keys · enter to pick</span></div>
+    <div class="sel-body">
+      <div class="grid" id="grid" role="listbox" aria-label="Releases">
+        {releases.map((r, i) => (
+          <button class="tile" id={`tile-${i}`} role="option" tabindex={i === 0 ? 0 : -1}>
+            <canvas width="32" height="32" aria-hidden="true"></canvas>
+            <span class="t">{r.title}</span><span class="y">{r.year}</span>
+          </button>
+        ))}
+      </div>
+      <aside class="detail" aria-live="polite">
+        <canvas id="portrait" width="32" height="32" aria-hidden="true"></canvas>
+        <h3 id="d-title">—</h3>
+        <dl class="stats">
+          <dt>YEAR</dt><dd id="d-year">—</dd>
+          <dt>TYPE</dt><dd id="d-type">—</dd>
+        </dl>
+        <p class="ready" id="ready"></p>
+        <a class="btn" id="d-listen" href="https://open.spotify.com/artist/4jsDAwTiXLfwp77EBqqHup" target="_blank" rel="noopener">▸ PRESS START · SPOTIFY</a>
+        <p class="also" id="d-also"></p>
+      </aside>
+    </div>
+  </section>
+
+  <section id="connect" class="watch">
+    <div class="sec-head"><h2 class="px">Connect</h2><span class="hint">listen · follow</span></div>
+    <div class="patches">
+        {connect.map((l) => (
+          <a class="patch" href={l.url} target="_blank" rel="noopener"><span class="n">{l.label}</span><span class="pill live">ON AIR</span></a>
+        ))}
+      </div>
+  </section>
+
+  <footer>
+    <label for="tracking">TRACKING <input type="range" id="tracking" min="0" max="100" value="35"></label>
+    <button class="ctl" id="sfx" aria-pressed="false">SFX OFF</button>
+    <button class="ctl" id="run-saver">RUN SCREENSAVER</button>
+    <span>© MILKSHAKE O'NEIL</span>
+    <p class="fine">{site.footerNote}</p>
+  </footer>
+</div>
+
+<div id="saver" hidden>
+  <div class="win" role="img" aria-label="Screensaver: a walk through a 3D maze">
+    <div class="titlebar">
+      <span class="ti"><i class="ico" aria-hidden="true"></i>MAZE.SCR · MILKSHAKE O'NEIL</span>
+      <span class="wb" aria-hidden="true"><i>_</i><i>□</i><i>×</i></span>
+    </div>
+    <div class="view"><canvas id="saver-c"></canvas></div>
+    <div class="status"><span id="hits">TAPES 0</span><span id="exits">EXITS 0</span><span class="grow">MOVE TO WAKE</span></div>
+  </div>
+</div>
+    <script type="application/json" id="releases-data" set:html={clientData}></script>
+    <script>
+      import "../scripts/site.js";
+    </script>
   </body>
 </html>
-
-<style>
-  .stub { display: flex; flex-direction: column; gap: 1.15rem; padding-block: 5rem; }
-  h1 { font-size: clamp(2.5rem, 8vw, 4.5rem); line-height: 0.95; letter-spacing: -0.035em; }
-  p { max-width: 50ch; color: var(--fg-mid); }
-  .links { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; font-family: var(--f-mono); font-size: 0.875rem; }
-  .links a { text-decoration: none; border-bottom: 1px solid var(--accent); }
-</style>

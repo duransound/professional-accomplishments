@@ -1,14 +1,21 @@
 {
-  // Cloudflare Workers Static Assets — Milkshake O'neil.
-  // Not deployed yet. A second Cloudflare project points at this file:
+  // Cloudflare Workers Static Assets: Milkshake O'neil (Forest Cream design).
+  //
+  // Same setup as sites/work: a purely static deploy (no "main"), built at the
+  // repo root, so the deploy command must point at this file explicitly:
   //
   //     npx wrangler deploy -c sites/music/wrangler.jsonc
   //
-  // Rename "name" to whatever that project ends up being called.
+  // Domain: milkshakeoneil.com is moving Wix -> Porkbun (transfer submitted
+  // 2026-09-22). The zone is already added to Cloudflare; once the transfer
+  // lands, set Porkbun's nameservers to grannbo.ns.cloudflare.com and
+  // max.ns.cloudflare.com, then attach the custom domain to this Worker.
   "name": "milkshake-oneil",
   "compatibility_date": "2026-08-31",
   "assets": {
     "directory": "./dist",
-    "html_handling": "auto-trailing-slash"
+    "html_handling": "auto-trailing-slash",
+    // Serve src/pages/404.astro for unknown paths (default "none" returns an empty 404).
+    "not_found_handling": "404-page"
   }
 }

@@ -1,0 +1,37 @@
+---
+/** 404, in the field-recorder voice. Served via not_found_handling: "404-page" in wrangler.jsonc. */
+import "@duran/theme/reset.css";
+import "../styles/brand.css";
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Out of range · Milkshake O'neil</title>
+    <meta name="robots" content="noindex" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Silkscreen:wght@400;700&family=VT323&display=swap" />
+  </head>
+  <body>
+    <div class="band" aria-hidden="true"></div>
+    <div class="wrap">
+      <div class="osd">
+        <span class="play"><i class="rec" aria-hidden="true">●</i> REC · <b>FIELD NOTES</b></span>
+        <span class="counter">--:--:--</span>
+      </div>
+      <main class="lost">
+        <span class="label">404 · OUT OF RANGE</span>
+        <h1 class="px">Nothing recorded here.</h1>
+        <p>This spot on the tape is blank. The music is back at the start.</p>
+        <a class="btn" href="/">▸ REWIND TO START</a>
+      </main>
+    </div>
+  </body>
+</html>
+
+<style>
+  .lost { display: flex; flex-direction: column; align-items: flex-start; gap: 18px; padding-block: 12vh; }
+  .lost h1 { font-size: clamp(24px, 5vw, 40px); }
+  .lost p { font-size: 26px; max-width: 34ch; }
+</style>

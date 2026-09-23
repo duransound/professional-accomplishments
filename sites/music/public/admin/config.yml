@@ -1,0 +1,77 @@
+# =============================================================================
+# Sveltia CMS: the browser editor at /admin for the Milkshake O'neil site.
+#
+# Same setup as duran.show/admin: saving commits straight to GitHub (main),
+# which triggers the milkshake-oneil Cloudflare build, which puts the change
+# live in about a minute. Sign-in goes through the same sveltia-cms-auth worker.
+#
+# Content is JSON (sites/music/content/*.json). The build checks it and fails
+# with a readable message if a field is wrong, so a bad edit never goes live.
+# =============================================================================
+
+backend:
+  name: github
+  repo: duransound/professional-accomplishments
+  branch: main
+  base_url: https://sveltia-cms-auth.iduran87.workers.dev
+
+site_url: https://milkshake-oneil.iduran87.workers.dev
+display_url: https://milkshake-oneil.iduran87.workers.dev
+
+media_folder: sites/music/public/uploads
+public_folder: /uploads
+
+collections:
+  # ---------------------------------------------------------------------------
+  - name: site
+    label: Page text & links
+    files:
+      - name: site
+        label: Page text & links
+        file: sites/music/content/site.json
+        format: json
+        description: >-
+          The words around the page and the Connect tiles. The newest release in
+          the Releases list is automatically the "latest" one at the top.
+        fields:
+          - { name: tagline, label: Genre line, widget: string, hint: 'Small line under the logo, e.g. "instrumental · hip hop · lo-fi".' }
+          - { name: bio, label: Bio, widget: text, hint: 'Two sentences reads best. Shown under the genre line.' }
+          - { name: latestLabel, label: Label above the latest release, widget: string, hint: 'Currently "LATEST FIELD RECORDING". Keep it short and in capitals.' }
+          - name: connect
+            label: Connect tiles
+            label_singular: link
+            widget: list
+            summary: '{{fields.label}} ({{fields.show}})'
+            hint: 'Order here is the order on the page. Untick "Show" to hide a tile without losing its link.'
+            fields:
+              - { name: label, label: Name, widget: string, hint: 'In capitals, e.g. SPOTIFY.' }
+              - { name: url, label: Link, widget: string, required: false, hint: 'Full address starting with https://' }
+              - { name: show, label: Show on the page, widget: boolean, default: true }
+          - { name: footerNote, label: Footer note, widget: text }
+
+  # ---------------------------------------------------------------------------
+  - name: releases
+    label: Releases
+    files:
+      - name: releases
+        label: Releases
+        file: sites/music/content/releases.json
+        format: json
+        description: >-
+          Newest first: the top release is shown as the latest at the top of the
+          page, and the list fills the Select Your Track grid in this order.
+          A new release gets a placeholder pixel cover until a real one is made.
+        fields:
+          - name: releases
+            label: Releases
+            label_singular: release
+            widget: list
+            summary: '{{fields.year}} · {{fields.title}}'
+            fields:
+              - { name: title, label: Title, widget: string }
+              - { name: year, label: Year, widget: number, value_type: int }
+              - { name: type, label: Type, widget: string, hint: 'e.g. Single, EP · 6 tracks, Album · 10 tracks' }
+              - { name: spotify, label: Spotify album link, widget: string, hint: 'https://open.spotify.com/album/… (this also picks the pixel cover)' }
+              - { name: apple, label: Apple Music link, widget: string, required: false }
+              - { name: amazon, label: Amazon Music link, widget: string, required: false }
+              - { name: deezer, label: Deezer link, widget: string, required: false }

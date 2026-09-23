@@ -1,0 +1,38 @@
+{
+  "tagline": "instrumental · hip hop · lo-fi",
+  "bio": "Instrumentals from San Francisco, recorded like it's still 1996. If you never risked your life on LimeWire, you have never lived.",
+  "latestLabel": "LATEST FIELD RECORDING",
+  "connect": [
+    {
+      "label": "SPOTIFY",
+      "url": "https://open.spotify.com/artist/4jsDAwTiXLfwp77EBqqHup",
+      "show": true
+    },
+    {
+      "label": "APPLE MUSIC",
+      "url": "https://music.apple.com/us/artist/milkshake-oneil/1507854328",
+      "show": true
+    },
+    {
+      "label": "YOUTUBE MUSIC",
+      "url": "https://music.youtube.com/channel/UCHUnOBMSWxXhxyX6C6rYOsg",
+      "show": true
+    },
+    {
+      "label": "INSTAGRAM",
+      "url": "https://www.instagram.com/milkshake.oneil",
+      "show": true
+    },
+    {
+      "label": "X",
+      "url": "https://x.com/duransound",
+      "show": false
+    },
+    {
+      "label": "AMAZON MUSIC",
+      "url": "",
+      "show": false
+    }
+  ],
+  "footerNote": "The page drifts into a screensaver after 30 seconds idle; move the mouse or press a key to wake it."
+}

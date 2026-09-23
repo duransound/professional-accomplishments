@@ -1,9 +1,8 @@
 # Cloudflare Pages headers.
 #
-# NOTE: the noindex line below keeps this out of Google while the brand and
-# domain are still being decided. DELETE THOSE TWO LINES AT LAUNCH — leaving
-# them in place means the site never appears in search results, which for a
-# site whose job is "a recruiter googles Ian Duran" would be self-defeating.
+# NOTE: the noindex line below keeps the workers.dev preview out of Google.
+# DELETE IT when milkshakeoneil.com is attached to this Worker (launch),
+# or the artist site will never show up in search.
 /*
   X-Robots-Tag: noindex, nofollow
 
