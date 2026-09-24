@@ -34,7 +34,7 @@ body::after{content:"";position:fixed;inset:0;pointer-events:none;background:rep
 .wb .x:focus-visible{outline:2px solid var(--moss);outline-offset:1px}
 /* when opened from the homepage it lives in an iframe: no page chrome, transparent around the window */
 .embed,.embed body{background:transparent}
-.embed body{padding:6px}
+.embed body{padding:0}
 .embed .note{display:none}
 
 /* window chrome (same as the maze screensaver) */
@@ -478,10 +478,17 @@ async function press(i){
 function release(i){held.delete(i)}
 const KEYMAP={};PADS.forEach((p,i)=>KEYMAP[p.key.toLowerCase()]=i);
 const EMBED=document.documentElement.classList.contains("embed");
-function closeWin(){if(playing)togglePlay();if(EMBED)parent.postMessage({beats:"close"},location.origin);else location.href="/"}
-$("#win-x").addEventListener("click",closeWin);
+function closeWin(){if(EMBED){if(playing)togglePlay();return}location.href="/"}
+/* inline on the homepage: tell the parent our height, and ping it while you play so its screensaver stays away */
+if(EMBED){const post=m=>{try{parent.postMessage(m,location.origin)}catch(e){}};
+  const pg=document.querySelector(".page"),sendH=()=>post({beats:"h",h:pg.getBoundingClientRect().height+16});
+  new ResizeObserver(sendH).observe(pg);addEventListener("load",sendH);sendH();
+  let lastPing=0;const ping=()=>{const n=Date.now();if(n-lastPing>2000){lastPing=n;post({beats:"act"})}};
+  ["pointerdown","pointermove","keydown","wheel"].forEach(ev=>addEventListener(ev,ping,{passive:true}));
+  setInterval(()=>{if(playing)post({beats:"act"})},5000)}
+$("#win-x").addEventListener("click",closeWin);if(EMBED)$("#win-x").setAttribute("aria-label","Stop playback");
 addEventListener("keydown",e=>{
-  if(e.key==="Escape"){closeWin();return}
+  if(e.key==="Escape"&&!EMBED){closeWin();return}
   if(e.target.closest("input,button#win-x"))return;
   if(e.code==="Space"){e.preventDefault();togglePlay();return}
   const i=KEYMAP[e.key.toLowerCase()];if(i==null||e.repeat||e.metaKey||e.ctrlKey||e.altKey)return;e.preventDefault();press(i)});

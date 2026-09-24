@@ -165,30 +165,19 @@ if(!reduce&&"IntersectionObserver" in window){
   document.querySelectorAll(".watch").forEach(s=>io.observe(s));
 }
 
-/* ---------- BEATS.EXE: the sampler page opens in a window over the site ---------- */
-const beatsWin=$("#beats"),beatsF=$("#beats-f");let beatsFrom=null;
-function openBeats(from){
-  if(!beatsWin.hidden)return;
-  beatsFrom=from||document.activeElement;
-  beatsF.src="/beats/?embed";beatsWin.hidden=false;document.body.classList.add("beats-open");blip(520);
-  beatsF.addEventListener("load",()=>beatsF.focus(),{once:true});
-}
-function closeBeats(){
-  if(beatsWin.hidden)return;
-  beatsWin.hidden=true;beatsF.src="about:blank";document.body.classList.remove("beats-open");lastAct=Date.now();
-  beatsFrom?.focus?.();
-}
-document.querySelectorAll("[data-beats]").forEach(a=>a.addEventListener("click",e=>{
-  if(e.metaKey||e.ctrlKey||e.shiftKey||e.button)return;e.preventDefault();openBeats(a)}));
-addEventListener("message",e=>{if(e.origin===location.origin&&e.data?.beats==="close")closeBeats()});
-beatsWin.addEventListener("click",e=>{if(e.target===beatsWin)closeBeats()});
-addEventListener("keydown",e=>{if(e.key==="Escape")closeBeats()});
+/* ---------- BEATS.EXE: inline iframe; it reports its height and keeps the screensaver away while you play ---------- */
+const beatsF=$("#beats-f");
+addEventListener("message",e=>{
+  if(e.origin!==location.origin||e.source!==beatsF?.contentWindow||!e.data?.beats)return;
+  if(e.data.beats==="h")beatsF.style.height=Math.ceil(e.data.h)+"px";
+  if(e.data.beats==="act")lastAct=Date.now();
+});
 
 /* ---------- counter + idle screensaver ---------- */
 const t0=Date.now();let lastAct=Date.now(),grace=0,raf=0;
 const saver=$("#saver"),sc=$("#saver-c"),sx=sc.getContext("2d");
 function openSaver(){
-  if(!saver.hidden||!mask||!beatsWin.hidden)return;
+  if(!saver.hidden||!mask)return;
   saver.hidden=false;grace=Date.now()+500;
   openMaze();
 }
