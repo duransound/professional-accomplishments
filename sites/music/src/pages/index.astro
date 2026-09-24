@@ -37,7 +37,7 @@ const clientData = JSON.stringify(releases.map((r) => ({ t: r.title, y: r.year, 
 <div class="wrap">
   <div class="osd" aria-hidden="false">
     <span class="play"><i class="rec" aria-hidden="true">●</i> REC · <b>FIELD NOTES</b></span>
-    <nav aria-label="Sections"><a href="#tracks">TRACKS</a><a href="#connect">CONNECT</a></nav>
+    <nav aria-label="Sections"><a href="#tracks">TRACKS</a><a href="#connect">CONNECT</a><a href="/beats/" data-beats>BEATS.EXE</a></nav>
     <span class="osd-r"><span class="counter" id="counter" aria-label="Time on page">00:00:00</span></span>
   </div>
 
@@ -48,6 +48,7 @@ const clientData = JSON.stringify(releases.map((r) => ({ t: r.title, y: r.year, 
       <div class="intro">
         <p class="tag"><span>{site.tagline}</span></p>
         <p class="bio">{site.bio}</p>
+        <p class="run"><a class="exe" href="/beats/" data-beats><i aria-hidden="true"></i>RUN BEATS.EXE</a><span class="hint">20 pads · 8 bars · one bad VHS deck</span></p>
       </div>
       <div class="latest">
       <canvas id="latest-cover" width="32" height="32" aria-hidden="true"></canvas>
@@ -102,6 +103,10 @@ const clientData = JSON.stringify(releases.map((r) => ({ t: r.title, y: r.year, 
     <span>© MILKSHAKE O'NEIL</span>
     <p class="fine">{site.footerNote}</p>
   </footer>
+</div>
+
+<div id="beats" hidden role="dialog" aria-modal="true" aria-label="BEATS.EXE beat machine">
+  <iframe id="beats-f" title="BEATS.EXE beat machine"></iframe>
 </div>
 
 <div id="saver" hidden>
