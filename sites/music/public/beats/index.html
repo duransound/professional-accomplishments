@@ -218,7 +218,7 @@ const PADS=[
   {id:"hat",nm:"HAT",key:"A",drum:1},{id:"ohat",nm:"OPEN HAT",key:"S",drum:1},{id:"shaker",nm:"SHAKER",key:"D",drum:1},{id:"rim",nm:"RIM",key:"F",drum:1},
   {id:"kick",nm:"KICK",key:"Z",drum:1},{id:"kick2",nm:"KICK 2",key:"X",drum:1},{id:"snare",nm:"SNARE",key:"C",drum:1},{id:"clap",nm:"CLAP",key:"V",drum:1}];
 const NP=PADS.length, IDX=Object.fromEntries(PADS.map((p,i)=>[p.id,i]));
-const VOL={arp1:.35,arp2:.35,rew:.2,eject:.5,keys1:.55,keys2:.55,keys3:.55,ko:.22,bassF:.8,bassE:.8,tomlo:.7,tomhi:.65,hat:.35,ohat:.3,shaker:.3,rim:.45,kick:1,kick2:.9,snare:.7,clap:.6};
+const VOL={arp1:.175,arp2:.175,rew:.2,eject:.25,keys1:.55,keys2:.55,keys3:.55,ko:.11,bassF:.8,bassE:.8,tomlo:.7,tomhi:.65,hat:.35,ohat:.3,shaker:.3,rim:.45,kick:1,kick2:.9,snare:.7,clap:.6};
 
 /* ---------- placeholder sounds, rendered once into buffers (swap for real samples later) ---------- */
 function noise(c,dur){const b=c.createBuffer(1,Math.ceil(dur*c.sampleRate),c.sampleRate),d=b.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;return b}
