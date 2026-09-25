@@ -52,7 +52,7 @@ const logSeed = D.assets
   .filter((a) => a.state !== "queued")
   .map((a) => ({ id: a.id, stage: a.state === "ready" ? "READY" : a.state === "hold" ? "HOLD" : (D.stages[a.done]?.name ?? "QC").toUpperCase(), msg: a.state === "hold" ? (a.note ?? "") : a.title }));
 ---
-<Base title={`Playback prep — ${site.name}`} description={P.summary} type="article">
+<Base title={`Playback prep — ${site.name}`} description={P.summary} image="/og/playback-prep.png" type="article">
   <Rail />
   <Masthead />
   <main>
