@@ -14,6 +14,7 @@ import { derive, inlineHtml } from "../data/case-studies";
 import { seatCount, depts, crewPage } from "../data/crew";
 import { site } from "../data/site";
 import { runbook, runbookStats } from "../data/runbook";
+import { playback, playbackStats } from "../data/playback";
 import { ed } from "../edit/attrs";
 
 const DEV = import.meta.env.DEV;
@@ -74,6 +75,18 @@ const items = (await getCollection("caseStudies"))
               <div><dt>On air</dt><dd>{runbookStats.showMinutes}m</dd></div>
             </dl>
             <span class="plate-btn" aria-hidden="true">Open the runbook →</span>
+          </a>
+          <a class="card" href="/projects/playback-prep/">
+            <span class="kicker">Playback prep <i class="spec">Demo</i></span>
+            <h3 {...ed("playback.yaml", "page.title")}>{playback.page.title}</h3>
+            <p {...ed("playback.yaml", "page.summary")}>{playback.page.summary}</p>
+            <dl class="figs">
+              <div><dt>Assets</dt><dd>{playbackStats.assets}</dd></div>
+              <div><dt>Stages</dt><dd>{playbackStats.stages}</dd></div>
+              <div><dt>Ready</dt><dd>{playbackStats.ready}</dd></div>
+              <div class="alert"><dt>Hold</dt><dd>{playbackStats.hold}</dd></div>
+            </dl>
+            <span class="plate-btn" aria-hidden="true">Open the desk →</span>
           </a>
         </div>
       </div>

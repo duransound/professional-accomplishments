@@ -15,6 +15,7 @@ import { lenses, defaultLens } from "../data/lenses";
 import { roles, education } from "../data/experience";
 import { kit } from "../data/kit";
 import { runbookStats } from "../data/runbook";
+import { playbackStats } from "../data/playback";
 import { seatCount } from "../data/crew";
 
 const lens = lenses.find((l) => l.id === defaultLens)!;
@@ -23,6 +24,7 @@ const work = [
   { name: "Room readiness dashboard", url: "duran.show/projects/room-readiness-dashboard", line: "Weekly room-status dashboard with an 8-week trend, open issues, and the technician walkthrough that feeds it." },
   { name: "Crew map", url: "duran.show/projects/crew-map", line: `${seatCount.total} production seats placed by room and by department, marking the ${seatCount.worked} I've worked.` },
   { name: "Show-day runbook", url: "duran.show/projects/show-day-runbook", line: `An all-hands from load-in to strike: ${runbookStats.cues} cues as called, who holds the call, and the failure plays.` },
+  { name: "Playback prep", url: "duran.show/projects/playback-prep", line: `Show media from link to playback machine: ${playbackStats.stages} stages on yt-dlp, ffprobe and ffmpeg, checked against one show spec, handed off as a cue-ordered package.` },
 ];
 ---
 <Base title={`Resume — ${site.name}`} description={`Resume of ${site.name}. ${site.roleProduction}.`}>

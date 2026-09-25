@@ -1,0 +1,253 @@
+# ---------------------------------------------------------------------------
+# PLAYBACK PREP — the demo at /projects/playback-prep/
+#
+# A composite show, not any real company's media. The commands are the real
+# ones; the files, durations and readings are sample data.
+#
+# Everything countable (how many assets, how many are ready, what's on hold,
+# the show length) is worked out from this file, never typed. The build
+# stops and says why if the file disagrees with itself: an asset marked
+# ready with a check that didn't pass, a cue pointing at an asset that
+# doesn't exist, and so on.
+#
+# All the words can also be changed on the page itself in edit mode.
+# ---------------------------------------------------------------------------
+page:
+  title: Playback Injest & Encoding
+  summary: Every roll-in, loop and stinger pulled, checked and conformed to what's required on spec before it reaches the playback machine.
+  dek: >
+    Show media arrives as a YouTube link, a Drive folder, a Loom and a stinger
+    someone exported at the wrong frame rate. I created this browser based
+    desk that turns all of it into one spec, checks it, and hands the playback
+    operator a package that just runs. It will encode from internet link,
+    transcode for different formats and scale/ crop depending on display
+    format.
+  note: >
+    A composite show with sample files.
+  deskIntro: This is the desk, the way the operator sees it on show week. Click through the screens, open an asset, or add a link and watch it run.
+  pipelineIntro: Every asset goes through the same five stages, in the same order, with the same commands. Nothing reaches the library on a guess.
+  queueIntro: The queue for this show. Replay it to watch each asset work through the stages and stop where it actually stops.
+  libraryIntro: What the playback operator browses. Filed by segment, one conformed version per asset, its status on the card.
+  formatsIntro: One master, cut for every screen in the room and every feed after it.
+  qcIntro: Pick an asset to see what came in, what went out, and every check against the show spec.
+  rundownIntro: Approved media in cue order, with what the operator does on each cue. The package only builds when every cue is ready.
+  notes:
+    - Media never leaves the machine. The app listens on the laptop only, so unreleased show content is never uploaded anywhere.
+    - A hold is a decision, not an error. The award stinger could be auto-conformed from 25 to 29.97 fps, but a fast graphic would judder on the big screen. Asking for a proper render is faster than explaining it on show day.
+    - The show spec lives in one place. Every conform and every check reads from it, so changing the venue's playback format is one edit.
+    - Today the app pulls, probes and converts. Captions, loudness checks and the package export are shown here as the method; the app is catching up.
+
+show:
+  name: "[CLIENT] Q4 All-Hands"
+  venue: Ballroom · hybrid
+  machine: QLab on a dedicated playback Mac
+
+# The target every asset is conformed to and checked against.
+spec:
+  - {k: Video, v: "ProRes 422 HQ"}
+  - {k: Raster, v: "1920 × 1080"}
+  - {k: Rate, v: "29.97 fps"}
+  - {k: Audio, v: "PCM 48 kHz / 24-bit"}
+  - {k: Loudness, v: "−24 LKFS ± 1"}
+  - {k: True peak, v: "−2 dBTP max"}
+  - {k: Captions, v: "Open, 2 lines, lower third"}
+
+# Conform targets offered on the Ingest screen. The first one is the show
+# default. Picking another changes the spec in the title block and on every
+# asset added from then on.
+specs:
+  - {id: keynote, name: "Keynote playback", v: "ProRes 422 HQ · 1920×1080 · 29.97 · PCM 48k/24 · −24 LKFS"}
+  - {id: led4k, name: "4K LED wall", v: "ProRes 422 HQ · 3840×2160 · 29.97 · PCM 48k/24 · −24 LKFS"}
+  - {id: ledwide, name: "Ultra-wide LED, 48:9", v: "ProRes 422 HQ · 5760×1080 · 59.94 · PCM 48k/24"}
+  - {id: projector, name: "Projector, 16:10", v: "ProRes 422 HQ · 1920×1200 · 29.97 · PCM 48k/24"}
+  - {id: stream, name: "Webcast and stream", v: "H.264 · 1920×1080 · 29.97 · AAC 48k · −16 LUFS"}
+  - {id: intl, name: "International, EBU", v: "ProRes 422 HQ · 1920×1080 · 25 · PCM 48k/24 · −23 LUFS"}
+
+# Output formats on the Formats screen: the same asset cut for each screen
+# in the room and each social feed afterwards. w and h are pixels.
+formats:
+  - {id: program, group: screen, name: "Program", w: 1920, h: 1080, spec: "ProRes 422 HQ · 29.97", use: "Main screens and the record"}
+  - {id: uhd, group: screen, name: "4K LED wall", w: 3840, h: 2160, spec: "ProRes 422 HQ · 29.97", use: "Upstage LED at native resolution"}
+  - {id: wide, group: screen, name: "Ultra-wide LED", w: 5760, h: 1080, spec: "ProRes 422 HQ · 59.94", use: "A 48:9 wall. Center content, extend the sides"}
+  - {id: wuxga, group: screen, name: "Projector", w: 1920, h: 1200, spec: "ProRes 422 HQ · 29.97", use: "16:10 projection, common in ballrooms"}
+  - {id: confidence, group: screen, name: "Confidence monitor", w: 1280, h: 720, spec: "H.264 · 29.97", use: "Downstage monitors for the presenter"}
+  - {id: reels, group: social, name: "Reels, TikTok and Shorts", w: 1080, h: 1920, spec: "H.264 · 30 · −14 LUFS", use: "Vertical, full screen on a phone"}
+  - {id: feed, group: social, name: "Instagram and LinkedIn feed", w: 1080, h: 1350, spec: "H.264 · 30 · −14 LUFS", use: "4:5, the tallest a feed post shows"}
+  - {id: square, group: social, name: "Square", w: 1080, h: 1080, spec: "H.264 · 30 · −14 LUFS", use: "1:1 for feeds and carousels"}
+  - {id: landscape, group: social, name: "YouTube and LinkedIn video", w: 1920, h: 1080, spec: "H.264 · 30 · −14 LUFS", use: "16:9 for the full-length upload"}
+
+# The five stages, in order. `tool` is what does the work; `cmd` is the
+# command it runs.
+stages:
+  - id: fetch
+    name: Fetch
+    tool: yt-dlp
+    what: Links are downloaded at the best quality up to 1080p. Local files are copied, never moved.
+    cmd: >-
+      yt-dlp -f "bv*[height<=1080]+ba/b" --merge-output-format mov
+      -o "01_source/%(title)s.%(ext)s" "$URL"
+  - id: probe
+    name: Probe
+    tool: ffprobe
+    what: Reads what actually arrived — codec, raster, frame rate, audio — before anything is changed.
+    cmd: >-
+      ffprobe -v error -show_format -show_streams -of json
+      "01_source/$CLIP"
+  - id: conform
+    name: Conform
+    tool: ffmpeg
+    what: Transcodes to the show spec. Scales and pads to 1080, converts the rate, normalizes loudness.
+    cmd: >-
+      ffmpeg -i "01_source/$CLIP"
+      -vf "scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2,fps=30000/1001"
+      -c:v prores_ks -profile:v 3 -pix_fmt yuv422p10le
+      -af loudnorm=I=-24:TP=-2 -c:a pcm_s24le -ar 48000
+      "02_conformed/$NAME.mov"
+  - id: caption
+    name: Caption
+    tool: ffmpeg + .srt
+    what: Burns the captions in, so they play on any machine without a subtitle track to forget.
+    cmd: >-
+      ffmpeg -i "02_conformed/$NAME.mov"
+      -vf "subtitles=03_captions/$NAME.srt:force_style='FontSize=22,MarginV=60'"
+      -c:v prores_ks -profile:v 3 -c:a copy "02_conformed/${NAME}_cc.mov"
+  - id: qc
+    name: QC
+    tool: ffprobe + ebur128
+    what: Measures the output against every line of the spec. Pass, or hold with a reason.
+    cmd: >-
+      ffmpeg -nostats -i "02_conformed/${NAME}_cc.mov"
+      -af ebur128=peak=true -f null -
+
+# Segments of the show, in running order.
+segments:
+  - {id: "01", name: Walk-in}
+  - {id: "02", name: Welcome}
+  - {id: "03", name: Keynote}
+  - {id: "04", name: Customer story}
+  - {id: "05", name: Panel}
+  - {id: "06", name: Awards}
+  - {id: "07", name: Exit}
+
+# One entry per asset.
+#   kind:  video | audio | gfx
+#   done:  how many stages are finished (0–5)
+#   state: ready | running | hold | queued
+#   duration: "m:ss", or leave it out for an overlay with no length of its own
+#   checks: only once there is a conformed output. result is
+#           pass | manual | fail | na
+assets:
+  - id: A1
+    title: Walk-in loop
+    kind: video
+    segment: "01"
+    source: Vimeo link
+    file: walk-in_loop.mov
+    duration: "0:45"
+    done: 5
+    state: ready
+    in: "H.264 · 1920×1080 · 29.97 · AAC 48k"
+    out: "ProRes 422 HQ · 1920×1080 · 29.97 · PCM 48k/24"
+    checks:
+      - {k: Video, v: "ProRes 422 HQ", result: pass}
+      - {k: Raster, v: "1920 × 1080", result: pass}
+      - {k: Rate, v: "29.97", result: pass}
+      - {k: Audio, v: "PCM 48 kHz / 24-bit", result: pass}
+      - {k: Loudness, v: "−24.2 LKFS", result: pass}
+      - {k: True peak, v: "−3.1 dBTP", result: pass}
+      - {k: Captions, v: "None needed · music only", result: na}
+
+  - id: A2
+    title: CEO keynote roll-in
+    kind: video
+    segment: "03"
+    source: Drive link
+    file: keynote_rollin_cc.mov
+    duration: "2:10"
+    done: 4
+    state: running
+    note: QC waiting on one manual check.
+    in: "H.264 · 3840×2160 · 23.976 · AAC 48k"
+    out: "ProRes 422 HQ · 1920×1080 · 29.97 · PCM 48k/24 · captions"
+    checks:
+      - {k: Video, v: "ProRes 422 HQ", result: pass}
+      - {k: Raster, v: "1920 × 1080 (from 3840 × 2160)", result: pass}
+      - {k: Rate, v: "29.97 (from 23.976)", result: pass}
+      - {k: Audio, v: "PCM 48 kHz / 24-bit", result: pass}
+      - {k: Loudness, v: "−24.1 LKFS", result: pass}
+      - {k: True peak, v: "−2.3 dBTP", result: pass}
+      - {k: Captions, v: "Burned in · check they clear the lower-thirds", result: manual}
+
+  - id: A3
+    title: Customer story
+    kind: video
+    segment: "04"
+    source: YouTube link
+    file: customer-story.mp4
+    duration: "3:05"
+    done: 2
+    state: running
+    in: "H.264 · 1280×720 · 23.976 · AAC 44.1k"
+
+  - id: A4
+    title: Award stinger
+    kind: video
+    segment: "06"
+    source: Local .mov
+    file: award_stinger.mov
+    duration: "0:08"
+    done: 2
+    state: hold
+    note: 25 fps source. Asked the designer for a 29.97 render instead of converting a fast graphic.
+    in: "ProRes 422 · 1920×1080 · 25 · PCM 48k/24"
+
+  - id: A5
+    title: Exit music bed
+    kind: audio
+    segment: "07"
+    source: Local .mp3
+    file: exit_bed.mp3
+    duration: "4:30"
+    done: 0
+    state: queued
+    in: "MP3 · 44.1 kHz · stereo"
+
+  - id: A6
+    title: Speaker lower-thirds
+    kind: gfx
+    segment: "03"
+    source: Local .mov
+    file: l3_speakers_4444.mov
+    done: 5
+    state: ready
+    in: "ProRes 4444 · 1920×1080 · 29.97 · alpha"
+    out: "ProRes 4444 · 1920×1080 · 29.97 · alpha kept"
+    checks:
+      - {k: Video, v: "ProRes 4444 · alpha kept for keying", result: pass}
+      - {k: Raster, v: "1920 × 1080", result: pass}
+      - {k: Rate, v: "29.97", result: pass}
+      - {k: Audio, v: "None · graphics", result: na}
+      - {k: Captions, v: "Not applicable", result: na}
+
+# The rundown, in running order. asset is an id from the list above.
+cues:
+  - {id: PB 01, asset: A1, does: "Loop until the standby for PB 02"}
+  - {id: PB 02, asset: A2, does: "Play, hold the last frame"}
+  - {id: PB 03, asset: A6, does: "Key over IMAG during the keynote"}
+  - {id: PB 04, asset: A3, does: "Play, then cut to camera"}
+  - {id: PB 05, asset: A4, does: "Play on the name read"}
+  - {id: PB 06, asset: A5, does: "Fade out on the house-lights cue"}
+
+# What the playback operator receives.
+package:
+  folder: "~/Shows/[CLIENT]-Q4/"
+  tree:
+    - {name: 01_source/, what: Everything as it arrived. Never edited.}
+    - {name: 02_conformed/, what: One show-spec file per asset.}
+    - {name: 03_captions/, what: The .srt behind every burned-in caption.}
+    - {name: 04_package/, what: What goes on the playback machine.}
+  contents:
+    - Conformed media, named by cue
+    - Cue sheet (CSV and PDF)
+    - Checksums (MD5) for every file
+    - The spec report from QC

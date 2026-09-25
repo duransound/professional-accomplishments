@@ -30,7 +30,7 @@ hire:
     - title: Production & technical programs
       line: Running a show or a program end to end, from scope and budget to the call on the day.
     - title: Creative production & account management
-      line: The client side of the same work — shaping what gets made and keeping the relationship healthy.
+      line: Owning the brief, the budget, and the client relationship on work I used to deliver from the other side.
   note: San Francisco Bay Area. Open to full-time, contract, and temporary roles.
   button: Email me about a role
   subject: A role for Ian Duran
@@ -55,6 +55,6 @@ hire:
 # stale date is better than an invisible one.
 now:
   label: Now
-  text: Three demo projects are live — a readiness dashboard, a crew map, and a show-day runbook.
+  text: Four demo projects are live — a readiness dashboard, a crew map, a show-day runbook, and a playback prep desk.
   href: /#projects
-  updated: 2026-09-21
+  updated: 2026-09-25

@@ -1,0 +1,1051 @@
+---
+/**
+ * /projects/playback-prep/ — show media, from a link to the playback machine.
+ *
+ * The page leads with the desk itself: an app window you click through, the
+ * way the playback operator sees it on show week. Four screens, all fed by
+ * content/playback.yaml:
+ *   Ingest   — the queue, replayable, plus "add a link" (simulated, nothing
+ *              is downloaded) and a job log
+ *   Library  — asset cards, filterable; a card opens that asset in QC
+ *   QC       — preview frame, what came in / went out, every check
+ *   Rundown  — cues in order, timeline, readiness and the package
+ * Below the window: the pipeline with the real commands, and the notes.
+ *
+ * Everything renders on the server. With JavaScript off the four screens
+ * simply stack, and every asset's readout is still on the page.
+ */
+import Base from "../../layouts/Base.astro";
+import Masthead from "../../components/Masthead.astro";
+import Rail from "../../components/Rail.astro";
+import Footer from "../../components/Footer.astro";
+import EditMode from "../../components/EditMode.astro";
+import { site } from "../../data/site";
+import { ed } from "../../edit/attrs";
+import { playback as D, playbackStats as S, asset, segment, stageCells, stateLabel, secs, clock, ratio } from "../../data/playback";
+
+const EDIT = import.meta.env.DEV;
+const P = D.page;
+const E = (path: string) => ed("playback.yaml", path);
+const kindName = { video: "Video", audio: "Audio", gfx: "GFX" } as const;
+const resultName = { pass: "Pass", manual: "Check", fail: "Fail", na: "n/a" } as const;
+const toGo = S.cues - S.cuesReady;
+const timeline = D.cues.map((c) => ({ c, a: asset(c.asset) })).filter(({ a }) => a.duration);
+const overlays = D.cues.map((c) => ({ c, a: asset(c.asset) })).filter(({ a }) => !a.duration);
+const firstQc = D.assets.find((a) => a.checks.length && a.state !== "ready") ?? D.assets[0]!;
+const bySeg = [...D.assets].sort((x, y) => x.segment.localeCompare(y.segment));
+const screens = [
+  { id: "ingest", n: "01", name: "Ingest" },
+  { id: "library", n: "02", name: "Library" },
+  { id: "qc", n: "03", name: "Asset + QC" },
+  { id: "formats", n: "04", name: "Formats" },
+  { id: "rundown", n: "05", name: "Rundown" },
+];
+const fmt0 = D.formats[0]!;
+const framed = D.assets.filter((a) => a.kind !== "audio");
+const fmtGroups = [
+  { key: "screen", name: "In the room" },
+  { key: "social", name: "Social, after the show" },
+] as const;
+// Opening lines of the job log, from the data: where each asset stands now.
+const logSeed = D.assets
+  .filter((a) => a.state !== "queued")
+  .map((a) => ({ id: a.id, stage: a.state === "ready" ? "READY" : a.state === "hold" ? "HOLD" : (D.stages[a.done]?.name ?? "QC").toUpperCase(), msg: a.state === "hold" ? (a.note ?? "") : a.title }));
+---
+<Base title={`Playback prep — ${site.name}`} description={P.summary} type="article">
+  <Rail />
+  <Masthead />
+  <main>
+
+    <section class="section">
+      <div class="wrap section-grid">
+        <div class="label">Playback prep</div>
+        <div class="section-body">
+          <h1 {...E("page.title")}>{P.title}</h1>
+          <p class="dek" {...E("page.dek")}>{P.dek}</p>
+          <dl class="figs">
+            <div><dt>Assets</dt><dd>{S.assets}</dd></div>
+            <div><dt>Ready</dt><dd>{S.ready}</dd></div>
+            <div class="alert"><dt>On hold</dt><dd>{S.hold}</dd></div>
+            <div><dt>Run time</dt><dd>{clock(S.runSeconds)}</dd></div>
+          </dl>
+          <p class="demo">
+            <i>Demo</i>
+            <span {...E("page.note")}>{P.note}</span>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="desk-section">
+      <div class="wrap section-grid">
+        <div class="label">The desk</div>
+        <div class="section-body">
+          <p class="intro" {...E("page.deskIntro")}>{P.deskIntro}</p>
+
+          <div class="desk" id="desk">
+            <div class="win-bar">
+              <span class="lamps" aria-hidden="true"><i></i><i></i><i></i></span>
+              <span class="win-title">Playback Prep</span>
+              <span class="win-url">127.0.0.1:8642</span>
+            </div>
+
+            <div class="win-body">
+              <nav class="win-rail" aria-label="Desk screens">
+                <div class="tabs" role="tablist" id="desk-tabs" hidden>
+                  {screens.map((s, i) => (
+                    <button type="button" role="tab" class="nav" id={`dt-${s.id}`} aria-controls={`screen-${s.id}`} aria-selected={String(i === 0)}>
+                      <span class="n">{s.n}</span>{s.name}
+                    </button>
+                  ))}
+                </div>
+                <div class="engine">
+                  <span class="eng-h">Queue</span>
+                  <span><i class="dot run"></i><b id="running-count">{S.running}</b> running</span>
+                  <span><i class="dot ok"></i>Local only</span>
+                </div>
+              </nav>
+
+              <div class="win-main">
+                <div class="tblock">
+                  <div><span>Show</span><b {...E("show.name")}>{D.show.name}</b></div>
+                  <div><span>Venue</span><b {...E("show.venue")}>{D.show.venue}</b></div>
+                  <div class="wide"><span>Conform target</span><b class="m" id="tb-spec" title={D.specs[0]!.v}>{D.specs[0]!.v}</b></div>
+                </div>
+
+                <!-- ============ 01 INGEST ============ -->
+                <section class="screen" id="screen-ingest" role="tabpanel" aria-labelledby="dt-ingest">
+                  <h2 class="s-h"><span>01</span> Ingest queue</h2>
+                  <form class="intake" id="intake">
+                    <label class="grow"><span>Source link or file</span><input id="in-url" type="text" placeholder="https://… or a file name" autocomplete="off" /></label>
+                    <label><span>Segment</span>
+                      <select id="in-seg">
+                        {D.segments.map((s) => <option value={s.id}>{s.id} · {s.name}</option>)}
+                      </select>
+                    </label>
+                    <label><span>Conform to</span>
+                      <select id="in-spec">
+                        {D.specs.map((sp) => <option value={sp.id} data-v={sp.v}>{sp.name}</option>)}
+                      </select>
+                    </label>
+                    <button type="submit" class="plate-btn on">Add to queue</button>
+                  </form>
+                  <p class="target"><span>Target</span> <b id="target-v">{D.specs[0]!.v}</b></p>
+                  <p class="fine">Demo: adding a link runs it through the stages on this page. Nothing is downloaded.</p>
+
+                  <div class="tw" tabindex="0" role="region" aria-label="Queue">
+                    <table class="queue" id="queue" data-stages={JSON.stringify(D.stages.map((s) => s.name))}>
+                      <thead>
+                        <tr>
+                          <th>ID</th><th>Asset</th><th>Seg</th>
+                          <th><span class="sr">Stages: </span>{D.stages.map((s) => <abbr title={s.name}>{s.name[0]}</abbr>)}</th>
+                          <th>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {D.assets.map((a, i) => (
+                          <tr data-id={a.id} data-done={a.done} data-state={a.state} data-label={stateLabel(a)}>
+                            <td class="mono strong">{a.id}</td>
+                            <td>
+                              <b class="a-title" {...E(`assets.${i}.title`)}>{a.title}</b>
+                              {a.state === "hold" && a.note
+                                ? <span class="a-sub hold" {...E(`assets.${i}.note`)}>{a.note}</span>
+                                : <span class="a-sub mono">{a.source} · {a.file}</span>}
+                            </td>
+                            <td class="mono">{a.segment}</td>
+                            <td>
+                              <span class="cells" aria-label={`${a.done} of ${S.stages} stages done`}>
+                                {stageCells(a).map((c) => <span class={`sc ${c}`} data-final={c}></span>)}
+                              </span>
+                            </td>
+                            <td><span class={`st st-${a.state}`}>{stateLabel(a)}</span></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <template id="row-tpl">
+                    <tr data-done="5" data-state="ready" data-label="Ready" class="added">
+                      <td class="mono strong"></td>
+                      <td><b class="a-title"></b><span class="a-sub mono"></span></td>
+                      <td class="mono"></td>
+                      <td><span class="cells">{D.stages.map(() => <span class="sc wait" data-final="done"></span>)}</span></td>
+                      <td><span class="st st-queued">Queued</span></td>
+                    </tr>
+                  </template>
+
+                  <div class="q-bar">
+                    <button type="button" class="plate-btn" id="q-replay" hidden>Replay the queue</button>
+                    <span class="legend">
+                      <span><i class="sc done"></i>Done</span>
+                      <span><i class="sc active"></i>Working</span>
+                      <span><i class="sc stopped"></i>Held</span>
+                      <span><i class="sc wait"></i>Waiting</span>
+                    </span>
+                  </div>
+
+                  <div class="log" aria-label="Job log">
+                    <span class="log-h">Job log</span>
+                    <ol id="log" aria-live="polite">
+                      {logSeed.map((l) => (
+                        <li><span class="t">--:--:--</span><b class={l.stage === "HOLD" ? "hold" : ""}>{l.stage}</b><span>{l.id} · {l.msg}</span></li>
+                      ))}
+                    </ol>
+                  </div>
+                </section>
+
+                <!-- ============ 02 LIBRARY ============ -->
+                <section class="screen" id="screen-library" role="tabpanel" aria-labelledby="dt-library">
+                  <h2 class="s-h"><span>02</span> Media library</h2>
+                  <div class="filter" id="lib-filter" hidden role="group" aria-label="Filter the library">
+                    <button type="button" class="fchip" data-f="" aria-pressed="true">All {S.assets}</button>
+                    <button type="button" class="fchip" data-f="ready" aria-pressed="false">Ready {S.ready}</button>
+                    <button type="button" class="fchip" data-f="open" aria-pressed="false">Not ready {S.assets - S.ready}</button>
+                    {(["video", "audio", "gfx"] as const).map((k) => (
+                      <button type="button" class={`fchip k-${k}`} data-f={k} aria-pressed="false">{kindName[k]} {D.assets.filter((a) => a.kind === k).length}</button>
+                    ))}
+                  </div>
+                  <div class="lib" id="lib">
+                    {bySeg.map((a) => (
+                      <button type="button" class="card" data-kind={a.kind} data-open={a.state === "ready" ? "0" : "1"} data-asset={a.id} aria-label={`${a.title}: open in QC`}>
+                        <span class={`thumb k-${a.kind}`}>
+                          <span class={`kind k-${a.kind}`}>{kindName[a.kind]}</span>
+                          {a.duration && <span class="len">{a.duration}</span>}
+                        </span>
+                        <span class="c-body">
+                          <span class="c-seg">Seg {a.segment} · {segment(a.segment).name}</span>
+                          <span class="c-title">{a.title}</span>
+                          <span class="c-spec">{a.out ?? `In: ${a.in}`}</span>
+                          <span class="c-foot"><span class={`st st-${a.state}`}>{stateLabel(a)}</span><span class="c-open">Open →</span></span>
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                  <p class="fine">{D.package.folder} · {D.package.tree.map((t) => t.name).join("  ")}</p>
+                </section>
+
+                <!-- ============ 03 QC ============ -->
+                <section class="screen" id="screen-qc" role="tabpanel" aria-labelledby="dt-qc">
+                  <h2 class="s-h"><span>03</span> Asset + QC</h2>
+                  <div class="pick" id="qc-pick" hidden role="group" aria-label="Pick an asset">
+                    {D.assets.map((a) => (
+                      <button type="button" class="pchip" data-asset={a.id} aria-pressed={String(a.id === firstQc.id)}>{a.id}</button>
+                    ))}
+                  </div>
+                  {D.assets.map((a, i) => (
+                    <div class="qc" id={`qc-${a.id}`} data-first={a.id === firstQc.id ? "1" : "0"}>
+                      <div class="qc-head">
+                        <span class="mono strong">{a.id}</span>
+                        <h3 {...E(`assets.${i}.title`)}>{a.title}</h3>
+                        <span class={`st st-${a.state}`}>{stateLabel(a)}</span>
+                      </div>
+                      <div class="qc-grid">
+                        <div class={`frame k-${a.kind}`} aria-hidden="true">
+                          {a.kind === "audio" ? (
+                            <span class="wave">{Array.from({ length: 36 }, (_, k) => <i style={`height:${18 + ((k * 37) % 64)}%`}></i>)}</span>
+                          ) : (
+                            <>
+                              <span class="safe action"><em>Action safe</em></span>
+                              <span class="safe title"><em>Title safe</em></span>
+                              {a.kind === "gfx" && <span class="l3"><i></i><i></i></span>}
+                              {a.checks.some((c) => c.k === "Captions" && c.result !== "na") && <span class="cap">[CAPTION LINE ONE]<br />[CAPTION LINE TWO]</span>}
+                              <span class="frame-k">{a.out ? "Conformed" : "Source"} · {a.file}</span>
+                            </>
+                          )}
+                        </div>
+                        <div class="io">
+                          <div><span class="io-k">In · {a.source}</span><span class="io-v">{a.in}</span></div>
+                          <div class={a.out ? "out" : "out empty"}><span class="io-k">Out · show spec</span><span class="io-v">{a.out ?? "Not conformed yet"}</span></div>
+                        </div>
+                      </div>
+                      {a.checks.length > 0 ? (
+                        <table class="checks">
+                          <thead><tr><th>Check</th><th>Measured</th><th>Result</th></tr></thead>
+                          <tbody>
+                            {a.checks.map((c) => (
+                              <tr><td class="ck">{c.k}</td><td class="mono">{c.v}</td><td><span class={`res r-${c.result}`}>{resultName[c.result]}</span></td></tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      ) : (
+                        <p class="qc-none">
+                          {a.state === "hold"
+                            ? "Stopped before conform. Nothing is checked until there is a show-spec file to check."
+                            : a.state === "queued"
+                              ? "Waiting in the queue. Checks run once it has been conformed."
+                              : `In progress: ${stateLabel(a).toLowerCase()}. Checks run once it has been conformed.`}
+                        </p>
+                      )}
+                      {a.note && <p class={`qc-note${a.state === "hold" ? " hold" : ""}`}><i>Note</i> <span {...E(`assets.${i}.note`)}>{a.note}</span></p>}
+                      {a.state === "running" && a.checks.some((c) => c.result === "manual") && (
+                        <p class="actions"><button type="button" class="plate-btn on" data-approve={a.id}>Approve for show</button></p>
+                      )}
+                    </div>
+                  ))}
+                </section>
+
+                <!-- ============ 04 FORMATS ============ -->
+                <section class="screen" id="screen-formats" role="tabpanel" aria-labelledby="dt-formats">
+                  <h2 class="s-h"><span>04</span> Output formats</h2>
+                  <p class="s-intro" {...E("page.formatsIntro")}>{P.formatsIntro}</p>
+                  <div class="fm">
+                    <div class="fm-menu" role="group" aria-label="Output formats">
+                      {fmtGroups.map((g) => (
+                        <div class="fm-grp">
+                          <span class="grp-h">{g.name}</span>
+                          {D.formats.filter((f) => f.group === g.key).map((f) => (
+                            <button type="button" class="fmt" data-fmt={f.id} data-w={f.w} data-h={f.h} data-name={f.name} data-spec={f.spec} data-use={f.use} data-ratio={ratio(f.w, f.h)} aria-pressed={String(f.id === fmt0.id)}>
+                              <span class="fmt-ico" aria-hidden="true"><i style={`width:${Math.max(3, Math.round((24 * f.w) / Math.max(f.w, f.h)))}px;height:${Math.max(3, Math.round((24 * f.h) / Math.max(f.w, f.h)))}px`}></i></span>
+                              <span class="fmt-name">{f.name}</span>
+                              <span class="fmt-dim">{ratio(f.w, f.h)} · {f.w}×{f.h}</span>
+                            </button>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                    <div class="fm-view">
+                      <div class="fm-ctl" id="fm-ctl" hidden>
+                        <label><span>Asset</span>
+                          <select id="fm-asset">
+                            {framed.map((a) => <option value={a.id} data-kind={a.kind}>{a.id} · {a.title}</option>)}
+                          </select>
+                        </label>
+                        <div class="seg-btns" role="group" aria-label="Framing">
+                          <button type="button" class="pchip" data-mode="fill" aria-pressed="true">Fill</button>
+                          <button type="button" class="pchip" data-mode="fit" aria-pressed="false">Fit</button>
+                        </div>
+                      </div>
+                      <div class="fm-stage" id="fm-stage">
+                        <div class="fm-frame" id="fm-frame" style={`aspect-ratio:${fmt0.w} / ${fmt0.h}`}>
+                          <div class="fm-src" id="fm-src">
+                            <span class="subj" aria-hidden="true"><i></i></span>
+                            <span class="fm-l3" id="fm-l3" aria-hidden="true" hidden><i></i><i></i></span>
+                            <span class="fm-tag">16:9 master</span>
+                          </div>
+                          <span class="fm-safe" aria-hidden="true"></span>
+                        </div>
+                      </div>
+                      <dl class="fm-read">
+                        <div><dt>Format</dt><dd id="fr-name">{fmt0.name}</dd></div>
+                        <div><dt>Size</dt><dd id="fr-size">{fmt0.w}×{fmt0.h} · {ratio(fmt0.w, fmt0.h)}</dd></div>
+                        <div><dt>Spec</dt><dd id="fr-spec">{fmt0.spec}</dd></div>
+                        <div class="w"><dt>Use</dt><dd id="fr-use">{fmt0.use}</dd></div>
+                        <div class="w"><dt>Framing</dt><dd id="fr-keep">Same shape as the master. Nothing is cropped.</dd></div>
+                      </dl>
+                      <p class="actions" id="fm-act" hidden><button type="button" class="plate-btn on" id="fm-queue">Queue this cut</button></p>
+                    </div>
+                  </div>
+                </section>
+
+                <!-- ============ 05 RUNDOWN ============ -->
+                <section class="screen" id="screen-rundown" role="tabpanel" aria-labelledby="dt-rundown">
+                  <h2 class="s-h"><span>05</span> Show rundown</h2>
+                  <div class="tw" tabindex="0" role="region" aria-label="Rundown">
+                    <table class="rundown">
+                      <thead><tr><th>Cue</th><th>Asset</th><th>Type</th><th>Length</th><th>On the cue</th><th>Status</th></tr></thead>
+                      <tbody>
+                        {D.cues.map((c, i) => {
+                          const a = asset(c.asset);
+                          return (
+                            <tr data-asset={a.id}>
+                              <td class="mono strong">{c.id}</td>
+                              <td>{a.title}</td>
+                              <td><span class={`kind k-${a.kind}`}>{kindName[a.kind]}</span></td>
+                              <td class="mono">{a.duration ?? "—"}</td>
+                              <td {...E(`cues.${i}.does`)}>{c.does}</td>
+                              <td><span class={`st st-${a.state}`}>{stateLabel(a)}</span></td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div class="tl-wrap">
+                    <div class="tl-h">
+                      <span>Timeline · {clock(S.runSeconds)}</span>
+                      {overlays.length > 0 && <span>{overlays.map(({ c }) => c.id).join(", ")} {overlays.length === 1 ? "keys" : "key"} over the program</span>}
+                    </div>
+                    <div class="tl" role="img" aria-label={`Playback timeline: ${timeline.map(({ c, a }) => `${c.id} ${a.duration}`).join(", ")}`}>
+                      {timeline.map(({ c, a }) => (
+                        <span class={`seg k-${a.kind}${a.state === "hold" ? " is-hold" : ""}`} style={`flex-grow:${secs(a.duration)}`} title={`${c.id} · ${a.title} · ${a.duration}`}><b>{c.id}</b></span>
+                      ))}
+                    </div>
+                  </div>
+                  <div class="pack">
+                    <div class="ready-box">
+                      <span class="rb-n"><b id="cues-ready">{S.cuesReady}</b><i>/ {S.cues}</i></span>
+                      <span class="rb-k">cues ready</span>
+                      <span class="meter" aria-hidden="true">
+                        {D.cues.map((c) => <i class={`m-${asset(c.asset).state}`} data-asset={c.asset}></i>)}
+                      </span>
+                      <span class="rb-note" id="rb-note" data-total={S.cues}>
+                        {toGo === 0 ? "Every cue is ready. The package can be built." : `The package builds when every cue is ready. ${toGo} to go.`}
+                      </span>
+                    </div>
+                    <div class="tree">
+                      <span class="tree-h mono">{D.package.folder}</span>
+                      <ul>
+                        {D.package.tree.map((t, i) => <li><span class="mono">{t.name}</span> <span {...E(`package.tree.${i}.what`)}>{t.what}</span></li>)}
+                      </ul>
+                      <span class="tree-h">The package holds</span>
+                      <ul class="contents">
+                        {D.package.contents.map((c, i) => <li {...E(`package.contents.${i}`)}>{c}</li>)}
+                      </ul>
+                    </div>
+                  </div>
+                </section>
+              </div>
+            </div>
+
+            <div class="win-status">
+              <span>{D.show.machine}</span>
+              <span>Local only · nothing uploaded</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap section-grid">
+        <div class="label">Under the hood</div>
+        <div class="section-body">
+          <p class="intro" {...E("page.pipelineIntro")}>{P.pipelineIntro}</p>
+          <div class="spec" role="group" aria-label="Show spec">
+            <span class="spec-h">Show spec</span>
+            <dl>
+              {D.spec.map((s, i) => <div><dt {...E(`spec.${i}.k`)}>{s.k}</dt><dd {...E(`spec.${i}.v`)}>{s.v}</dd></div>)}
+            </dl>
+          </div>
+          <ol class="stages">
+            {D.stages.map((st, i) => (
+              <li>
+                <div class="st-head">
+                  <span class="st-n">{String(i + 1).padStart(2, "0")}</span>
+                  <h2 {...E(`stages.${i}.name`)}>{st.name}</h2>
+                </div>
+                <p {...E(`stages.${i}.what`)}>{st.what}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="wrap section-grid">
+        <div class="label">Notes</div>
+        <div class="section-body">
+          {P.notes.length > 0 && (
+            <ul class="notes">
+              {P.notes.map((n, i) => <li {...E(`page.notes.${i}`)}>{n}</li>)}
+            </ul>
+          )}
+          <p class="colophon label">Demo · composite show, sample files, real commands</p>
+          <p><a class="plate-btn" href="/#projects">← All projects</a></p>
+        </div>
+      </div>
+    </section>
+
+    <Footer />
+  </main>
+  {EDIT && <EditMode />}
+</Base>
+
+<script>
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const $ = <T extends HTMLElement = HTMLElement>(s: string, r: ParentNode = document) => r.querySelector<T>(s);
+  const $$ = <T extends HTMLElement = HTMLElement>(s: string, r: ParentNode = document) => Array.from(r.querySelectorAll<T>(s));
+
+  const desk = $("#desk");
+  if (desk) {
+    desk.classList.add("js");
+
+    // ---- Screens -----------------------------------------------------------
+    const tabs = $("#desk-tabs")!;
+    tabs.hidden = false;
+    const tabBtns = $$<HTMLButtonElement>("[role=tab]", tabs);
+    const screens = $$(".screen", desk);
+    const show = (id: string, focus = false) => {
+      tabBtns.forEach((b) => { const on = b.id === `dt-${id}`; b.setAttribute("aria-selected", String(on)); b.tabIndex = on ? 0 : -1; if (on && focus) b.focus(); });
+      screens.forEach((s) => (s.hidden = s.id !== `screen-${id}`));
+      document.dispatchEvent(new CustomEvent("desk:show", { detail: id }));
+    };
+    tabBtns.forEach((b, i) => {
+      b.addEventListener("click", () => show(b.id.slice(3)));
+      b.addEventListener("keydown", (e) => {
+        const d = e.key === "ArrowDown" || e.key === "ArrowRight" ? 1 : e.key === "ArrowUp" || e.key === "ArrowLeft" ? -1 : 0;
+        if (d) { e.preventDefault(); show(tabBtns[(i + d + tabBtns.length) % tabBtns.length]!.id.slice(3), true); }
+      });
+    });
+    show("ingest");
+
+    // ---- Job log -------------------------------------------------------------
+    const log = $("#log")!;
+    const t0 = new Date(); t0.setHours(14, 2, 0, 0);
+    let tick = 0;
+    const stamp = () => { const d = new Date(t0.getTime() + tick++ * 7000); return d.toTimeString().slice(0, 8); };
+    $$(".t", log).forEach((t) => (t.textContent = stamp()));
+    const say = (stage: string, msg: string, hold = false) => {
+      const li = document.createElement("li");
+      li.innerHTML = `<span class="t">${stamp()}</span><b class="${hold ? "hold" : ""}"></b><span></span>`;
+      li.querySelector("b")!.textContent = stage.toUpperCase();
+      li.querySelector("span:last-child")!.textContent = msg;
+      log.appendChild(li);
+      while (log.children.length > 7) log.firstElementChild!.remove();
+    };
+
+    // ---- Queue ---------------------------------------------------------------
+    const queue = $<HTMLTableElement>("#queue")!;
+    const names: string[] = JSON.parse(queue.dataset.stages ?? "[]");
+    const setChip = (tr: HTMLElement, state: string, text: string) => {
+      const chip = $(".st", tr); if (!chip) return;
+      chip.className = `st st-${state}`; chip.textContent = text;
+      recount();
+    };
+    const paint = (tr: HTMLElement, p: number) => {
+      // p = stages finished so far; the one at p is being worked on
+      $$(".sc", tr).forEach((c, k) => (c.className = `sc ${k < p ? "done" : k === p ? "active" : "wait"}`));
+    };
+    const finish = (tr: HTMLElement) => {
+      $$(".sc", tr).forEach((c) => (c.className = `sc ${c.dataset.final}`));
+      setChip(tr, tr.dataset.state ?? "queued", tr.dataset.label ?? "");
+    };
+    const running = $("#running-count");
+    const recount = () => { if (running) running.textContent = String($$(".st.st-running", queue).length); };
+
+    /** Run one row from the first stage to where it ends. */
+    const run = (tr: HTMLElement, delay = 0, speak = true): Promise<void> => new Promise((done) => {
+      const end = Number(tr.dataset.done ?? 0);
+      const id = tr.dataset.id ?? "";
+      if (reduce) { finish(tr); return done(); }
+      $$(".sc", tr).forEach((c) => (c.className = "sc wait"));
+      setChip(tr, "queued", "Queued");
+      let p = 0;
+      window.setTimeout(() => {
+        const step = () => {
+          if (p >= end) {
+            finish(tr);
+            const st = tr.dataset.state;
+            if (speak) say(st === "hold" ? "hold" : st === "ready" ? "ready" : (names[end] ?? "qc"), `${id} ${st === "hold" ? "stopped, needs a decision" : st === "ready" ? "passed every check" : "waiting on " + (names[end] ?? "QC").toLowerCase()}`, st === "hold");
+            return done();
+          }
+          paint(tr, p); setChip(tr, "running", names[p] ?? "");
+          if (speak) say(names[p] ?? "", `${id} ${$(".a-title", tr)?.textContent ?? ""}`);
+          p++;
+          window.setTimeout(step, 620);
+        };
+        step();
+      }, delay);
+    });
+
+    const replay = $<HTMLButtonElement>("#q-replay")!;
+    replay.hidden = false;
+    replay.addEventListener("click", async () => {
+      replay.disabled = true;
+      const rows = $$("tbody tr:not(.added)", queue).filter((r) => Number(r.dataset.done) > 0);
+      $$("tbody tr:not(.added)", queue).forEach((r) => { if (Number(r.dataset.done) > 0) { $$(".sc", r).forEach((c) => (c.className = "sc wait")); setChip(r, "queued", "Queued"); } });
+      await Promise.all(rows.map((r, i) => run(r, i * 380)));
+      replay.disabled = false;
+    });
+
+    // Add a link: a new row that runs every stage and lands ready.
+    const form = $<HTMLFormElement>("#intake")!;
+    const tpl = $<HTMLTemplateElement>("#row-tpl")!;
+    let nextId = $$("tbody tr", queue).length + 1;
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const input = $<HTMLInputElement>("#in-url")!;
+      const seg = $<HTMLSelectElement>("#in-seg")!.value;
+      const raw = input.value.trim();
+      let title = "New clip", src = "Local file";
+      if (/^https?:\/\//i.test(raw)) {
+        try { const h = new URL(raw).hostname.replace(/^www\./, ""); src = `${h.split(".")[0]} link`; title = `Clip from ${h}`; } catch { /* keep defaults */ }
+      } else if (raw) { title = raw.replace(/\.[a-z0-9]{2,4}$/i, "").replace(/[-_]+/g, " "); src = raw; }
+      const tr = tpl.content.firstElementChild!.cloneNode(true) as HTMLElement;
+      const id = `A${nextId++}`;
+      tr.dataset.id = id;
+      $("td", tr)!.textContent = id;
+      $(".a-title", tr)!.textContent = title.slice(0, 48);
+      const spec = $<HTMLSelectElement>("#in-spec")!;
+      const specName = spec.selectedOptions[0]?.textContent ?? "";
+      $(".a-sub", tr)!.textContent = `${src} → ${specName}`;
+      $$("td.mono", tr)[1]!.textContent = seg;
+      $("tbody", queue)!.appendChild(tr);
+      input.value = "";
+      say("fetch", `${id} queued from ${src} → ${specName}`);
+      run(tr, 250);
+    });
+
+    // ---- Library -------------------------------------------------------------
+    const lf = $("#lib-filter")!;
+    lf.hidden = false;
+    const chips = $$<HTMLButtonElement>(".fchip", lf);
+    const cards = $$<HTMLButtonElement>(".card", desk);
+    chips.forEach((b) => b.addEventListener("click", () => {
+      const f = b.dataset.f ?? "";
+      cards.forEach((c) => { c.hidden = !(!f || (f === "ready" && c.dataset.open === "0") || (f === "open" && c.dataset.open === "1") || c.dataset.kind === f); });
+      chips.forEach((c) => c.setAttribute("aria-pressed", String(c === b)));
+    }));
+
+    // ---- QC ------------------------------------------------------------------
+    const pick = $("#qc-pick")!;
+    pick.hidden = false;
+    const pchips = $$<HTMLButtonElement>(".pchip", pick);
+    const panels = $$(".qc", desk);
+    const openQc = (id: string) => {
+      pchips.forEach((c) => c.setAttribute("aria-pressed", String(c.dataset.asset === id)));
+      panels.forEach((p) => (p.hidden = p.id !== `qc-${id}`));
+    };
+    pchips.forEach((c) => c.addEventListener("click", () => openQc(c.dataset.asset!)));
+    cards.forEach((c) => c.addEventListener("click", () => { openQc(c.dataset.asset!); show("qc"); $("#dt-qc")?.scrollIntoView({ block: "nearest" }); }));
+    openQc((panels.find((p) => p.dataset.first === "1") ?? panels[0]!).id.slice(3));
+
+    // Approve: the manual check passes, and the asset turns ready everywhere.
+    $$<HTMLButtonElement>("[data-approve]", desk).forEach((b) => b.addEventListener("click", () => {
+      const id = b.dataset.approve!;
+      const panel = $(`#qc-${id}`)!;
+      $$(".r-manual", panel).forEach((r) => { r.className = "res r-pass"; r.textContent = "Pass"; });
+      $$(`[data-asset="${id}"] .st, #qc-${id} .st`, desk).forEach((s) => { s.className = "st st-ready"; s.textContent = "Ready"; });
+      $$(`.meter [data-asset="${id}"]`, desk).forEach((m) => (m.className = "m-ready"));
+      const row = $(`#queue tr[data-id="${id}"]`);
+      if (row) { row.dataset.state = "ready"; row.dataset.label = "Ready"; row.dataset.done = String(names.length); $$(".sc", row).forEach((c) => (c.dataset.final = "done")); finish(row); }
+      $$(`#lib .card[data-asset="${id}"]`).forEach((c) => (c.dataset.open = "0"));
+      const ready = $$(".meter i", desk).filter((m) => m.className === "m-ready").length;
+      const total = Number($("#rb-note")?.dataset.total ?? 0);
+      const rc = $("#cues-ready"); if (rc) rc.textContent = String(ready);
+      const note = $("#rb-note"); if (note) note.textContent = ready === total ? "Every cue is ready. The package can be built." : `The package builds when every cue is ready. ${total - ready} to go.`;
+      recount();
+      say("ready", `${id} approved for show`);
+      b.closest("p")?.remove();
+    }));
+
+    // ---- Conform target --------------------------------------------------------
+    const specSel = $<HTMLSelectElement>("#in-spec")!;
+    specSel.addEventListener("change", () => {
+      const v = specSel.selectedOptions[0]?.dataset.v ?? "";
+      const tb = $("#tb-spec"); if (tb) { tb.textContent = v; tb.title = v; }
+      const tv = $("#target-v"); if (tv) tv.textContent = v;
+      say("spec", `Conform target → ${specSel.selectedOptions[0]?.textContent ?? ""}`);
+    });
+
+    // ---- Formats -----------------------------------------------------------------
+    const fmBtns = $$<HTMLButtonElement>(".fmt", desk);
+    const stage = $("#fm-stage")!, frame = $("#fm-frame")!, src = $("#fm-src")!;
+    const assetSel = $<HTMLSelectElement>("#fm-asset")!;
+    const modeBtns = $$<HTMLButtonElement>("[data-mode]", desk);
+    $("#fm-ctl")!.hidden = false;
+    $("#fm-act")!.hidden = false;
+    let cur = fmBtns.find((b) => b.getAttribute("aria-pressed") === "true") ?? fmBtns[0]!;
+    let mode: "fill" | "fit" = "fill";
+    const SA = 16 / 9;
+    const pct = (n: number) => `${Math.round(n * 100)}%`;
+    const layout = () => {
+      const w = Number(cur.dataset.w), h = Number(cur.dataset.h), fa = w / h;
+      const W = stage.clientWidth - 24, H = stage.clientHeight - 24;
+      if (W <= 0 || H <= 0) return;
+      const sc = Math.min(W / w, H / h);
+      frame.style.aspectRatio = "auto";
+      frame.style.width = `${Math.round(w * sc)}px`;
+      frame.style.height = `${Math.round(h * sc)}px`;
+      let sw = 1, sh = 1;
+      if (mode === "fill") { if (fa < SA) sw = SA / fa; else if (fa > SA) sh = fa / SA; }
+      else { if (fa < SA) sh = fa / SA; else if (fa > SA) sw = SA / fa; }
+      Object.assign(src.style, { width: pct(sw), height: pct(sh), left: pct((1 - sw) / 2), top: pct((1 - sh) / 2) });
+      let keep = "Same shape as the master. Nothing is cropped.";
+      if (Math.abs(fa - SA) > 0.01) {
+        keep = mode === "fill"
+          ? fa < SA
+            ? `Center crop keeps ${pct(fa / SA)} of the master's width. Reframe if the subject isn't centered.`
+            : `Crop keeps ${pct(SA / fa)} of the master's height. For a wall this wide, build the sides out instead.`
+          : fa < SA
+            ? `Whole master fits, with bars filling ${pct(1 - fa / SA)} of the height.`
+            : `Whole master fits, with bars filling ${pct(1 - SA / fa)} of the width.`;
+      }
+      $("#fr-name")!.textContent = cur.dataset.name ?? "";
+      $("#fr-size")!.textContent = `${w}×${h} · ${cur.dataset.ratio ?? ""}`;
+      $("#fr-spec")!.textContent = cur.dataset.spec ?? "";
+      $("#fr-use")!.textContent = cur.dataset.use ?? "";
+      $("#fr-keep")!.textContent = keep;
+    };
+    fmBtns.forEach((b) => b.addEventListener("click", () => {
+      cur = b;
+      fmBtns.forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+      layout();
+    }));
+    modeBtns.forEach((b) => b.addEventListener("click", () => {
+      mode = b.dataset.mode === "fit" ? "fit" : "fill";
+      modeBtns.forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+      layout();
+    }));
+    const paintAsset = () => {
+      const o = assetSel.selectedOptions[0];
+      const l3 = $("#fm-l3"); if (l3) l3.hidden = o?.dataset.kind !== "gfx";
+      const tag = $(".fm-tag", src); if (tag) tag.textContent = `${assetSel.value} · 16:9 master`;
+    };
+    assetSel.addEventListener("change", paintAsset);
+    paintAsset();
+    $("#fm-queue")!.addEventListener("click", () => {
+      say("export", `${assetSel.value} → ${cur.dataset.name} ${cur.dataset.ratio} (${mode})`);
+      if (!$(".fmt-q", cur)) { const q = document.createElement("span"); q.className = "fmt-q"; q.textContent = "Queued"; cur.appendChild(q); }
+    });
+    document.addEventListener("desk:show", (e) => { if ((e as CustomEvent).detail === "formats") requestAnimationFrame(layout); });
+    window.addEventListener("resize", layout);
+  }
+</script>
+
+<style>
+  /* Amber is SPOT 3 · video. Fill and line only, never text (2.17:1 on stock),
+     which is why it lives in crew.yaml and not brand.css. */
+  main { --video: #D89A2C; }
+
+  h1 { font-size: clamp(1.85rem, 4.6vw, 2.9rem); line-height: 1.04; letter-spacing: -0.03em; max-width: 22ch; }
+  h2 { font-size: 1.0625rem; letter-spacing: -0.01em; margin: 0; }
+  .dek { font-size: 1.1875rem; color: var(--ink-mid); max-width: 56ch; margin: 0; }
+  .intro { color: var(--ink-mid); max-width: 60ch; margin: 0; }
+  .demo { display: flex; gap: 0.85rem; align-items: flex-start; max-width: 72ch; margin: 0; }
+  .demo i, .qc-note i {
+    font-style: normal; flex: none; background: var(--tally); color: var(--paper);
+    font-family: var(--f-mono); font-weight: 500; font-size: 0.625rem;
+    letter-spacing: 0.14em; text-transform: uppercase; padding: 0.3rem 0.55rem 0.26rem;
+  }
+  .demo span { color: var(--ink-mid); font-size: 0.9375rem; }
+  .mono { font-family: var(--f-mono); font-weight: 500; font-size: 0.8125rem; }
+  .strong { color: var(--tally); }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .fine { margin: 0; font-family: var(--f-mono); font-size: 0.625rem; letter-spacing: 0.04em; color: var(--ink-mid); }
+
+  .figs { display: flex; flex-wrap: wrap; margin: 0; border: var(--lw-key) solid var(--ink); background: var(--surface); max-width: 40rem; }
+  .figs > div { flex: 1 1 6rem; padding: 0.7rem 0.85rem; border-right: var(--lw-hair) solid var(--rule); }
+  .figs > div:last-child { border-right: 0; }
+  .figs dt { font-family: var(--f-mono); font-weight: 500; font-size: 0.5625rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-mid); margin-bottom: 0.25rem; }
+  .figs dd { margin: 0; font-family: var(--f-mono); font-weight: 500; font-size: 1.75rem; line-height: 1; font-variant-numeric: tabular-nums; }
+  .figs .alert dd { color: var(--tally); }
+
+  /* ---- chips ---- */
+  .st {
+    display: inline-block; font-family: var(--f-mono); font-weight: 500; font-size: 0.5625rem; letter-spacing: 0.1em;
+    text-transform: uppercase; padding: 0.22rem 0.45rem 0.18rem; white-space: nowrap; border: var(--lw-med) solid transparent;
+  }
+  .st-ready { background: var(--held); color: var(--paper); }
+  .st-running { background: var(--focus); color: var(--paper); }
+  .st-hold { background: var(--tally); color: var(--paper); }
+  .st-queued { color: var(--ink-mid); border: var(--lw-med) dashed var(--ink-mid); }
+  .kind {
+    display: inline-block; font-family: var(--f-mono); font-weight: 500; font-size: 0.5625rem; letter-spacing: 0.12em;
+    text-transform: uppercase; padding: 0.18rem 0.42rem 0.14rem; border: var(--lw-thin) solid var(--ink);
+  }
+  .kind.k-video { background: var(--video); color: var(--ink); }
+  .kind.k-audio { background: var(--held); color: var(--paper); }
+  .kind.k-gfx { background: var(--focus); color: var(--paper); }
+
+  /* ================= THE DESK (app window) ================= */
+  .desk { border: var(--lw-key) solid var(--ink); background: var(--paper); display: flex; flex-direction: column; min-width: 0; }
+  .win-bar {
+    display: flex; align-items: center; gap: 0.8rem; background: var(--ink); color: var(--paper);
+    padding: 0.5rem 0.75rem; font-family: var(--f-mono); font-weight: 500; font-size: 0.6875rem; letter-spacing: 0.08em;
+  }
+  .lamps { display: inline-flex; gap: 0.3rem; }
+  .lamps i { width: 0.6rem; height: 0.6rem; display: inline-block; background: var(--tally); }
+  .lamps i:nth-child(2) { background: var(--video); }
+  .lamps i:nth-child(3) { background: var(--held); }
+  .win-title { text-transform: uppercase; letter-spacing: 0.14em; }
+  .win-url { margin-left: auto; color: rgba(242, 241, 237, 0.65); }
+  .win-body { display: grid; grid-template-columns: 9.25rem minmax(0, 1fr); min-height: 34rem; }
+  .win-rail {
+    background: var(--sunk); border-right: var(--lw-key) solid var(--ink);
+    display: flex; flex-direction: column; justify-content: space-between; gap: 1.5rem; padding: 0.75rem 0.55rem;
+  }
+  .win-rail .tabs { display: flex; flex-direction: column; gap: 0.2rem; }
+  .win-rail .tabs[hidden] { display: none; }
+  .nav {
+    cursor: pointer; display: flex; align-items: center; gap: 0.5rem; min-height: 2.6rem; padding: 0 0.55rem; text-align: left;
+    font-family: var(--f-display); font-weight: 700; font-size: 0.8125rem; color: var(--ink);
+    background: transparent; border: var(--lw-key) solid transparent;
+  }
+  .nav .n { font-family: var(--f-mono); font-weight: 500; font-size: 0.625rem; color: var(--ink-mid); }
+  .nav:hover { border-color: var(--ink); }
+  .nav[aria-selected="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .nav[aria-selected="true"] .n { color: rgba(242, 241, 237, 0.7); }
+  .nav:focus-visible, .pchip:focus-visible, .fchip:focus-visible, .card:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .engine { display: flex; flex-direction: column; gap: 0.35rem; font-family: var(--f-mono); font-weight: 500; font-size: 0.625rem; border-top: var(--lw-thin) solid var(--ink); padding-top: 0.6rem; }
+  .eng-h { letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-mid); }
+  .engine span { display: inline-flex; align-items: center; gap: 0.4rem; }
+  .dot { width: 0.45rem; height: 0.45rem; border-radius: 50%; display: inline-block; }
+  .dot.ok { background: var(--held); }
+  .dot.run { background: var(--focus); }
+  .win-main { display: flex; flex-direction: column; min-width: 0; }
+  .tblock { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 2fr); background: var(--surface); border-bottom: var(--lw-key) solid var(--ink); }
+  .tblock > div { padding: 0.45rem 0.75rem; display: flex; flex-direction: column; gap: 0.1rem; border-right: var(--lw-thin) solid var(--ink); min-width: 0; }
+  .tblock > div:last-child { border-right: 0; }
+  .tblock span { font-family: var(--f-mono); font-weight: 500; font-size: 0.5rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-mid); }
+  .tblock b { font-family: var(--f-display); font-size: 0.8125rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tblock b.m { font-family: var(--f-mono); font-weight: 500; font-size: 0.6875rem; }
+  .screen { padding: 1rem 1rem 1.2rem; display: flex; flex-direction: column; gap: 0.85rem; min-width: 0; }
+  .desk:not(.js) .screen + .screen { border-top: var(--lw-key) solid var(--ink); }
+  .s-h { font-size: 1.375rem; letter-spacing: -0.02em; }
+  .s-h span { font-family: var(--f-mono); font-weight: 500; font-size: 0.75rem; color: var(--tally); margin-right: 0.3rem; vertical-align: 0.2em; }
+  .win-status {
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.4rem 1rem; padding: 0.45rem 0.75rem;
+    border-top: var(--lw-key) solid var(--ink); background: var(--sunk);
+    font-family: var(--f-mono); font-weight: 500; font-size: 0.5625rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-mid);
+  }
+
+  /* ---- ingest ---- */
+  .intake { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: flex-end; background: var(--surface); border: var(--lw-key) solid var(--ink); padding: 0.75rem; }
+  .intake label { display: flex; flex-direction: column; gap: 0.3rem; }
+  .intake label.grow { flex: 1 1 14rem; }
+  .intake label > span { font-family: var(--f-mono); font-weight: 500; font-size: 0.5625rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-mid); }
+  .intake input, .intake select {
+    height: 2.6rem; border: var(--lw-med) solid var(--ink); background: var(--paper); color: var(--ink);
+    font-family: var(--f-mono); font-size: 0.75rem; padding: 0 0.6rem; border-radius: 0; min-width: 0;
+  }
+  .intake input:focus-visible, .intake select:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+  .plate-btn.on { background: var(--tally); color: var(--paper); }
+  .plate-btn[disabled] { opacity: 0.5; cursor: default; }
+
+  .tw { position: relative; overflow-x: auto; border: var(--lw-key) solid var(--ink); background: var(--surface); }
+  .tw:focus-visible, .cmd:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.8125rem; }
+  .queue { min-width: 34rem; }
+  .rundown { min-width: 36rem; }
+  th {
+    font-family: var(--f-mono); font-weight: 500; font-size: 0.5rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--ink-mid); text-align: left; padding: 0.5rem 0.6rem; border-bottom: var(--lw-med) solid var(--ink); white-space: nowrap; background: var(--sunk);
+  }
+  th abbr { text-decoration: none; display: inline-block; width: 1rem; margin-right: 0.18rem; text-align: center; }
+  td { padding: 0.5rem 0.6rem; border-bottom: var(--lw-hair) solid var(--rule); vertical-align: middle; }
+  tr:last-child td { border-bottom: 0; }
+  tr.added { background: var(--held-wash); }
+  .a-title { display: block; font-family: var(--f-display); font-size: 0.875rem; }
+  .a-sub { display: block; font-size: 0.6875rem; color: var(--ink-mid); margin-top: 0.1rem; line-height: 1.35; }
+  .a-sub.mono { font-size: 0.625rem; }
+  .a-sub.hold { color: var(--tally); }
+  .cells { display: inline-flex; gap: 0.18rem; }
+  .sc { display: inline-block; width: 1rem; height: 0.6rem; border: var(--lw-thin) solid var(--ink); background: transparent; }
+  .sc.done { background: var(--ink); }
+  .sc.active { background: repeating-linear-gradient(-45deg, var(--focus) 0 3px, #8A93C9 3px 6px); background-size: 200% 100%; animation: work 0.9s linear infinite; }
+  .sc.stopped { background: var(--tally); }
+  .sc.wait { border-style: dashed; border-color: var(--ink-soft); }
+  @keyframes work { to { background-position: -12px 0; } }
+  @media (prefers-reduced-motion: reduce) { .sc.active { animation: none; } }
+  .q-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 0.8rem 1.4rem; }
+  .legend { display: flex; flex-wrap: wrap; gap: 0.4rem 0.9rem; font-family: var(--f-mono); font-weight: 500; font-size: 0.5625rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mid); }
+  .legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
+  .log { background: var(--ink); color: var(--paper); padding: 0.6rem 0.75rem; font-family: var(--f-mono); font-size: 0.6875rem; }
+  .log-h { display: block; font-weight: 500; font-size: 0.5625rem; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(242, 241, 237, 0.6); margin-bottom: 0.35rem; }
+  .log ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.15rem; min-height: 8.4rem; }
+  /* Lines are added by the script, so these reach past Astro's scoping. */
+  .log :global(li) { display: grid; grid-template-columns: 4.6rem 5.2rem minmax(0, 1fr); gap: 0.4rem; line-height: 1.45; }
+  .log :global(.t) { color: rgba(242, 241, 237, 0.55); }
+  .log :global(b) { font-weight: 500; color: #9FD3C5; }
+  .log :global(b.hold) { color: #F28C80; }
+  .log :global(li > span:last-child) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* ---- library ---- */
+  .filter, .pick { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+  .filter[hidden], .pick[hidden] { display: none; }
+  .fchip, .pchip {
+    cursor: pointer; min-height: 2.2rem; font-family: var(--f-mono); font-weight: 500; font-size: 0.6875rem; letter-spacing: 0.06em;
+    background: var(--surface); color: var(--ink); border: var(--lw-thin) solid var(--ink); padding: 0.28rem 0.6rem 0.24rem;
+  }
+  .pchip { min-width: 2.75rem; }
+  .fchip.k-video { border-left: 5px solid var(--video); }
+  .fchip.k-audio { border-left: 5px solid var(--held); }
+  .fchip.k-gfx { border-left: 5px solid var(--focus); }
+  .fchip[aria-pressed="true"], .pchip[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+  .lib { display: grid; gap: 0.6rem; grid-template-columns: repeat(auto-fill, minmax(12.5rem, 1fr)); }
+  .card {
+    cursor: pointer; text-align: left; padding: 0; font: inherit; color: var(--ink);
+    background: var(--surface); border: var(--lw-key) solid var(--ink); display: flex; flex-direction: column;
+    transition: transform 80ms ease, box-shadow 80ms ease;
+  }
+  .card:hover { transform: translate(-2px, -2px); box-shadow: var(--lift); }
+  .card:active { transform: none; box-shadow: none; }
+  .card[hidden] { display: none; }
+  .thumb {
+    position: relative; aspect-ratio: 16 / 7; border-bottom: var(--lw-key) solid var(--ink);
+    background: repeating-linear-gradient(45deg, var(--rule-soft) 0 1px, var(--paper) 1px 9px);
+    display: flex; align-items: flex-end; justify-content: space-between; padding: 0.45rem 0.45rem 0.45rem 0.8rem;
+  }
+  .thumb::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; }
+  .thumb.k-video::before { background: var(--video); }
+  .thumb.k-audio::before { background: var(--held); }
+  .thumb.k-gfx::before { background: var(--focus); }
+  .len { font-family: var(--f-mono); font-weight: 500; font-size: 0.625rem; background: var(--surface); border: var(--lw-thin) solid var(--ink); padding: 0.1rem 0.35rem; }
+  .c-body { padding: 0.6rem 0.7rem 0.7rem; display: flex; flex-direction: column; gap: 0.25rem; }
+  .c-seg { font-family: var(--f-mono); font-weight: 500; font-size: 0.5rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-mid); }
+  .c-title { font-family: var(--f-display); font-weight: 700; font-size: 0.9375rem; }
+  .c-spec { font-family: var(--f-mono); font-size: 0.625rem; line-height: 1.45; color: var(--ink-mid); }
+  .c-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 0.25rem; }
+  .c-open { font-family: var(--f-mono); font-weight: 500; font-size: 0.5625rem; letter-spacing: 0.1em; text-transform: uppercase; }
+
+  /* ---- QC ---- */
+  .qc { display: flex; flex-direction: column; gap: 0.75rem; }
+  .qc[hidden] { display: none; }
+  .desk:not(.js) .qc + .qc { border-top: var(--lw-thin) solid var(--ink); padding-top: 0.85rem; }
+  .qc-head { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+  .qc-head h3 { margin: 0; font-size: 1.125rem; }
+  .qc-head .st { margin-left: auto; }
+  .qc-grid { display: grid; gap: 0.75rem; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); align-items: start; }
+  .frame {
+    position: relative; aspect-ratio: 16 / 9; border: var(--lw-key) solid var(--ink); overflow: hidden;
+    background: repeating-linear-gradient(45deg, var(--rule-soft) 0 1px, var(--paper) 1px 9px);
+  }
+  .safe { position: absolute; border: var(--lw-med) dashed var(--ink-soft); }
+  .safe.action { inset: 5%; }
+  .safe.title { inset: 10%; border-width: var(--lw-thin); }
+  .safe.title em { left: auto; right: 0.3rem; }
+  .safe em { position: absolute; top: 0.2rem; left: 0.3rem; font-style: normal; font-family: var(--f-mono); font-size: 0.5rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-mid); }
+  .cap {
+    position: absolute; left: 50%; bottom: 14%; transform: translateX(-50%); white-space: nowrap; text-align: center;
+    background: rgba(21, 24, 30, 0.88); color: var(--paper); padding: 0.2rem 0.6rem; font-family: var(--f-display); font-size: 0.6875rem; line-height: 1.35;
+  }
+  .l3 { position: absolute; left: 10%; bottom: 14%; width: 45%; padding: 0.35rem 0.45rem; border: var(--lw-key) solid var(--focus); background: var(--surface); display: flex; flex-direction: column; gap: 0.25rem; }
+  .l3 i { display: block; height: 0.35rem; background: var(--focus); width: 70%; }
+  .l3 i + i { height: 0.25rem; width: 45%; background: var(--ink-soft); }
+  .frame-k { position: absolute; right: 0.4rem; bottom: 0.3rem; font-family: var(--f-mono); font-size: 0.5rem; letter-spacing: 0.06em; color: var(--ink-mid); background: var(--surface); padding: 0.05rem 0.3rem; }
+  .wave { position: absolute; inset: 18% 6%; display: flex; align-items: center; gap: 2px; }
+  .wave i { flex: 1; background: var(--held); }
+  .io { display: flex; flex-direction: column; border: var(--lw-thin) solid var(--ink); }
+  .io > div { padding: 0.55rem 0.7rem; display: flex; flex-direction: column; gap: 0.2rem; }
+  .io > .out { border-top: var(--lw-thin) solid var(--ink); background: var(--held-wash); }
+  .io > .out.empty { background: var(--sunk); }
+  .io-k { font-family: var(--f-mono); font-weight: 500; font-size: 0.5rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-mid); }
+  .io-v { font-family: var(--f-mono); font-weight: 500; font-size: 0.75rem; line-height: 1.45; }
+  .checks { border: var(--lw-thin) solid var(--ink); background: var(--surface); }
+  .ck { font-family: var(--f-display); width: 6.5rem; }
+  .res { font-family: var(--f-mono); font-weight: 500; font-size: 0.5625rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.16rem 0.42rem 0.12rem; border: var(--lw-thin) solid var(--ink); }
+  .r-pass { background: var(--held); color: var(--paper); border-color: var(--held); }
+  .r-manual { background: var(--video); color: var(--ink); }
+  .r-fail { background: var(--tally); color: var(--paper); border-color: var(--tally); }
+  .r-na { color: var(--ink-mid); border-style: dashed; border-color: var(--ink-soft); }
+  .qc-none { margin: 0; color: var(--ink-mid); font-size: 0.875rem; }
+  .qc-note { margin: 0; display: flex; gap: 0.6rem; align-items: flex-start; font-size: 0.875rem; }
+  .qc-note i { background: var(--ink); }
+  .qc-note.hold i { background: var(--tally); }
+  .actions { margin: 0; }
+
+  /* ---- conform target ---- */
+  .target { margin: 0; display: flex; gap: 0.6rem; align-items: baseline; flex-wrap: wrap; }
+  .target span { font-family: var(--f-mono); font-weight: 500; font-size: 0.5625rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-mid); }
+  .target b { font-family: var(--f-mono); font-weight: 500; font-size: 0.75rem; }
+  .s-intro { margin: -0.3rem 0 0; color: var(--ink-mid); font-size: 0.875rem; }
+
+  /* ---- formats ---- */
+  .fm { display: grid; grid-template-columns: minmax(0, 13.5rem) minmax(0, 1fr); gap: 0.85rem; align-items: start; }
+  .fm-menu { display: flex; flex-direction: column; gap: 0.8rem; }
+  .fm-grp { display: grid; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); gap: 0.25rem; }
+  .grp-h { grid-column: 1 / -1; font-family: var(--f-mono); font-weight: 500; font-size: 0.5625rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-mid); margin-bottom: 0.1rem; }
+  .fmt {
+    cursor: pointer; display: grid; grid-template-columns: 1.9rem minmax(0, 1fr); column-gap: 0.45rem; align-items: center; text-align: left;
+    min-height: 2.75rem; padding: 0.35rem 0.5rem; font: inherit; color: var(--ink); background: var(--surface); border: var(--lw-thin) solid var(--ink);
+  }
+  .fmt:hover { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+  .fmt:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .fmt-ico { grid-row: 1 / span 3; display: flex; align-items: center; justify-content: center; height: 1.6rem; }
+  .fmt-ico i { display: block; border: var(--lw-med) solid currentColor; box-sizing: border-box; }
+  .fmt-name { font-family: var(--f-display); font-weight: 700; font-size: 0.8125rem; line-height: 1.2; }
+  .fmt-dim { font-family: var(--f-mono); font-weight: 500; font-size: 0.5625rem; letter-spacing: 0.04em; color: var(--ink-mid); }
+  .fmt[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+  .fmt[aria-pressed="true"] .fmt-dim { color: rgba(242, 241, 237, 0.7); }
+  .fmt :global(.fmt-q) { grid-column: 2; justify-self: start; margin-top: 0.15rem; font-family: var(--f-mono); font-weight: 500; font-size: 0.5rem; letter-spacing: 0.12em; text-transform: uppercase; background: var(--held); color: var(--paper); padding: 0.1rem 0.35rem; }
+  .fm-view { display: flex; flex-direction: column; gap: 0.6rem; min-width: 0; }
+  .fm-ctl { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: flex-end; }
+  .fm-ctl[hidden] { display: none; }
+  .fm-ctl label { display: flex; flex-direction: column; gap: 0.3rem; flex: 1 1 12rem; }
+  .fm-ctl label > span { font-family: var(--f-mono); font-weight: 500; font-size: 0.5625rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-mid); }
+  .fm-ctl select { height: 2.6rem; border: var(--lw-med) solid var(--ink); background: var(--paper); color: var(--ink); font-family: var(--f-mono); font-size: 0.75rem; padding: 0 0.6rem; border-radius: 0; }
+  .fm-ctl select:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+  .seg-btns { display: flex; gap: 0.25rem; }
+  .fm-stage { height: 17rem; display: flex; align-items: center; justify-content: center; background: var(--sunk); border: var(--lw-key) solid var(--ink); overflow: hidden; }
+  .fm-frame { position: relative; overflow: hidden; width: 90%; max-height: 90%; background: #2A2F38; outline: var(--lw-key) solid var(--tally); }
+  .fm-src { position: absolute; left: 0; top: 0; width: 100%; height: 100%; background: repeating-linear-gradient(45deg, var(--rule-soft) 0 1px, var(--paper) 1px 9px); overflow: hidden; }
+  .subj { position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); width: 20%; height: 72%; }
+  .subj::before { content: ""; position: absolute; left: 50%; top: 0; width: 38%; aspect-ratio: 1; transform: translateX(-50%); border-radius: 50%; background: var(--ink-soft); }
+  .subj i { position: absolute; left: 0; right: 0; bottom: 0; height: 58%; border-radius: 40% 40% 0 0; background: var(--ink-soft); }
+  .fm-l3 { position: absolute; left: 8%; bottom: 12%; width: 40%; padding: 0.3rem 0.4rem; border: var(--lw-key) solid var(--focus); background: var(--surface); display: flex; flex-direction: column; gap: 0.2rem; }
+  .fm-l3[hidden] { display: none; }
+  .fm-l3 i { display: block; height: 0.3rem; background: var(--focus); width: 70%; }
+  .fm-l3 i + i { height: 0.22rem; width: 45%; background: var(--ink-soft); }
+  .fm-tag { position: absolute; left: 0.35rem; top: 0.3rem; font-family: var(--f-mono); font-size: 0.5rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mid); background: var(--surface); padding: 0.05rem 0.3rem; }
+  .fm-safe { position: absolute; inset: 5%; border: var(--lw-thin) dashed var(--tally); pointer-events: none; }
+  .fm-read { margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: var(--lw-thin) solid var(--ink); background: var(--surface); }
+  .fm-read > div { padding: 0.5rem 0.65rem; border-right: var(--lw-hair) solid var(--rule); border-bottom: var(--lw-hair) solid var(--rule); }
+  .fm-read > .w { grid-column: 1 / -1; border-right: 0; }
+  .fm-read dt { font-family: var(--f-mono); font-weight: 500; font-size: 0.5rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-mid); }
+  .fm-read dd { margin: 0.15rem 0 0; font-family: var(--f-mono); font-weight: 500; font-size: 0.75rem; }
+  .fm-read .w dd { font-family: var(--f-body); font-weight: 400; font-size: 0.875rem; }
+
+  /* ---- rundown ---- */
+  .tl-wrap { display: flex; flex-direction: column; gap: 0.4rem; }
+  .tl-h { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.4rem; font-family: var(--f-mono); font-weight: 500; font-size: 0.5625rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-mid); }
+  .tl { display: flex; border: var(--lw-key) solid var(--ink); background: var(--surface); height: 2.3rem; }
+  .tl .seg { flex-basis: 0; min-width: 2.3rem; display: flex; align-items: center; padding: 0 0.4rem; border-right: var(--lw-med) solid var(--ink); overflow: hidden; white-space: nowrap; }
+  .tl .seg:last-child { border-right: 0; }
+  .tl .seg b { font-family: var(--f-mono); font-weight: 500; font-size: 0.5625rem; }
+  .tl .k-video { background: var(--video); color: var(--ink); }
+  .tl .k-audio { background: var(--held); color: var(--paper); }
+  .tl .is-hold { background: var(--tally); color: var(--paper); }
+  .pack { display: grid; align-items: start; gap: 0.6rem; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); }
+  .ready-box, .tree { background: var(--surface); border: var(--lw-key) solid var(--ink); padding: 0.8rem 0.9rem; display: flex; flex-direction: column; gap: 0.5rem; }
+  .rb-n { font-family: var(--f-mono); font-weight: 500; font-size: 2.2rem; line-height: 1; }
+  .rb-n b { font-weight: 500; }
+  .rb-n i { font-style: normal; font-size: 0.9rem; color: var(--ink-mid); margin-left: 0.3rem; }
+  .rb-k { font-family: var(--f-mono); font-weight: 500; font-size: 0.5625rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-mid); margin-top: -0.25rem; }
+  .meter { display: flex; gap: 0.25rem; }
+  .meter i { flex: 1; height: 0.8rem; border: var(--lw-med) solid var(--ink); }
+  .meter .m-ready { background: var(--held); }
+  .meter .m-running { background: var(--focus); }
+  .meter .m-hold { background: var(--tally); }
+  .meter .m-queued { border-style: dashed; }
+  .rb-note { font-size: 0.875rem; color: var(--ink-mid); }
+  .tree-h { font-family: var(--f-mono); font-weight: 500; font-size: 0.5625rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-mid); }
+  .tree-h.mono { font-size: 0.6875rem; letter-spacing: 0.02em; text-transform: none; color: var(--ink); }
+  .tree ul { margin: 0 0 0.3rem; padding: 0 0 0 0.75rem; list-style: none; border-left: var(--lw-thin) solid var(--ink); display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.8125rem; color: var(--ink-mid); }
+  .tree ul .mono { color: var(--ink); font-size: 0.6875rem; margin-right: 0.2rem; }
+  .tree .contents { border-left: 0; padding-left: 1rem; list-style: square; }
+
+  /* ================= UNDER THE HOOD ================= */
+  .spec { border: var(--lw-key) solid var(--ink); background: var(--surface); display: grid; grid-template-columns: auto minmax(0, 1fr); }
+  .spec-h {
+    background: var(--ink); color: var(--paper); padding: 0.7rem 0.85rem; writing-mode: vertical-rl; transform: rotate(180deg);
+    font-family: var(--f-mono); font-weight: 500; font-size: 0.5625rem; letter-spacing: 0.14em; text-transform: uppercase; text-align: center;
+  }
+  .spec dl { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); }
+  .spec dl > div { padding: 0.6rem 0.85rem; border-right: var(--lw-hair) solid var(--rule); border-bottom: var(--lw-hair) solid var(--rule); }
+  .spec dt { font-family: var(--f-mono); font-weight: 500; font-size: 0.5625rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-mid); }
+  .spec dd { margin: 0.15rem 0 0; font-family: var(--f-mono); font-weight: 500; font-size: 0.8125rem; }
+  .stages { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+  .stages li { position: relative; background: var(--surface); border: var(--lw-key) solid var(--ink); padding: 0.9rem 1.1rem 1rem; display: flex; flex-direction: column; gap: 0.55rem; }
+  .stages li + li { margin-top: 1.4rem; }
+  .stages li + li::before { content: ""; position: absolute; left: 1.55rem; top: calc(-1.4rem - var(--lw-key)); height: 1.4rem; border-left: var(--lw-rule) solid var(--ink); }
+  .st-head { display: flex; align-items: baseline; gap: 0.7rem; flex-wrap: wrap; }
+  .st-n { font-family: var(--f-mono); font-weight: 500; font-size: 0.8125rem; color: var(--tally); }
+  .tool { margin-left: auto; font-family: var(--f-mono); font-weight: 500; font-size: 0.625rem; letter-spacing: 0.08em; padding: 0.18rem 0.45rem; background: var(--sunk); border: var(--lw-thin) solid var(--ink); }
+  .stages p { margin: 0; color: var(--ink-mid); font-size: 0.9375rem; max-width: 64ch; }
+  .cmd { margin: 0; background: var(--ink); color: var(--paper); padding: 0.7rem 0.85rem; overflow-x: auto; font-family: var(--f-mono); font-size: 0.75rem; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+
+  .notes { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 0.5rem; max-width: 62ch; color: var(--ink-mid); }
+  .colophon { color: var(--ink-mid); }
+
+  /* ---- small screens: the rail becomes a tab strip across the top ---- */
+  @media (max-width: 44rem) {
+    .win-body { grid-template-columns: minmax(0, 1fr); min-height: 0; }
+    .win-rail { border-right: 0; border-bottom: var(--lw-key) solid var(--ink); padding: 0.4rem; }
+    .win-rail .tabs { flex-direction: row; overflow-x: auto; }
+    .nav { flex: none; min-height: 2.5rem; }
+    .engine { display: none; }
+    .tblock { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .log :global(li) { grid-template-columns: 3.9rem 4.4rem minmax(0, 1fr); gap: 0.3rem; }
+    .log { font-size: 0.625rem; }
+    .tblock .wide { grid-column: 1 / -1; border-right: 0; border-top: var(--lw-thin) solid var(--ink); }
+    .qc-grid { grid-template-columns: 1fr; }
+    .fm { grid-template-columns: minmax(0, 1fr); }
+    .fm-grp { grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr)); }
+    .fm-stage { height: 13rem; }
+    .fm-read { grid-template-columns: minmax(0, 1fr); }
+    .win-url { display: none; }
+    .screen { padding: 0.8rem 0.7rem 1rem; }
+  }
+</style>

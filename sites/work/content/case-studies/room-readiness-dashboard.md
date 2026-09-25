@@ -12,9 +12,9 @@
 kind: "Readiness dashboard"
 demo: true
 issued: 2026-09-21
-title: "{{down}} of {{total}} rooms aren't show-ready, down from {{startDown}}"
+title: "Room readiness, tested weekly and scored"
 dek: "A weekly view of fourteen shared rooms across two buildings: which ones can host a meeting today, what's broken, and whether it's getting better."
-summaryLine: "A weekly room-readiness dashboard: status by room, open issues, and eight weeks of trend."
+summaryLine: "A weekly room-readiness dashboard: status by room, open issues, and eight weeks of trend. Technicians run a weekly check of all critical paths once a week."
 target: 92
 
 meta:
